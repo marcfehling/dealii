@@ -29,6 +29,7 @@ namespace LA
 #include <deal.II/base/function.h>
 #include <deal.II/base/logstream.h>
 #include <deal.II/base/quadrature_lib.h>
+#include <deal.II/base/std_cxx14/memory.h>
 #include <deal.II/base/timer.h>
 #include <deal.II/base/utilities.h>
 
@@ -47,6 +48,7 @@ namespace LA
 
 #include <deal.II/hp/dof_handler.h>
 #include <deal.II/hp/fe_values.h>
+#include <deal.II/hp/q_collection.h>
 #include <deal.II/hp/refinement.h>
 
 #include <deal.II/lac/affine_constraints.h>
@@ -59,6 +61,7 @@ namespace LA
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/error_estimator.h>
 #include <deal.II/numerics/matrix_tools.h>
+#include <deal.II/numerics/smoothness_estimator.h>
 #include <deal.II/numerics/vector_tools.h>
 
 #include <complex>
@@ -109,9 +112,7 @@ namespace Step27
     hp::QCollection<dim - 1> face_quadrature_collection;
 
     hp::QCollection<dim>                    fourier_q_collection;
-    std::shared_ptr<FESeries::Fourier<dim>> fourier;
-    std::vector<double>                     ln_k;
-    Table<dim, std::complex<double>>        fourier_coefficients;
+    std::unique_ptr<FESeries::Fourier<dim>> fourier;
 
     AffineConstraints<double> constraints;
 
@@ -184,18 +185,15 @@ namespace Step27
         face_quadrature_collection.push_back(QGauss<dim - 1>(degree + 1));
       }
 
-    const unsigned int N = max_degree;
-
     QGauss<1>      base_quadrature(2);
-    QIterated<dim> quadrature(base_quadrature, N);
+    QIterated<dim> quadrature(base_quadrature, max_degree);
     for (unsigned int i = 0; i < fe_collection.size(); i++)
       fourier_q_collection.push_back(quadrature);
 
-    fourier = std::make_shared<FESeries::Fourier<dim>>(N,
-                                                       fe_collection,
-                                                       fourier_q_collection);
-
-    resize(fourier_coefficients, N);
+    fourier =
+      std_cxx14::make_unique<FESeries::Fourier<dim>>(max_degree,
+                                                     fe_collection,
+                                                     fourier_q_collection);
   }
 
 
@@ -378,12 +376,17 @@ namespace Step27
       solution,
       estimated_error_per_cell);
 
-
-    Vector<float> smoothness_indicators(triangulation.n_active_cells());
-    estimate_smoothness(smoothness_indicators);
-
     parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
       triangulation, estimated_error_per_cell, 0.3, 0.03);
+
+    Vector<float> smoothness_indicators(triangulation.n_active_cells());
+    SmoothnessEstimator::fourier_coefficient_decay(
+      *fourier,
+      dof_handler,
+      solution,
+      smoothness_indicators,
+      /*regression_strategy=*/VectorTools::Linfty_norm,
+      /*only_flagged_cells=*/true);
 
     hp::Refinement::p_adaptivity_from_relative_threshold(dof_handler,
                                                          smoothness_indicators,
@@ -465,68 +468,6 @@ namespace Step27
         solve();
         postprocess();
       }
-  }
-
-
-
-  template <int dim>
-  std::pair<bool, unsigned int>
-  LaplaceProblem<dim>::predicate(const TableIndices<dim> &ind)
-  {
-    unsigned int v = 0;
-    for (unsigned int i = 0; i < dim; i++)
-      v += ind[i] * ind[i];
-    if (v > 0 && v < max_degree * max_degree)
-      return std::make_pair(true, v);
-    else
-      return std::make_pair(false, v);
-  }
-
-
-
-  template <int dim>
-  void
-  LaplaceProblem<dim>::estimate_smoothness(Vector<float> &smoothness_indicators)
-  {
-    Vector<double> local_dof_values;
-
-    for (const auto &cell : dof_handler.active_cell_iterators())
-      if (cell->is_locally_owned())
-        {
-          local_dof_values.reinit(cell->get_fe().dofs_per_cell);
-          cell->get_dof_values(solution, local_dof_values);
-
-          fourier->calculate(local_dof_values,
-                             cell->active_fe_index(),
-                             fourier_coefficients);
-
-          std::pair<std::vector<unsigned int>, std::vector<double>> res =
-            FESeries::process_coefficients<dim>(
-              fourier_coefficients,
-              std::bind(&LaplaceProblem<dim>::predicate,
-                        this,
-                        std::placeholders::_1),
-              VectorTools::Linfty_norm);
-
-          Assert(res.first.size() == res.second.size(), ExcInternalError());
-
-          if (ln_k.size() == 0)
-            {
-              ln_k.resize(res.first.size(), 0);
-              for (unsigned int f = 0; f < ln_k.size(); f++)
-                ln_k[f] =
-                  std::log(2.0 * numbers::PI * std::sqrt(1. * res.first[f]));
-            }
-
-          for (double &residual_element : res.second)
-            residual_element = std::log(residual_element);
-
-          std::pair<double, double> fit =
-            FESeries::linear_regression(ln_k, res.second);
-
-          smoothness_indicators(cell->active_cell_index()) =
-            -fit.first - 1. * dim / 2;
-        }
   }
 } // namespace Step27
 

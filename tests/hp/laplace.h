@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2018 by the deal.II authors
+// Copyright (C) 2019 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -13,7 +13,10 @@
 //
 // ---------------------------------------------------------------------
 
+
+
 // base header for hp-FEM test on Laplace equation.
+
 
 #include <deal.II/base/convergence_table.h>
 #include <deal.II/base/function.h>
@@ -42,7 +45,12 @@
 #include <deal.II/grid/tria_accessor.h>
 #include <deal.II/grid/tria_iterator.h>
 
-#include <deal.II/lac/constraint_matrix.h>
+#include <deal.II/hp/dof_handler.h>
+#include <deal.II/hp/fe_collection.h>
+#include <deal.II/hp/q_collection.h>
+#include <deal.II/hp/refinement.h>
+
+#include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/full_matrix.h>
 #include <deal.II/lac/precondition.h>
@@ -67,6 +75,8 @@
 #include <fstream>
 
 #include "../tests.h"
+
+
 
 /**
  * Basic class for Laplace problem
@@ -118,13 +128,10 @@ protected:
   mark_h_cells() = 0;
 
   /**
-   * remove h-refinement flag from some cells and populate @p p_cells with
-   * iterators to those cells, that shall be p-refined.
+   * remove h-refinement flag from some cells and flag cells for p-refinement
    */
-  virtual std::pair<unsigned int, unsigned int>
-  substitute_h_for_p(
-    std::vector<typename Triangulation<dim>::active_cell_iterator>
-      &p_cells) = 0;
+  virtual void
+  substitute_h_for_p() = 0;
 
   void
   refine_grid(const unsigned int cycle);
@@ -206,11 +213,15 @@ Laplace<dim>::Laplace(const Function<dim> &force_function,
   deallog << std::endl;
 }
 
+
+
 template <int dim>
 Laplace<dim>::~Laplace()
 {
   dof_handler.clear();
 }
+
+
 
 template <int dim>
 hp::DoFHandler<dim> &
@@ -218,6 +229,8 @@ Laplace<dim>::get_dof_handler()
 {
   return dof_handler;
 }
+
+
 
 template <int dim>
 void
@@ -229,6 +242,8 @@ Laplace<dim>::setup_solve_estimate(Vector<float> &output_estimate)
   estimate_error();
   output_estimate = estimated_error_per_cell;
 }
+
+
 
 template <int dim>
 void
@@ -284,6 +299,8 @@ Laplace<dim>::setup_system()
   pcout << "Number of degrees of freedom: " << dof_handler.n_dofs()
         << std::endl;
 }
+
+
 
 template <int dim>
 void
@@ -352,6 +369,8 @@ Laplace<dim>::assemble()
   pcout << " done." << std::endl;
 }
 
+
+
 //#define DIRECT
 
 template <int dim>
@@ -397,6 +416,8 @@ Laplace<dim>::solve()
   pcout << " done." << std::endl;
 }
 
+
+
 template <int dim>
 void
 Laplace<dim>::refine_grid(const unsigned int cycle)
@@ -407,10 +428,19 @@ Laplace<dim>::refine_grid(const unsigned int cycle)
   mark_h_cells();
 
   // 3.3. Substitute h for p refinement
-  std::vector<typename Triangulation<dim>::active_cell_iterator> p_cells;
-  hp_number = substitute_h_for_p(p_cells);
+  substitute_h_for_p();
 
+  // prepare refinement and store number of flagged cells
   triangulation.prepare_coarsening_and_refinement();
+
+  hp_number = {0, 0};
+  for (const auto &cell : dof_handler.active_cell_iterators())
+    {
+      if (cell->refine_flag_set())
+        ++hp_number.first;
+      if (cell->future_fe_index_set())
+        ++hp_number.second;
+    }
 
   // 3.4. Solution Transfer
   SolutionTransfer<dim, TrilinosWrappers::MPI::Vector, hp::DoFHandler<dim>>
@@ -424,18 +454,7 @@ Laplace<dim>::refine_grid(const unsigned int cycle)
   solution_coarse = solution;
   soltrans.prepare_for_coarsening_and_refinement(solution_coarse);
 
-  // increase fe_index()
-  for (unsigned int i = 0; i < p_cells.size(); i++)
-    {
-      typename hp::DoFHandler<dim>::active_cell_iterator cell(
-        &triangulation, p_cells[i]->level(), p_cells[i]->index(), &dof_handler);
-
-      const unsigned int incremented_index = cell->active_fe_index() + 1;
-      Assert(incremented_index < fe.size(), ExcInternalError());
-      cell->set_active_fe_index(incremented_index);
-    }
-
-  // 3.5. Refinement
+  // 3.5. h-refinement and p-refinement
   triangulation.execute_coarsening_and_refinement();
 
   // FIXME: some hp strategies might need:
@@ -447,6 +466,8 @@ Laplace<dim>::refine_grid(const unsigned int cycle)
   // 3.7. Solution Transfer finish
   soltrans.interpolate(solution_coarse, solution);
 }
+
+
 
 template <int dim>
 void
@@ -535,6 +556,8 @@ Laplace<dim>::calculate_error()
   Linfty_error = Utilities::MPI::max(Linfty_error, mpi_communicator);
 }
 
+
+
 template <int dim>
 void
 Laplace<dim>::output_results(int cycle)
@@ -556,6 +579,8 @@ Laplace<dim>::output_results(int cycle)
             << dof_handler.n_dofs() << sp << L2_error << sp << H1_error << sp
             << Linfty_error << sp << total_error << sp << std::endl;
 }
+
+
 
 template <int dim>
 void
@@ -602,6 +627,8 @@ Laplace<dim>::print_errors()
         << std::endl;
     }
 }
+
+
 
 template <int dim>
 void

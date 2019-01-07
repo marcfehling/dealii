@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2018 by the deal.II authors
+// Copyright (C) 2019 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -13,7 +13,11 @@
 //
 // ---------------------------------------------------------------------
 
+
+
 // essentially similar to fe/fe_series_05.cc but test smoothness estimation.
+
+
 #include <deal.II/base/function.h>
 #include <deal.II/base/quadrature_lib.h>
 
@@ -37,7 +41,9 @@
 
 #include "../tests.h"
 
+
 using namespace dealii;
+
 
 template <int dim>
 class LegendreFunction : public Function<dim>
@@ -61,6 +67,8 @@ private:
   const Table<dim, double> coefficients;
 };
 
+
+
 // copy-paste from fe_series.cc
 template <int dim>
 double
@@ -77,6 +85,8 @@ Lh(const Point<dim> &x_q, const TableIndices<dim> &indices)
     }
   return res;
 }
+
+
 
 template <>
 double
@@ -107,6 +117,8 @@ LegendreFunction<3>::value(const dealii::Point<3> &point,
   return f;
 }
 
+
+
 void
 compare(const Table<2, double> &coeff1, const Table<2, double> &coeff2)
 {
@@ -133,6 +145,8 @@ compare(const Table<3, double> &coeff1, const Table<3, double> &coeff2)
           << std::endl
           << linf << std::endl;
 }
+
+
 
 void resize(Table<2, double> &coeff, const unsigned int N)
 {
@@ -171,10 +185,12 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
   hp::QCollection<dim>  quadrature_formula;
 
   // add some extra FEs in fe_collection
+  const QGauss<dim>  quadrature(poly_degree + 1);
+  const QSorted<dim> quadrature_sorted(quadrature);
   for (unsigned int p = 1; p <= max_poly; p++)
     {
       fe_collection.push_back(FE_Q<dim>(p));
-      quadrature_formula.push_back(QGauss<dim>(p + 1 + 5));
+      quadrature_formula.push_back(quadrature_sorted);
     }
 
   GridGenerator::hyper_cube(triangulation, 0.0, 1.0); // reference cell
@@ -186,12 +202,12 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
 
   VectorTools::interpolate(dof_handler, func, values);
 
-  const unsigned int      N = poly_degree + 1;
-  FESeries::Legendre<dim> legendre(N, fe_collection, quadrature_formula);
+  const unsigned int      n_modes = poly_degree + 1;
+  FESeries::Legendre<dim> legendre(n_modes, fe_collection, quadrature_formula);
 
   const Table<dim, double> &coeff_in = func.get_coefficients();
   Table<dim, double>        coeff_out;
-  resize(coeff_out, N);
+  resize(coeff_out, n_modes);
 
   Vector<double> local_dof_values;
 
@@ -212,12 +228,20 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
   // finally test smoothness estimator:
   Vector<float> smoothness(1);
   SmoothnessEstimator::legendre_coefficient_decay(
-    legendre, dof_handler, values, smoothness, coefficients_predicate);
+    legendre,
+    dof_handler,
+    values,
+    smoothness,
+    coefficients_predicate,
+    /*smallest_abs_coefficient=*/1e-10,
+    /*only_flagged_cells=*/false);
 
   deallog << "smoothness:" << std::endl << smoothness[0] << std::endl;
 
   dof_handler.clear();
 }
+
+
 
 int
 main()
@@ -239,7 +263,8 @@ main()
 
     LegendreFunction<dim> function(coeff_in);
     test(function, p);
-    deallog << "expected smoothness:" << std::endl << 0. << std::endl;
+    deallog << "expected smoothness:" << std::endl
+            << std::numeric_limits<float>::infinity() << std::endl;
   }
 
   // for quadratic we can already assign exponential decay:   a_i = C exp ( -k
@@ -266,7 +291,7 @@ main()
     test(function, p);
 
     deallog << "expected smoothness:" << std::endl
-            << exp(-std::min(k1, k2)) << std::endl;
+            << std::min(k1, k2) << std::endl;
   }
 
   // linear elements in 3D (expect zero output)
@@ -283,7 +308,8 @@ main()
 
     LegendreFunction<dim> function(coeff_in);
     test(function, p);
-    deallog << "expected smoothness:" << std::endl << 0. << std::endl;
+    deallog << "expected smoothness:" << std::endl
+            << std::numeric_limits<float>::infinity() << std::endl;
   }
 
   // cubic in 3D
@@ -311,7 +337,7 @@ main()
     test(function, p);
 
     deallog << "expected smoothness:" << std::endl
-            << exp(-std::min(k1, std::min(k2, k3))) << std::endl;
+            << std::min(k1, std::min(k2, k3)) << std::endl;
   }
 
 
@@ -342,7 +368,7 @@ main()
     LegendreFunction<dim> function(coeff_in);
     test(function, p);
 
-    deallog << "expected smoothness:" << std::endl << exp(-k1) << std::endl;
+    deallog << "expected smoothness:" << std::endl << k1 << std::endl;
   }
 
   // cubic in 3D (zero)
@@ -355,7 +381,8 @@ main()
     LegendreFunction<dim> function(coeff_in);
     test(function, p);
 
-    deallog << "expected smoothness:" << std::endl << 0. << std::endl;
+    deallog << "expected smoothness:" << std::endl
+            << std::numeric_limits<float>::infinity() << std::endl;
   }
 
   dealii::deallog << "Ok" << std::endl;

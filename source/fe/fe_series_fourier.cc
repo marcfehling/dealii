@@ -167,14 +167,15 @@ namespace FESeries
 {
   template <int dim, int spacedim>
   Fourier<dim, spacedim>::Fourier(
-    const unsigned int                     N,
+    const unsigned int                     size_in_each_direction,
     const hp::FECollection<dim, spacedim> &fe_collection,
     const hp::QCollection<dim> &           q_collection)
-    : fe_collection(&fe_collection)
+    : n_coefficients_per_direction(size_in_each_direction)
+    , fe_collection(&fe_collection)
     , q_collection(&q_collection)
     , fourier_transform_matrices(fe_collection.size())
   {
-    set_k_vectors(k_vectors, N);
+    set_k_vectors(k_vectors, n_coefficients_per_direction);
     unrolled_coefficients.resize(k_vectors.n_elements());
   }
 
@@ -208,6 +209,15 @@ namespace FESeries
       });
 
     task_group.join_all();
+  }
+
+
+
+  template <int dim, int spacedim>
+  unsigned int
+  Fourier<dim, spacedim>::get_n_coefficients_per_direction() const
+  {
+    return n_coefficients_per_direction;
   }
 
 

@@ -192,11 +192,13 @@ namespace FESeries
     const unsigned int                     size_in_each_direction,
     const hp::FECollection<dim, spacedim> &fe_collection,
     const hp::QCollection<dim> &           q_collection)
-    : N(size_in_each_direction)
+    : n_coefficients_per_direction(size_in_each_direction)
     , fe_collection(&fe_collection)
     , q_collection(&q_collection)
     , legendre_transform_matrices(fe_collection.size())
-    , unrolled_coefficients(Utilities::fixed_power<dim>(N), 0.)
+    , unrolled_coefficients(Utilities::fixed_power<dim>(
+                              n_coefficients_per_direction),
+                            0.)
   {}
 
 
@@ -232,9 +234,9 @@ namespace FESeries
 
   template <int dim, int spacedim>
   unsigned int
-  Legendre<dim, spacedim>::get_size_in_each_direction() const
+  Legendre<dim, spacedim>::get_n_coefficients_per_direction() const
   {
-    return N;
+    return n_coefficients_per_direction;
   }
 
 
@@ -248,11 +250,12 @@ namespace FESeries
     Table<dim, CoefficientType> & legendre_coefficients)
   {
     for (unsigned int d = 0; d < dim; ++d)
-      AssertDimension(legendre_coefficients.size(d), N);
+      AssertDimension(legendre_coefficients.size(d),
+                      n_coefficients_per_direction);
 
     ensure_existence(*fe_collection,
                      *q_collection,
-                     N,
+                     n_coefficients_per_direction,
                      cell_active_fe_index,
                      legendre_transform_matrices);
 

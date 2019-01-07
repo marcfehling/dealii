@@ -317,21 +317,7 @@ namespace hp
      * Each entry of the parameter @p sobolev_indices needs to correspond
      * to an active cell.
      *
-     * For more theoretical details see
-     * @code{.bib}
-     * @article{Ainsworth1998,
-     *  author    = {Ainsworth, Mark and Senior, Bill},
-     *  title     = {An adaptive refinement strategy for hp-finite element
-     *               computations},
-     *  journal   = {{Applied Numerical Mathematics}},
-     *  volume    = {26},
-     *  number    = {1--2},
-     *  pages     = {165--178},
-     *  publisher = {Elsevier},
-     *  year      = {1998},
-     *  doi       = {10.1016/S0168-9274(97)00083-4}
-     * }
-     * @endcode
+     * For more theoretical details see @cite ainsworth1998hp .
      *
      * @note Triangulation::prepare_for_coarsening_and_refinement() may change
      *   refine and coarsen flags. Avoid calling it before this particular
@@ -513,21 +499,7 @@ namespace hp
      * predicted_error_per_cell = std::move(transferred_errors);
      * @endcode
      *
-     * For more theoretical details see
-     * @code{.bib}
-     * @article{Melenk2001,
-     *  author    = {Melenk, Jens Markus and Wohlmuth, Barbara I.},
-     *  title     = {{On residual-based a posteriori error estimation
-     *                in hp-FEM}},
-     *  journal   = {{Advances in Computational Mathematics}},
-     *  volume    = {15},
-     *  number    = {1},
-     *  pages     = {311--331},
-     *  publisher = {Springer US},
-     *  year      = {2001},
-     *  doi       = {10.1023/A:1014268310921}
-     * }
-     * @endcode
+     * For more theoretical details see @cite melenk2001hp .
      *
      * @note This feature is currently only implemented for isotropic refinement.
      *

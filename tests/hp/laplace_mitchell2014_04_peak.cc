@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2018 by the deal.II authors
+// Copyright (C) 2019 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -13,8 +13,11 @@
 //
 // ---------------------------------------------------------------------
 
+
+
 // test SmoothnessEstimator::legendre_coefficient_decay() on
-// problem 4 (peak) in Mitchel 2014.
+// problem 4 (peak) in Mitchell 2014.
+
 
 #include "laplace.h"
 
@@ -103,10 +106,8 @@ private:
   estimate_error();
   void
   mark_h_cells();
-
-  std::pair<unsigned int, unsigned int>
-  substitute_h_for_p(
-    std::vector<typename Triangulation<dim>::active_cell_iterator> &p_cells);
+  void
+  substitute_h_for_p();
 
   hp::QCollection<dim - 1> quadrature_face;
 };
@@ -140,9 +141,8 @@ Problem4<dim>::Problem4(const Function<dim> &force_function,
 
 
 template <int dim>
-std::pair<unsigned int, unsigned int>
-Problem4<dim>::substitute_h_for_p(
-  std::vector<typename Triangulation<dim>::active_cell_iterator> &p_cells)
+void
+Problem4<dim>::substitute_h_for_p()
 {
   Vector<float> smoothness_indicators(
     Laplace<dim>::triangulation.n_active_cells());
@@ -150,30 +150,14 @@ Problem4<dim>::substitute_h_for_p(
                                                   Laplace<dim>::solution,
                                                   smoothness_indicators);
 
-  unsigned int num_p_cells = 0;
-  unsigned int num_h_cells = 0;
-  for (auto &cell : Laplace<dim>::dof_handler.active_cell_iterators())
-    if (cell->refine_flag_set())
-      {
-        typename Triangulation<dim>::active_cell_iterator tria_cell(
-          &(Laplace<dim>::triangulation), cell->level(), cell->index());
-
-        const unsigned int cur_fe_index = cell->active_fe_index();
-        const bool p_ref = smoothness_indicators(cell->index()) < exp(-1.);
-
-        if (cur_fe_index < Laplace<dim>::fe.size() - 1 && p_ref)
-          {
-            ++num_p_cells;
-            cell->clear_refine_flag();
-            p_cells.push_back(tria_cell);
-          }
-        else
-          {
-            ++num_h_cells;
-          }
-      }
-
-  return std::make_pair(num_h_cells, num_p_cells);
+  hp::Refinement::p_adaptivity_from_absolute_threshold(
+    Laplace<dim>::dof_handler,
+    smoothness_indicators,
+    static_cast<float>(1.),
+    static_cast<float>(0.),
+    std::greater<float>(),
+    std::less<float>());
+  hp::Refinement::choose_p_over_h(Laplace<dim>::dof_handler);
 }
 
 

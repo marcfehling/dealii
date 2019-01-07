@@ -116,12 +116,7 @@ namespace FESeries
               Table<dim, CoefficientType> & fourier_coefficients);
 
     /**
-     * Return number of coefficients in each coordinate direction.
-     */
-    unsigned int
-    get_n_coefficients_per_direction() const;
-
-    /**
+<<<<<<< HEAD
      * Calculate all transformation matrices to transfer the finite element
      * solution to the series expansion representation.
      *
@@ -160,6 +155,12 @@ namespace FESeries
      */
     bool
     operator==(const Fourier<dim, spacedim> &fourier) const;
+=======
+     * Return number of coefficients in each coordinate direction.
+     */
+    unsigned int
+    get_n_coefficients_per_direction() const;
+>>>>>>> SmoothnessEstimator: Enhancements regarding applicability.
 
   private:
     /**
@@ -272,7 +273,7 @@ namespace FESeries
     unsigned int
     get_n_coefficients_per_direction() const;
 
-    /**
+    /*
      * Calculate all transformation matrices to transfer the finite element
      * solution to the series expansion representation.
      *
