@@ -374,6 +374,7 @@ namespace Step27new
   {
     computing_timer.enter_subsection("postprocess");
 
+    computing_timer.enter_subsection("flag h");
     Vector<float> estimated_error_per_cell(triangulation.n_active_cells());
     KellyErrorEstimator<dim>::estimate(
       dof_handler,
@@ -382,13 +383,26 @@ namespace Step27new
       solution,
       estimated_error_per_cell);
 
+    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
+      triangulation, estimated_error_per_cell, 0.3, 0.03);
+    computing_timer.leave_subsection("flag h");
+
+    computing_timer.enter_subsection("flag p");
     Vector<float> smoothness_indicators(triangulation.n_active_cells());
     estimate_smoothness(smoothness_indicators);
+
+    // perform only refinment, thus set min coarsen threshold to 0
+    hp::Refinement::p_adaptivity_from_threshold(dof_handler,
+                                                smoothness_indicators,
+                                                0.5,
+                                                0.);
+    hp::Refinement::choose_p_over_h(dof_handler);
+    computing_timer.leave_subsection("flag p");
 
 #ifdef ENABLE_OUTPUT
     computing_timer.leave_subsection("postprocess");
     {
-      TimerOutput::Scope t(computing_timer, "output");
+      TimerOutput::Scope t(computing_timer, "write");
 
       Vector<float> fe_degrees(triangulation.n_active_cells());
       for (const auto &cell : dof_handler.active_cell_iterators())
@@ -434,17 +448,9 @@ namespace Step27new
     computing_timer.enter_subsection("postprocess");
 #endif
 
-    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-      triangulation, estimated_error_per_cell, 0.3, 0.03);
-
-    // perform only refinment, thus set min coarsen threshold to 0
-    hp::Refinement::p_adaptivity_from_threshold(dof_handler,
-                                                smoothness_indicators,
-                                                0.5,
-                                                0.);
-    hp::Refinement::choose_p_over_h(dof_handler);
-
+    computing_timer.enter_subsection("refine");
     triangulation.execute_coarsening_and_refinement();
+    computing_timer.leave_subsection("refine");
 
     computing_timer.leave_subsection("postprocess");
   }
@@ -526,10 +532,12 @@ namespace Step27new
         assemble_system();
         solve();
         postprocess(cycle);
-      }
 
-    computing_timer.print_summary();
-    computing_timer.reset();
+        computing_timer.print_summary();
+        computing_timer.reset();
+
+        pcout << std::endl;
+      }
   }
 
 
