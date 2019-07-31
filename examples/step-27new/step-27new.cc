@@ -372,8 +372,6 @@ namespace Step27new
   template <int dim>
   void LaplaceProblem<dim>::postprocess(const unsigned int cycle)
   {
-    computing_timer.enter_subsection("postprocess");
-
     computing_timer.enter_subsection("flag h");
     Vector<float> estimated_error_per_cell(triangulation.n_active_cells());
     KellyErrorEstimator<dim>::estimate(
@@ -400,7 +398,6 @@ namespace Step27new
     computing_timer.leave_subsection("flag p");
 
 #ifdef ENABLE_OUTPUT
-    computing_timer.leave_subsection("postprocess");
     {
       TimerOutput::Scope t(computing_timer, "write");
 
@@ -426,10 +423,9 @@ namespace Step27new
 
       const std::string filename =
         ("solution-" + Utilities::int_to_string(cycle, 2) + "." +
-         Utilities::int_to_string(triangulation.locally_owned_subdomain(), 4) +
-         ".vtu");
-      std::ofstream output(filename);
-      data_out.write_vtk(output);
+         Utilities::int_to_string(triangulation.locally_owned_subdomain(), 4));
+      std::ofstream output(filename + ".vtu");
+      data_out.write_vtu(output);
 
       if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
         {
@@ -446,14 +442,11 @@ namespace Step27new
           data_out.write_pvtu_record(master_output, filenames);
         }
     }
-    computing_timer.enter_subsection("postprocess");
 #endif
 
     computing_timer.enter_subsection("refine");
     triangulation.execute_coarsening_and_refinement();
     computing_timer.leave_subsection("refine");
-
-    computing_timer.leave_subsection("postprocess");
   }
 
 
