@@ -426,7 +426,8 @@ namespace Step27new
 
       const std::string filename =
         ("solution-" + Utilities::int_to_string(cycle, 2) + "." +
-         Utilities::int_to_string(triangulation.locally_owned_subdomain(), 4));
+         Utilities::int_to_string(triangulation.locally_owned_subdomain(), 4) +
+         ".vtu");
       std::ofstream output(filename);
       data_out.write_vtk(output);
 
