@@ -250,7 +250,7 @@ namespace Step27new
                   mpi_communicator,
                   /*verbose=*/true),
                 ExcMessage(
-                  "AffineConstraints object constains inconsistencies!"));
+                  "AffineConstraints object contains inconsistencies!"));
 #endif
     constraints.close();
 
