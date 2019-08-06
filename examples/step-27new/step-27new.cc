@@ -623,7 +623,7 @@ int main(int argc, char *argv[])
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
       unsigned int n_cycles = 6; // default
-      if (argc > 2)
+      if (argc > 1)
         {
           char *        endptr;
           unsigned long argument = strtoul(argv[1], &endptr, 10);
