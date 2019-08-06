@@ -80,6 +80,7 @@ namespace LA
 #include <complex>
 #include <fstream>
 #include <iostream>
+#include <limits>
 
 
 namespace Step27new
@@ -94,7 +95,7 @@ namespace Step27new
     LaplaceProblem();
     ~LaplaceProblem();
 
-    void run();
+    void run(const unsigned int n_cycles);
 
   private:
     void setup_system();
@@ -507,7 +508,7 @@ namespace Step27new
 
 
   template <int dim>
-  void LaplaceProblem<dim>::run()
+  void LaplaceProblem<dim>::run(const unsigned int n_cycles)
   {
     pcout << "Running with "
 #ifdef USE_PETSC_LA
@@ -518,7 +519,7 @@ namespace Step27new
           << " on " << Utilities::MPI::n_mpi_processes(mpi_communicator)
           << " MPI rank(s)..." << std::endl;
 
-    for (unsigned int cycle = 0; cycle < 6; ++cycle)
+    for (unsigned int cycle = 0; cycle < n_cycles; ++cycle)
       {
         pcout << "Cycle " << cycle << ':' << std::endl;
 
@@ -621,8 +622,19 @@ int main(int argc, char *argv[])
 
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
+      unsigned int n_cycles = 6; // default
+      if (argc > 2)
+        {
+          char *        p;
+          unsigned long argument = strtoul(argv[1], &p, 10);
+          if (*p != '\0' || argument > std::numeric_limits<unsigned int>::max())
+            throw std::invalid_argument("Invalid parameter received!");
+
+          n_cycles = static_cast<unsigned int>(argument);
+        }
+
       LaplaceProblem<2> laplace_problem;
-      laplace_problem.run();
+      laplace_problem.run(n_cycles);
     }
   catch (std::exception &exc)
     {
