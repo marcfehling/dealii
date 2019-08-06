@@ -625,9 +625,9 @@ int main(int argc, char *argv[])
       unsigned int n_cycles = 6; // default
       if (argc > 2)
         {
-          char *        p;
-          unsigned long argument = strtoul(argv[1], &p, 10);
-          if (*p != '\0' || argument > std::numeric_limits<unsigned int>::max())
+          char *        endptr;
+          unsigned long argument = strtoul(argv[1], &endptr, 10);
+          if (*endptr != '\0' || argument > std::numeric_limits<unsigned int>::max())
             throw std::invalid_argument("Invalid parameter received!");
 
           n_cycles = static_cast<unsigned int>(argument);
