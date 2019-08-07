@@ -21,7 +21,7 @@
 
 
 // uncomment the following line to enable output
-#define ENABLE_OUTPUT
+// #define ENABLE_OUTPUT
 
 
 #include <deal.II/base/conditional_ostream.h>
@@ -37,13 +37,13 @@
 #include <deal.II/lac/generic_linear_algebra.h>
 // uncomment the following #define if you have PETSc and Trilinos installed
 // and you prefer using Trilinos in this example:
-#define FORCE_USE_OF_TRILINOS
+// #define FORCE_USE_OF_TRILINOS
 namespace LA
 {
 #if defined(DEAL_II_WITH_PETSC) && !defined(DEAL_II_PETSC_WITH_COMPLEX) && \
   !(defined(DEAL_II_WITH_TRILINOS) && defined(FORCE_USE_OF_TRILINOS))
   using namespace dealii::LinearAlgebraPETSc;
-//#  define USE_PETSC_LA
+#  define USE_PETSC_LA
 #elif defined(DEAL_II_WITH_TRILINOS)
   using namespace dealii::LinearAlgebraTrilinos;
 #else
@@ -179,7 +179,7 @@ namespace Step27new
     : mpi_communicator(MPI_COMM_WORLD)
     , triangulation(mpi_communicator)
     , dof_handler(triangulation)
-    , max_degree(dim <= 2 ? 7 : 5)
+    , max_degree(dim <= 2 ? 15 : 9)
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_communicator) == 0))
     , computing_timer(mpi_communicator,
@@ -627,7 +627,8 @@ int main(int argc, char *argv[])
         {
           char *        endptr;
           unsigned long argument = strtoul(argv[1], &endptr, 10);
-          if (*endptr != '\0' || argument > std::numeric_limits<unsigned int>::max())
+          if (*endptr != '\0' ||
+              argument > std::numeric_limits<unsigned int>::max())
             throw std::invalid_argument("Invalid parameter received!");
 
           n_cycles = static_cast<unsigned int>(argument);
