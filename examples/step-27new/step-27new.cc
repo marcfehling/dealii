@@ -350,12 +350,12 @@ namespace Step27new
                                                     mpi_communicator);
 
 #ifdef USE_PETSC_LA
-    SolverControl solver_control(system_rhs.size(),
-                                 1e-12 * system_rhs.l2_norm());
+    SolverControl solver_control(dof_handler.n_dofs(),
+                                 1e-8);
     LA::SolverCG  cg(solver_control, mpi_communicator);
 #else
-    SolverControl solver_control(system_rhs.size(),
-                                 1e-8 * system_rhs.l2_norm());
+    SolverControl solver_control(dof_handler.n_dofs(),
+                                 1e-8);
     LA::SolverCG  cg(solver_control);
 #endif
 
@@ -502,7 +502,7 @@ namespace Step27new
       }
 
     triangulation.create_triangulation(vertices, cells, SubCellData());
-    triangulation.refine_global(3);
+    triangulation.refine_global(6);
   }
 
 
