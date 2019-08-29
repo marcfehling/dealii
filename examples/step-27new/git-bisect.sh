@@ -62,10 +62,8 @@ fi
 
 # perform crucial test
 cd "$PATH_INSTALL_DEALII/examples/step-27new"
-rm -rf "build"
-mkdir -p "build"
-cd "build"
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+find . ! -name CMakeLists.txt ! -name step-27new.cc -delete
+cmake -DCMAKE_BUILD_TYPE=Debug .
 make
 mpirun -np 20 ./step-27new
 # git bisect does not understand SIGSEGV, so we'll convert it
