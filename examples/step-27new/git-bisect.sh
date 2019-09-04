@@ -31,7 +31,7 @@ PATH_INSTALL_DEALII="$PATH_BUILD_DEALII/install"
 
 
 # build hypre from scratch
-cd "$PATH_BUILD_HYPRE"
+cd "$PATH_BUILD_HYPRE/src"
 make distclean
 ./configure --enable-shared
 make -j80
