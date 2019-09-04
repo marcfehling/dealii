@@ -22,23 +22,36 @@ export PATH="$PATH:/usr/lib64/openmpi/bin"
 
 
 # store paths for convenience
-PATH_BUILD_HYPRE="/raid/fehling/hypre"
-PATH_BUILD_PETSC="/raid/fehling/petsc"
+export PATH_BUILD_HYPRE="/raid/fehling/hypre"
+export PATH_BUILD_PETSC="/raid/fehling/petsc"
 
-PATH_SOURCE_DEALII="/raid/fehling/dealii"
-PATH_BUILD_DEALII="/raid/fehling/build-dealii-petsc-git"
-PATH_INSTALL_DEALII="$PATH_BUILD_DEALII/install"
+export PATH_SOURCE_DEALII="/raid/fehling/dealii"
+export PATH_BUILD_DEALII="/raid/fehling/build-dealii-petsc-git"
+export PATH_INSTALL_DEALII="$PATH_BUILD_DEALII/install"
+
+
+# helper function
+build_hypre () {
+  export PATH_INSTALL_HYPRE="$1/hypre"
+
+  cd $1
+  ./configure --enable-shared
+  make -j80
+  # leave this script informing 'git bisect' to skip this hypre commit
+  # since hypre cannot be built
+  if [ "$?" -ne "0" ]; then
+    exit 125
+  fi
+}
 
 
 # build hypre from scratch
-cd "$PATH_BUILD_HYPRE/src"
-make distclean
-./configure --enable-shared
-make -j80
-# leave this script informing 'git bisect' to skip this hypre commit
-# since hypre cannot be built
-if [ "$?" -ne "0" ]; then
-  exit 125
+cd "$PATH_BUILD_HYPRE"
+git clean -fd
+if [ -d "$PATH_BUILD_HYPRE/src" ]; then
+  build_hypre "$PATH_BUILD_HYPRE/src"
+else
+  build_hypre "$PATH_BUILD_HYPRE"
 fi
 
 
@@ -47,7 +60,7 @@ cd "$PATH_BUILD_PETSC"
 export PETSC_DIR=`pwd`
 export PETSC_ARCH=x86_64
 make distclean
-./config/configure.py --with-shared-libraries=1 --with-cxx-flags=C++11 --with-x=0 --with-mpi=1 --with-hypre-dir="$PATH_BUILD_HYPRE/src/hypre" --download-superlu_dist=yes --download-mumps=yes --download-parmetis=yes --download-scalapack=yes --download-metis=yes --download-blacs=yes
+./config/configure.py --with-shared-libraries=1 --with-cxx-flags=C++11 --with-x=0 --with-mpi=1 --with-hypre-dir="$PATH_INSTALL_HYPRE" --download-superlu_dist=yes --download-mumps=yes --download-parmetis=yes --download-scalapack=yes --download-metis=yes --download-blacs=yes
 make all test
 # leave this script with an error if petsc cannot be built
 if [ "$?" -ne "0" ]; then
