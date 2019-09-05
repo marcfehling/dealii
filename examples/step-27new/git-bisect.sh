@@ -62,7 +62,8 @@ export PETSC_ARCH=x86_64
 make distclean
 ./config/configure.py --with-shared-libraries=1 --with-cxx-flags=C++11 --with-x=0 --with-mpi=1 --with-hypre-dir="$PATH_INSTALL_HYPRE" --download-superlu_dist=yes --download-mumps=yes --download-parmetis=yes --download-scalapack=yes --download-metis=yes --download-blacs=yes
 make all test
-# leave this script with an error if petsc cannot be built
+# leave this script informing 'git bisect' to skip this hypre commit
+# since petsc cannot be built
 if [ "$?" -ne "0" ]; then
   exit 125
 fi
@@ -74,7 +75,8 @@ mkdir -p "$PATH_BUILD_DEALII"
 cd "$PATH_BUILD_DEALII"
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PATH_INSTALL_DEALII" -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_P4EST=ON -DP4EST_DIR=/raid/fehling/bin/p4est-2.2 -DDEAL_II_WITH_PETSC=ON -DPETSC_ARCH=x86_64 -DPETSC_DIR="$PATH_BUILD_PETSC" "$PATH_SOURCE_DEALII"
 make -j80 install
-# leave this script with an error if deal.ii cannot be built
+# leave this script informing 'git bisect' to skip this hypre commit
+# since deal.ii cannot be built
 if [ "$?" -ne "0" ]; then
   exit 125
 fi
