@@ -35,7 +35,7 @@ build_hypre () {
   export PATH_INSTALL_HYPRE="$1/hypre"
 
   cd $1
-  ./configure --enable-shared
+  ./configure --enable-shared CXXFLAGS="-std=c++11"
   make -j80
   # leave this script informing 'git bisect' to skip this hypre commit
   # since hypre cannot be built
@@ -64,7 +64,7 @@ make distclean
 make all test
 # leave this script with an error if petsc cannot be built
 if [ "$?" -ne "0" ]; then
-  exit 1
+  exit 125
 fi
 
 
@@ -76,7 +76,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PATH_INSTALL_DEALII" -DD
 make -j80 install
 # leave this script with an error if deal.ii cannot be built
 if [ "$?" -ne "0" ]; then
-  exit 1
+  exit 125
 fi
 
 
