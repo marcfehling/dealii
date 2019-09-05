@@ -22,7 +22,7 @@ export PATH="$PATH:/usr/lib64/openmpi/bin"
 
 
 # store paths for convenience
-export PATH_BUILD_HYPRE="/raid/fehling/hypre"
+export PATH_REPO_HYPRE="/raid/fehling/hypre"
 export PATH_BUILD_PETSC="/raid/fehling/petsc"
 
 export PATH_SOURCE_DEALII="/raid/fehling/dealii"
@@ -30,28 +30,22 @@ export PATH_BUILD_DEALII="/raid/fehling/build-dealii-petsc-git"
 export PATH_INSTALL_DEALII="$PATH_BUILD_DEALII/install"
 
 
-# helper function
-build_hypre () {
-  export PATH_INSTALL_HYPRE="$1/hypre"
-
-  cd $1
-  ./configure --enable-shared CXXFLAGS="-std=c++11"
-  make -j80
-  # leave this script informing 'git bisect' to skip this hypre commit
-  # since hypre cannot be built
-  if [ "$?" -ne "0" ]; then
-    exit 125
-  fi
-}
-
-
 # build hypre from scratch
-cd "$PATH_BUILD_HYPRE"
+cd "$PATH_REPO_HYPRE"
 git clean -fd
-if [ -d "$PATH_BUILD_HYPRE/src" ]; then
-  build_hypre "$PATH_BUILD_HYPRE/src"
+if [ -d "$PATH_REPO_HYPRE/src" ]; then
+  export PATH_BUILD_HYPRE="$PATH_REPO_HYPRE/src"
 else
-  build_hypre "$PATH_BUILD_HYPRE"
+  export PATH_BUILD_HYPRE="$PATH_REPO_HYPRE"
+fi
+export PATH_INSTALL_HYPRE="$PATH_BUILD_HYPRE/hypre"
+cd "$PATH_BUILD_HYPRE"
+./configure --enable-shared CXXFLAGS="-std=c++11"
+make -j80
+# leave this script informing 'git bisect' to skip this hypre commit
+# since hypre cannot be built
+if [ "$?" -ne "0" ]; then
+  exit 125
 fi
 
 
