@@ -364,7 +364,8 @@ namespace Step27new
 #ifdef USE_PETSC_LA
     data.symmetric_operator = true;
 #else
-    /* Trilinos defaults are good */
+    data.elliptic              = true;
+    data.higher_order_elements = true;
 #endif
     preconditioner.initialize(system_matrix, data);
 
