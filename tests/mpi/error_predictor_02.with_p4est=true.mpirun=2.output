@@ -1,0 +1,175 @@
+
+DEAL:0:2d::cells before: 16
+DEAL:0:2d:: cell:0_1:0 fe_deg:2 error:10.0000 refining future_fe_deg:3
+DEAL:0:2d:: cell:0_1:1 fe_deg:2 error:10.0000
+DEAL:0:2d:: cell:0_1:2 fe_deg:2 error:10.0000
+DEAL:0:2d:: cell:0_1:3 fe_deg:2 error:10.0000
+DEAL:0:2d:: cell:1_1:0 fe_deg:2 error:10.0000 refining future_fe_deg:1
+DEAL:0:2d:: cell:1_1:1 fe_deg:2 error:10.0000
+DEAL:0:2d:: cell:1_1:2 fe_deg:2 error:10.0000
+DEAL:0:2d:: cell:1_1:3 fe_deg:2 error:10.0000
+DEAL:0:2d::cells after: 16
+DEAL:0:2d:: cell:0_1:1 predict:10.0000
+DEAL:0:2d:: cell:0_1:2 predict:10.0000
+DEAL:0:2d:: cell:0_1:3 predict:10.0000
+DEAL:0:2d:: cell:0_2:00 predict:0.156250
+DEAL:0:2d:: cell:0_2:01 predict:0.156250
+DEAL:0:2d:: cell:0_2:02 predict:0.156250
+DEAL:0:2d:: cell:0_2:03 predict:0.156250
+DEAL:0:2d::OK
+DEAL:0:3d::cells before: 64
+DEAL:0:3d:: cell:0_1:0 fe_deg:2 error:10.0000 refining future_fe_deg:3
+DEAL:0:3d:: cell:0_1:1 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:0_1:2 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:0_1:3 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:0_1:4 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:0_1:5 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:0_1:6 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:0_1:7 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:0 fe_deg:2 error:10.0000 refining future_fe_deg:1
+DEAL:0:3d:: cell:1_1:1 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:2 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:3 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:4 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:5 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:6 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:1_1:7 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:0 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:1 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:2 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:3 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:4 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:5 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:6 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:2_1:7 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:0 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:1 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:2 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:3 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:4 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:5 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:6 fe_deg:2 error:10.0000
+DEAL:0:3d:: cell:3_1:7 fe_deg:2 error:10.0000
+DEAL:0:3d::cells after: 64
+DEAL:0:3d:: cell:0_1:1 predict:10.0000
+DEAL:0:3d:: cell:0_1:2 predict:10.0000
+DEAL:0:3d:: cell:0_1:3 predict:10.0000
+DEAL:0:3d:: cell:0_1:4 predict:10.0000
+DEAL:0:3d:: cell:0_1:5 predict:10.0000
+DEAL:0:3d:: cell:0_1:6 predict:10.0000
+DEAL:0:3d:: cell:0_1:7 predict:10.0000
+DEAL:0:3d:: cell:1_1:1 predict:10.0000
+DEAL:0:3d:: cell:1_1:2 predict:10.0000
+DEAL:0:3d:: cell:1_1:3 predict:10.0000
+DEAL:0:3d:: cell:1_1:4 predict:10.0000
+DEAL:0:3d:: cell:1_1:5 predict:10.0000
+DEAL:0:3d:: cell:1_1:6 predict:10.0000
+DEAL:0:3d:: cell:1_1:7 predict:10.0000
+DEAL:0:3d:: cell:0_2:00 predict:0.0781250
+DEAL:0:3d:: cell:0_2:01 predict:0.0781250
+DEAL:0:3d:: cell:0_2:02 predict:0.0781250
+DEAL:0:3d:: cell:0_2:03 predict:0.0781250
+DEAL:0:3d:: cell:0_2:04 predict:0.0781250
+DEAL:0:3d:: cell:0_2:05 predict:0.0781250
+DEAL:0:3d:: cell:0_2:06 predict:0.0781250
+DEAL:0:3d:: cell:0_2:07 predict:0.0781250
+DEAL:0:3d:: cell:1_2:00 predict:1.25000
+DEAL:0:3d:: cell:1_2:01 predict:1.25000
+DEAL:0:3d:: cell:1_2:02 predict:1.25000
+DEAL:0:3d:: cell:1_2:03 predict:1.25000
+DEAL:0:3d:: cell:1_2:04 predict:1.25000
+DEAL:0:3d:: cell:1_2:05 predict:1.25000
+DEAL:0:3d:: cell:1_2:06 predict:1.25000
+DEAL:0:3d:: cell:1_2:07 predict:1.25000
+DEAL:0:3d::OK
+
+DEAL:1:2d::cells before: 16
+DEAL:1:2d:: cell:2_1:0 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:2d:: cell:2_1:1 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:2d:: cell:2_1:2 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:2d:: cell:2_1:3 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:2d:: cell:3_1:0 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:2d:: cell:3_1:1 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:2d:: cell:3_1:2 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:2d:: cell:3_1:3 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:2d::cells after: 16
+DEAL:1:2d:: cell:2_0: predict:160.000
+DEAL:1:2d:: cell:3_0: predict:160.000
+DEAL:1:2d:: cell:1_1:1 predict:10.0000
+DEAL:1:2d:: cell:1_1:2 predict:10.0000
+DEAL:1:2d:: cell:1_1:3 predict:10.0000
+DEAL:1:2d:: cell:1_2:00 predict:2.50000
+DEAL:1:2d:: cell:1_2:01 predict:2.50000
+DEAL:1:2d:: cell:1_2:02 predict:2.50000
+DEAL:1:2d:: cell:1_2:03 predict:2.50000
+DEAL:1:2d::OK
+DEAL:1:3d::cells before: 64
+DEAL:1:3d:: cell:4_1:0 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:1 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:2 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:3 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:4 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:5 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:6 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:4_1:7 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:0 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:1 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:2 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:3 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:4 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:5 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:6 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:5_1:7 fe_deg:2 error:10.0000
+DEAL:1:3d:: cell:6_1:0 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:1 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:2 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:3 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:4 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:5 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:6 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:6_1:7 fe_deg:2 error:10.0000 coarsening future_fe_deg:3
+DEAL:1:3d:: cell:7_1:0 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:1 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:2 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:3 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:4 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:5 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:6 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d:: cell:7_1:7 fe_deg:2 error:10.0000 coarsening future_fe_deg:1
+DEAL:1:3d::cells after: 64
+DEAL:1:3d:: cell:6_0: predict:320.000
+DEAL:1:3d:: cell:7_0: predict:320.000
+DEAL:1:3d:: cell:2_1:0 predict:10.0000
+DEAL:1:3d:: cell:2_1:1 predict:10.0000
+DEAL:1:3d:: cell:2_1:2 predict:10.0000
+DEAL:1:3d:: cell:2_1:3 predict:10.0000
+DEAL:1:3d:: cell:2_1:4 predict:10.0000
+DEAL:1:3d:: cell:2_1:5 predict:10.0000
+DEAL:1:3d:: cell:2_1:6 predict:10.0000
+DEAL:1:3d:: cell:2_1:7 predict:10.0000
+DEAL:1:3d:: cell:3_1:0 predict:10.0000
+DEAL:1:3d:: cell:3_1:1 predict:10.0000
+DEAL:1:3d:: cell:3_1:2 predict:10.0000
+DEAL:1:3d:: cell:3_1:3 predict:10.0000
+DEAL:1:3d:: cell:3_1:4 predict:10.0000
+DEAL:1:3d:: cell:3_1:5 predict:10.0000
+DEAL:1:3d:: cell:3_1:6 predict:10.0000
+DEAL:1:3d:: cell:3_1:7 predict:10.0000
+DEAL:1:3d:: cell:4_1:0 predict:10.0000
+DEAL:1:3d:: cell:4_1:1 predict:10.0000
+DEAL:1:3d:: cell:4_1:2 predict:10.0000
+DEAL:1:3d:: cell:4_1:3 predict:10.0000
+DEAL:1:3d:: cell:4_1:4 predict:10.0000
+DEAL:1:3d:: cell:4_1:5 predict:10.0000
+DEAL:1:3d:: cell:4_1:6 predict:10.0000
+DEAL:1:3d:: cell:4_1:7 predict:10.0000
+DEAL:1:3d:: cell:5_1:0 predict:10.0000
+DEAL:1:3d:: cell:5_1:1 predict:10.0000
+DEAL:1:3d:: cell:5_1:2 predict:10.0000
+DEAL:1:3d:: cell:5_1:3 predict:10.0000
+DEAL:1:3d:: cell:5_1:4 predict:10.0000
+DEAL:1:3d:: cell:5_1:5 predict:10.0000
+DEAL:1:3d:: cell:5_1:6 predict:10.0000
+DEAL:1:3d:: cell:5_1:7 predict:10.0000
+DEAL:1:3d::OK
+
