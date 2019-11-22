@@ -2405,6 +2405,25 @@ public:
      * function when the triangulation has reached its final state.
      */
     boost::signals2::signal<void()> post_distributed_load;
+
+    /**
+     * This signal is triggered during refinement in the parallel
+     * distributed case, namely after p4est has been refined and
+     * coarsened and the parallel::distributed::Triangulation has
+     * not yet. It will be triggered directly after we updated the
+     * Triangulation::CellStatus relations between correponding cells
+     * in p4est and the triangulation. It will be triggered once for each
+     * combination of cell and Triangulation::CellStatus, so n_active_cells()
+     * times in total.
+     */
+    boost::signals2::signal<void(const cell_iterator &, const CellStatus)>
+      post_distributed_update_cellstatus;
+
+    /**
+     * This signal is triggered during refinement in the parallel
+     * distributed case, right before data will be packed for transfer.
+     */
+    boost::signals2::signal<void()> pre_distributed_refinement_data_transfer;
   };
 
   /**

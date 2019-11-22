@@ -1053,6 +1053,19 @@ namespace hp
     BOOST_SERIALIZATION_SPLIT_MEMBER()
 
     /**
+     * A function that will be triggered through a triangulation
+     * signal during the refinement process of the associated
+     * parallel::distributed::Triangulation.
+     *
+     * It ensures that no cell will be both h- and p-adapted. It will
+     * clear future_fe_index of cells that have been adapted by p4est.
+     */
+    void
+    clear_future_fe_index_if_adapted_by_p4est(
+      const typename Triangulation<dim, spacedim>::cell_iterator &cell_,
+      const typename Triangulation<dim, spacedim>::CellStatus     status);
+
+    /**
      * Exception
      */
     DeclException0(ExcNoFESelected);
