@@ -1754,7 +1754,7 @@ namespace hp
 
         // refinement signals
         tria_listeners.push_back(
-          this->tria->signals.pre_distributed_refinement.connect(
+          this->tria->signals.pre_distributed_refinement_data_transfer.connect(
             [this]() { this->pre_distributed_active_fe_index_transfer(); }));
         tria_listeners.push_back(
           this->tria->signals.post_distributed_refinement.connect(
@@ -1765,6 +1765,18 @@ namespace hp
           this->tria->signals.post_distributed_save.connect([this]() {
             this->post_distributed_serialization_of_active_fe_indices();
           }));
+
+        // ensure that cells are either h- or p-adapted
+        // NOTE: Let the user decide this on hiw own
+        //       by letting him connect to this signal.
+        // tria_listeners.push_back(
+        //   this->tria->signals.post_distributed_update_cellstatus.connect(
+        //     [this](
+        //       const typename Triangulation<dim, spacedim>::cell_iterator
+        //       &cell, const typename Triangulation<dim, spacedim>::CellStatus
+        //       status) { this->clear_future_fe_index_if_adapted_by_p4est(cell,
+        //       status);
+        //     }));
       }
     else if (dynamic_cast<const parallel::shared::Triangulation<dim, spacedim>
                             *>(&this->get_triangulation()) != nullptr)
@@ -2228,6 +2240,41 @@ namespace hp
         active_fe_index_transfer.reset();
       }
 #endif
+  }
+
+
+
+  template <int dim, int spacedim>
+  void
+  DoFHandler<dim, spacedim>::clear_future_fe_index_if_adapted_by_p4est(
+    const typename Triangulation<dim, spacedim>::cell_iterator &cell_,
+    const typename Triangulation<dim, spacedim>::CellStatus     status)
+  {
+    switch (status)
+      {
+        case parallel::distributed::Triangulation<dim, spacedim>::CELL_REFINE:
+          {
+            cell_iterator cell(*cell_, this);
+            cell->clear_future_fe_index();
+            break;
+          }
+
+        case parallel::distributed::Triangulation<dim, spacedim>::CELL_COARSEN:
+          for (unsigned int c = 0; c < cell_->n_children(); ++c)
+            {
+              cell_iterator child(*(cell_->child(c)), this);
+              child->clear_future_fe_index();
+            }
+          break;
+
+        case parallel::distributed::Triangulation<dim, spacedim>::CELL_PERSIST:
+        case parallel::distributed::Triangulation<dim, spacedim>::CELL_INVALID:
+          break;
+
+        default:
+          Assert(false, ExcInternalError());
+          break;
+      }
   }
 
 

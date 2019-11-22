@@ -3953,6 +3953,19 @@ namespace parallel
       // has happened, we need to update the quadrant cell relations
       update_quadrant_cell_relations();
 
+      // signal that quadrant-cell-relations have been updated
+      for (const auto &quad_cell_rel : local_quadrant_cell_relations)
+        {
+          const auto &cell_status = std::get<1>(quad_cell_rel);
+          const auto &dealii_cell = std::get<2>(quad_cell_rel);
+
+          this->signals.post_distributed_update_cellstatus(dealii_cell,
+                                                           cell_status);
+        }
+
+      // signal that data transfer is about to happen
+      this->signals.pre_distributed_refinement_data_transfer();
+
       // before repartitioning the mesh, store the current distribution
       // of the p4est quadrants and let others attach mesh related info
       // (such as SolutionTransfer data)
