@@ -14,6 +14,7 @@
 // ---------------------------------------------------------------------
 
 #include <deal.II/base/quadrature.h>
+#include <deal.II/base/signaling_nan.h>
 
 #include <deal.II/fe/fe_series.h>
 
@@ -140,67 +141,74 @@ namespace SmoothnessEstimator
       }
 
     for (const auto &cell : dof_handler.active_cell_iterators())
-      if (cell->is_locally_owned() &&
-          (!only_flagged_cells || cell->refine_flag_set() ||
-           cell->coarsen_flag_set()))
+      if (cell->is_locally_owned())
         {
-          local_dof_values.reinit(cell->get_fe().dofs_per_cell);
-
-          const unsigned int pe = cell->get_fe().degree;
-
-          Assert(pe > 0, ExcInternalError());
-          const auto &pred = predicates[pe - 1];
-
-          // since we use coefficients with indices [1,pe] in each direction,
-          // the number of coefficients we need to calculate is at least N=pe+1
-          AssertIndexRange(pe, fe_legendre.get_n_coefficients_per_direction());
-
-          cell->get_dof_values(solution, local_dof_values);
-          fe_legendre.calculate(local_dof_values,
-                                cell->active_fe_index(),
-                                expansion_coefficients);
-
-          // choose the smallest decay of coefficients in each direction,
-          // i.e. the maximum decay slope k_v as in exp(-k_v)
-          number_coeff k_v = std::numeric_limits<number_coeff>::infinity();
-          for (unsigned int d = 0; d < dim; d++)
+          if (!only_flagged_cells || cell->refine_flag_set() ||
+              cell->coarsen_flag_set())
             {
-              x.resize(0);
-              y.resize(0);
+              local_dof_values.reinit(cell->get_fe().dofs_per_cell);
 
-              // will use all non-zero coefficients allowed by the predicate
-              // function
-              Assert(pred.size() == pe + 1, ExcInternalError());
-              for (unsigned int i = 0; i <= pe; i++)
-                if (pred[i])
-                  {
-                    TableIndices<dim> ind;
-                    ind[d] = i;
-                    const number_coeff coeff_abs =
-                      std::abs(expansion_coefficients(ind));
+              const unsigned int pe = cell->get_fe().degree;
 
-                    if (coeff_abs > smallest_abs_coefficient)
+              Assert(pe > 0, ExcInternalError());
+              const auto &pred = predicates[pe - 1];
+
+              // since we use coefficients with indices [1,pe] in each
+              // direction, the number of coefficients we need to calculate is
+              // at least N=pe+1
+              AssertIndexRange(pe,
+                               fe_legendre.get_n_coefficients_per_direction());
+
+              cell->get_dof_values(solution, local_dof_values);
+              fe_legendre.calculate(local_dof_values,
+                                    cell->active_fe_index(),
+                                    expansion_coefficients);
+
+              // choose the smallest decay of coefficients in each direction,
+              // i.e. the maximum decay slope k_v as in exp(-k_v)
+              number_coeff k_v = std::numeric_limits<number_coeff>::infinity();
+              for (unsigned int d = 0; d < dim; d++)
+                {
+                  x.resize(0);
+                  y.resize(0);
+
+                  // will use all non-zero coefficients allowed by the predicate
+                  // function
+                  Assert(pred.size() == pe + 1, ExcInternalError());
+                  for (unsigned int i = 0; i <= pe; i++)
+                    if (pred[i])
                       {
-                        y.push_back(std::log(coeff_abs));
-                        x.push_back(i);
+                        TableIndices<dim> ind;
+                        ind[d] = i;
+                        const number_coeff coeff_abs =
+                          std::abs(expansion_coefficients(ind));
+
+                        if (coeff_abs > smallest_abs_coefficient)
+                          {
+                            y.push_back(std::log(coeff_abs));
+                            x.push_back(i);
+                          }
                       }
-                  }
 
-              // in case we don't have enough non-zero coefficient to fit,
-              // skip this direction
-              if (x.size() < 2)
-                continue;
+                  // in case we don't have enough non-zero coefficient to fit,
+                  // skip this direction
+                  if (x.size() < 2)
+                    continue;
 
-              const std::pair<number_coeff, number_coeff> fit =
-                FESeries::linear_regression(x, y);
+                  const std::pair<number_coeff, number_coeff> fit =
+                    FESeries::linear_regression(x, y);
 
-              // decay corresponds to negative slope
-              // take the lesser negative slope along each direction
-              k_v = std::min(k_v, -fit.first);
+                  // decay corresponds to negative slope
+                  // take the lesser negative slope along each direction
+                  k_v = std::min(k_v, -fit.first);
+                }
+
+              smoothness_indicators(cell->active_cell_index()) =
+                static_cast<float>(k_v);
             }
-
-          smoothness_indicators(cell->active_cell_index()) =
-            static_cast<float>(k_v);
+          else
+            smoothness_indicators(cell->active_cell_index()) =
+              numbers::signaling_nan<float>();
         }
   }
 
@@ -277,62 +285,68 @@ namespace SmoothnessEstimator
     std::vector<double>                                       ln_k;
     std::pair<std::vector<unsigned int>, std::vector<double>> res;
     for (const auto &cell : dof_handler.active_cell_iterators())
-      if (cell->is_locally_owned() &&
-          (!only_flagged_cells || cell->refine_flag_set() ||
-           cell->coarsen_flag_set()))
+      if (cell->is_locally_owned())
         {
-          local_dof_values.reinit(cell->get_fe().dofs_per_cell);
-
-          // Inside the loop, we first need to get the values of the local
-          // degrees of freedom and then need to compute the series
-          // expansion by multiplying this vector with the matrix ${\cal F}$
-          // corresponding to this finite element.
-          cell->get_dof_values(solution, local_dof_values);
-
-          fe_series.calculate(local_dof_values,
-                              cell->active_fe_index(),
-                              expansion_coefficients);
-
-          // We fit our exponential decay of expansion coefficients to the
-          // provided regression_strategy on each possible value of |k|. To
-          // this end, we use FESeries::process_coefficients() to rework
-          // coefficients into the desired format.
-          res = FESeries::process_coefficients<dim>(
-            expansion_coefficients,
-            [N](const TableIndices<dim> &indices) {
-              return index_norm_less_than_N_squared<dim>(indices, N);
-            },
-            regression_strategy);
-
-          Assert(res.first.size() == res.second.size(), ExcInternalError());
-
-          // Prepare linear equation for the logarithmic least squares fit.
-          //
-          // First, calculate ln(|k|).
-          //
-          // For Fourier expansion, this translates to
-          // ln(2*pi*sqrt(predicate)) = ln(2*pi) + 0.5*ln(predicate). Since
-          // we are just interested in the slope of a linear regression
-          // later, we omit the ln(2*pi) factor.
-          ln_k.resize(res.first.size());
-          for (unsigned int f = 0; f < res.first.size(); ++f)
-            ln_k[f] = 0.5 * std::log(static_cast<double>(res.first[f]));
-
-          // Second, calculate ln(U_k).
-          for (auto &residual_element : res.second)
-            residual_element = std::log(residual_element);
-
-          // Last, do the linear regression.
-          float regularity = 0.;
-          if (res.first.size() > 1)
+          if (!only_flagged_cells || cell->refine_flag_set() ||
+              cell->coarsen_flag_set())
             {
-              const auto fit = FESeries::linear_regression(ln_k, res.second);
-              // Compute regularity s = mu - dim/2
-              regularity = static_cast<float>(-fit.first - .5 * dim);
-            }
+              local_dof_values.reinit(cell->get_fe().dofs_per_cell);
 
-          // Store result in the vector of estimated values for each cell.
-          smoothness_indicators(cell->active_cell_index()) = regularity;
+              // Inside the loop, we first need to get the values of the local
+              // degrees of freedom and then need to compute the series
+              // expansion by multiplying this vector with the matrix ${\cal F}$
+              // corresponding to this finite element.
+              cell->get_dof_values(solution, local_dof_values);
+
+              fe_series.calculate(local_dof_values,
+                                  cell->active_fe_index(),
+                                  expansion_coefficients);
+
+              // We fit our exponential decay of expansion coefficients to the
+              // provided regression_strategy on each possible value of |k|. To
+              // this end, we use FESeries::process_coefficients() to rework
+              // coefficients into the desired format.
+              res = FESeries::process_coefficients<dim>(
+                expansion_coefficients,
+                [N](const TableIndices<dim> &indices) {
+                  return index_norm_less_than_N_squared<dim>(indices, N);
+                },
+                regression_strategy);
+
+              Assert(res.first.size() == res.second.size(), ExcInternalError());
+
+              // Prepare linear equation for the logarithmic least squares fit.
+              //
+              // First, calculate ln(|k|).
+              //
+              // For Fourier expansion, this translates to
+              // ln(2*pi*sqrt(predicate)) = ln(2*pi) + 0.5*ln(predicate). Since
+              // we are just interested in the slope of a linear regression
+              // later, we omit the ln(2*pi) factor.
+              ln_k.resize(res.first.size());
+              for (unsigned int f = 0; f < res.first.size(); ++f)
+                ln_k[f] = 0.5 * std::log(static_cast<double>(res.first[f]));
+
+              // Second, calculate ln(U_k).
+              for (auto &residual_element : res.second)
+                residual_element = std::log(residual_element);
+
+              // Last, do the linear regression.
+              float regularity = 0.;
+              if (res.first.size() > 1)
+                {
+                  const auto fit =
+                    FESeries::linear_regression(ln_k, res.second);
+                  // Compute regularity s = mu - dim/2
+                  regularity = static_cast<float>(-fit.first - .5 * dim);
+                }
+
+              // Store result in the vector of estimated values for each cell.
+              smoothness_indicators(cell->active_cell_index()) = regularity;
+            }
+          else
+            smoothness_indicators(cell->active_cell_index()) =
+              numbers::signaling_nan<float>();
         }
   }
 

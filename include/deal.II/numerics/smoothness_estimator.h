@@ -122,7 +122,7 @@ namespace SmoothnessEstimator
    * coarsening. This parameter controls whether this particular subset or all
    * cells will be considered. By default, only flagged cells will be
    * considered: Smoothness indicators will only be set on those vector entries
-   * of flagged cells; the others will be set to zero.
+   * of flagged cells; the others will be set to NaN.
    *
    * For more theoretical details see @cite mavriplis1994hp @cite houston2005hp
    * @cite eibner2007hp and for the application within the deal.II library
@@ -249,7 +249,7 @@ namespace SmoothnessEstimator
    * controls whether this particular subset or all cells will be considered. By
    * default, only flagged cells will be considered: Smoothness indicators will
    * only be set on those vector entries of flagged cells; the others will be
-   * set to zero.
+   * set to NaN.
    *
    * @ingroup numerics
    * @author Denis Davydov, 2016, Marc Fehling, 2018
