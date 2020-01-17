@@ -94,6 +94,11 @@ namespace FESeries
     using CoefficientType = typename std::complex<double>;
 
     /**
+     * Default constructor.
+     */
+    Fourier() = default;
+
+    /**
      * A non-default constructor. The @p n_coefficients_per_direction defines
      * the number of modes in each direction, @p fe_collection is the
      * hp::FECollection for which expansion will be used and @p q_collection
@@ -103,6 +108,14 @@ namespace FESeries
     Fourier(const unsigned int                     n_coefficients_per_direction,
             const hp::FECollection<dim, spacedim> &fe_collection,
             const hp::QCollection<dim> &           q_collection);
+
+    /**
+     * TODO: Doc.
+     */
+    void
+    initialize(const unsigned int n_coefficients_per_direction,
+               const hp::FECollection<dim, spacedim> &fe_collection,
+               const hp::QCollection<dim> &           q_collection);
 
     /**
      * Calculate @p fourier_coefficients of the cell vector field given by
@@ -165,7 +178,7 @@ namespace FESeries
     /**
      * Number of coefficients in each direction.
      */
-    const unsigned int n_coefficients_per_direction;
+    unsigned int n_coefficients_per_direction;
 
     /**
      * hp::FECollection for which transformation matrices will be calculated.
@@ -245,6 +258,11 @@ namespace FESeries
     using CoefficientType = double;
 
     /**
+     * Default constructor.
+     */
+    Legendre() = default;
+
+    /**
      * A non-default constructor. The @p n_coefficients_per_direction defines
      * the number of coefficients in each direction, @p fe_collection is the
      * hp::FECollection for which expansion will be used and @p q_collection
@@ -254,6 +272,14 @@ namespace FESeries
     Legendre(const unsigned int n_coefficients_per_direction,
              const hp::FECollection<dim, spacedim> &fe_collection,
              const hp::QCollection<dim> &           q_collection);
+
+    /**
+     * TODO: Doc.
+     */
+    void
+    initialize(const unsigned int n_coefficients_per_direction,
+               const hp::FECollection<dim, spacedim> &fe_collection,
+               const hp::QCollection<dim> &           q_collection);
 
     /**
      * Calculate @p legendre_coefficients of the cell vector field given by
@@ -316,7 +342,7 @@ namespace FESeries
     /**
      * Number of coefficients in each direction.
      */
-    const unsigned int n_coefficients_per_direction;
+    unsigned int n_coefficients_per_direction;
 
     /**
      * hp::FECollection for which transformation matrices will be calculated.

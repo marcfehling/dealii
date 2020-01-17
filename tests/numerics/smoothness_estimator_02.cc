@@ -295,7 +295,7 @@ test(const unsigned int poly_degree)
 
   // finally test smoothness estimator:
   Vector<float> regularity(1);
-  SmoothnessEstimator::fourier_coefficient_decay(
+  SmoothnessEstimator::Fourier::coefficient_decay(
     fourier,
     dof_handler,
     values,

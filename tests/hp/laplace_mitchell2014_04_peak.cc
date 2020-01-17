@@ -110,6 +110,10 @@ private:
   substitute_h_for_p();
 
   hp::QCollection<dim - 1> quadrature_face;
+
+  unsigned int            n_modes;
+  hp::QCollection<dim>    expansion_q_collection;
+  FESeries::Legendre<dim> legendre;
 };
 
 template <int dim>
@@ -136,6 +140,15 @@ Problem4<dim>::Problem4(const Function<dim> &force_function,
       const QIterated<dim> q_iterated(q_trapez, p + 3);
       Laplace<dim>::quadrature_infty.push_back(QSorted<dim>(q_iterated));
     }
+
+  // after the FECollection has been generated, create a corresponding legendre
+  // series expansion object
+  n_modes =
+    SmoothnessEstimator::Legendre::default_number_of_modes(Laplace<dim>::fe);
+  expansion_q_collection =
+    SmoothnessEstimator::Legendre::default_quadrature_collection(
+      Laplace<dim>::fe);
+  legendre.initialize(n_modes, Laplace<dim>::fe, expansion_q_collection);
 }
 
 
@@ -146,9 +159,10 @@ Problem4<dim>::substitute_h_for_p()
 {
   Vector<float> smoothness_indicators(
     Laplace<dim>::triangulation.n_active_cells());
-  SmoothnessEstimator::legendre_coefficient_decay(Laplace<dim>::dof_handler,
-                                                  Laplace<dim>::solution,
-                                                  smoothness_indicators);
+  SmoothnessEstimator::Legendre::coefficient_decay(legendre,
+                                                   Laplace<dim>::dof_handler,
+                                                   Laplace<dim>::solution,
+                                                   smoothness_indicators);
 
   hp::Refinement::p_adaptivity_from_absolute_threshold(
     Laplace<dim>::dof_handler,

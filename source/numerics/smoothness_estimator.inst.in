@@ -18,42 +18,42 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
      VEC : REAL_VECTOR_TYPES)
   {
 #if deal_II_dimension <= deal_II_space_dimension
-    template void SmoothnessEstimator::legendre_coefficient_decay<
-      deal_II_dimension,
-      deal_II_space_dimension,
-      VEC>(FESeries::Legendre<deal_II_dimension, deal_II_space_dimension> &,
-           const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
-           const VEC &,
-           Vector<float> &,
-           const std::function<void(std::vector<bool> & flags)> &,
-           const double,
-           const bool);
-    template void SmoothnessEstimator::legendre_coefficient_decay<
-      deal_II_dimension,
-      deal_II_space_dimension,
-      VEC>(const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
-           const VEC &,
-           Vector<float> &,
-           const std::function<void(std::vector<bool> & flags)> &,
-           const double,
-           const bool);
+    template void SmoothnessEstimator::Legendre::
+      coefficient_decay<deal_II_dimension, deal_II_space_dimension, VEC>(
+        FESeries::Legendre<deal_II_dimension, deal_II_space_dimension> &,
+        const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
+        const VEC &,
+        Vector<float> &,
+        const std::function<void(std::vector<bool> & flags)> &,
+        const double,
+        const bool);
 
-    template void SmoothnessEstimator::fourier_coefficient_decay<
-      deal_II_dimension,
-      deal_II_space_dimension,
-      VEC>(FESeries::Fourier<deal_II_dimension, deal_II_space_dimension> &,
-           const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
-           const VEC &,
-           Vector<float> &,
-           const VectorTools::NormType,
-           const bool);
-    template void SmoothnessEstimator::fourier_coefficient_decay<
-      deal_II_dimension,
-      deal_II_space_dimension,
-      VEC>(const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
-           const VEC &,
-           Vector<float> &,
-           const VectorTools::NormType,
-           const bool);
+    template void SmoothnessEstimator::Fourier::
+      coefficient_decay<deal_II_dimension, deal_II_space_dimension, VEC>(
+        FESeries::Fourier<deal_II_dimension, deal_II_space_dimension> &,
+        const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
+        const VEC &,
+        Vector<float> &,
+        const VectorTools::NormType,
+        const bool);
+#endif
+  }
+
+for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS)
+  {
+#if deal_II_dimension <= deal_II_space_dimension
+    template unsigned int SmoothnessEstimator::Legendre::
+      default_number_of_modes<deal_II_dimension, deal_II_space_dimension>(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &);
+    template hp::QCollection<deal_II_dimension> SmoothnessEstimator::Legendre::
+      default_quadrature_collection<deal_II_dimension, deal_II_space_dimension>(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &);
+
+    template unsigned int SmoothnessEstimator::Fourier::
+      default_number_of_modes<deal_II_dimension, deal_II_space_dimension>(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &);
+    template hp::QCollection<deal_II_dimension> SmoothnessEstimator::Fourier::
+      default_quadrature_collection<deal_II_dimension, deal_II_space_dimension>(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &);
 #endif
   }

@@ -380,7 +380,7 @@ namespace Step27
       triangulation, estimated_error_per_cell, 0.3, 0.03);
 
     Vector<float> smoothness_indicators(triangulation.n_active_cells());
-    SmoothnessEstimator::fourier_coefficient_decay(
+    SmoothnessEstimator::Fourier::coefficient_decay(
       *fourier,
       dof_handler,
       solution,

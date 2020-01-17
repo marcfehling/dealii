@@ -291,7 +291,7 @@ namespace Step27
                                                     0.03);
 
     Vector<float> smoothness_indicators;
-    SmoothnessEstimator::fourier_coefficient_decay(
+    SmoothnessEstimator::Fourier::coefficient_decay(
       *fourier,
       dof_handler,
       solution,

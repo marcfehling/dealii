@@ -227,7 +227,7 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
 
   // finally test smoothness estimator:
   Vector<float> smoothness(1);
-  SmoothnessEstimator::legendre_coefficient_decay(
+  SmoothnessEstimator::Legendre::coefficient_decay(
     legendre,
     dof_handler,
     values,

@@ -167,10 +167,10 @@ namespace FESeries
 {
   template <int dim, int spacedim>
   Fourier<dim, spacedim>::Fourier(
-    const unsigned int                     size_in_each_direction,
+    const unsigned int                     n_coefficients_per_direction,
     const hp::FECollection<dim, spacedim> &fe_collection,
     const hp::QCollection<dim> &           q_collection)
-    : n_coefficients_per_direction(size_in_each_direction)
+    : n_coefficients_per_direction(n_coefficients_per_direction)
     , fe_collection(&fe_collection)
     , q_collection(&q_collection)
     , fourier_transform_matrices(fe_collection.size())
@@ -214,6 +214,33 @@ namespace FESeries
 
 
   template <int dim, int spacedim>
+  void
+  Fourier<dim, spacedim>::initialize(
+    const unsigned int                     n_coefficients_per_direction,
+    const hp::FECollection<dim, spacedim> &fe_collection,
+    const hp::QCollection<dim> &           q_collection)
+  {
+    // set members
+    this->n_coefficients_per_direction = n_coefficients_per_direction;
+    this->fe_collection =
+      SmartPointer<const hp::FECollection<dim, spacedim>>(&fe_collection);
+    this->q_collection =
+      SmartPointer<const hp::QCollection<dim>>(&q_collection);
+
+    // clean up auxiliary members
+    k_vectors.reset_values();
+    set_k_vectors(k_vectors, n_coefficients_per_direction);
+
+    fourier_transform_matrices.clear();
+    fourier_transform_matrices.resize(fe_collection.size());
+
+    unrolled_coefficients.clear();
+    unrolled_coefficients.resize(k_vectors.n_elements());
+  }
+
+
+
+  template <int dim, int spacedim>
   unsigned int
   Fourier<dim, spacedim>::get_n_coefficients_per_direction() const
   {
@@ -230,6 +257,12 @@ namespace FESeries
     const unsigned int           cell_active_fe_index,
     Table<dim, CoefficientType> &fourier_coefficients)
   {
+    Assert(fe_collection != nullptr && q_collection != nullptr,
+           ExcMessage("Initialize this FESeries object first!"));
+    for (unsigned int d = 0; d < dim; ++d)
+      AssertDimension(fourier_coefficients.size(d),
+                      n_coefficients_per_direction);
+
     ensure_existence(*fe_collection,
                      *q_collection,
                      k_vectors,
