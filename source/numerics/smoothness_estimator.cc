@@ -86,16 +86,14 @@ namespace SmoothnessEstimator
       smoothness_indicators.reinit(
         dof_handler.get_triangulation().n_active_cells());
 
+      unsigned int             N;
+      Table<dim, number_coeff> expansion_coefficients;
+      Vector<number>           local_dof_values;
+
+      // auxiliary vector to do linear regression
       const unsigned int max_degree =
         dof_handler.get_fe_collection().max_degree();
 
-      Table<dim, number_coeff> expansion_coefficients;
-      resize(expansion_coefficients,
-             fe_legendre.get_n_coefficients_per_direction());
-
-      Vector<number> local_dof_values;
-
-      // auxiliary vector to do linear regression
       std::vector<number_coeff> x;
       std::vector<number_coeff> y;
 
@@ -118,7 +116,9 @@ namespace SmoothnessEstimator
             if (!only_flagged_cells || cell->refine_flag_set() ||
                 cell->coarsen_flag_set())
               {
-                local_dof_values.reinit(cell->get_fe().dofs_per_cell);
+                N = fe_legendre.get_n_coefficients_per_direction(
+                  cell->active_fe_index());
+                resize(expansion_coefficients, N);
 
                 const unsigned int pe = cell->get_fe().degree;
 
@@ -128,10 +128,11 @@ namespace SmoothnessEstimator
                 // since we use coefficients with indices [1,pe] in each
                 // direction, the number of coefficients we need to calculate is
                 // at least N=pe+1
-                AssertIndexRange(
-                  pe, fe_legendre.get_n_coefficients_per_direction());
+                AssertIndexRange(pe, N);
 
+                local_dof_values.reinit(cell->get_fe().dofs_per_cell);
                 cell->get_dof_values(solution, local_dof_values);
+
                 fe_legendre.calculate(local_dof_values,
                                       cell->active_fe_index(),
                                       expansion_coefficients);
@@ -188,11 +189,15 @@ namespace SmoothnessEstimator
 
 
     template <int dim, int spacedim>
-    unsigned int
-    default_number_of_modes(
+    std::vector<unsigned int>
+    default_number_of_coefficients_per_direction(
       const hp::FECollection<dim, spacedim> &fe_collection)
     {
-      return fe_collection.max_degree() + 1;
+      std::vector<unsigned int> n_coefficients_per_direction;
+      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+        n_coefficients_per_direction.push_back(fe_collection[i].degree + 1);
+
+      return n_coefficients_per_direction;
     }
 
 
@@ -202,7 +207,8 @@ namespace SmoothnessEstimator
     default_quadrature_collection(
       const hp::FECollection<dim, spacedim> &fe_collection)
     {
-      const unsigned int n_modes = default_number_of_modes(fe_collection);
+      const std::vector<unsigned int> n_modes =
+        default_number_of_coefficients_per_direction(fe_collection);
 
       // We initialize a FESeries::Legendre expansion object object which will
       // be used to calculate the expansion coefficients. In addition to the
@@ -217,12 +223,13 @@ namespace SmoothnessEstimator
 
       // We start with the zeroth Legendre polynomial which is just a constant,
       // so the highest Legendre polynomial will be of order (n_modes - 1).
-      const QGauss<dim>  quadrature(n_modes);
-      const QSorted<dim> quadrature_sorted(quadrature);
-
       hp::QCollection<dim> q_collection;
       for (unsigned int i = 0; i < fe_collection.size(); ++i)
-        q_collection.push_back(quadrature_sorted);
+        {
+          const QGauss<dim>  quadrature(n_modes[i]);
+          const QSorted<dim> quadrature_sorted(quadrature);
+          q_collection.push_back(quadrature_sorted);
+        }
 
       return q_collection;
     }
@@ -281,10 +288,8 @@ namespace SmoothnessEstimator
       smoothness_indicators.reinit(
         dof_handler.get_triangulation().n_active_cells());
 
-      const unsigned int N = fe_series.get_n_coefficients_per_direction();
-
+      unsigned int             N;
       Table<dim, number_coeff> expansion_coefficients;
-      resize(expansion_coefficients, N);
 
       Vector<number>      local_dof_values;
       std::vector<double> ln_k;
@@ -295,12 +300,15 @@ namespace SmoothnessEstimator
             if (!only_flagged_cells || cell->refine_flag_set() ||
                 cell->coarsen_flag_set())
               {
-                local_dof_values.reinit(cell->get_fe().dofs_per_cell);
+                N = fe_series.get_n_coefficients_per_direction(
+                  cell->active_fe_index());
+                resize(expansion_coefficients, N);
 
                 // Inside the loop, we first need to get the values of the local
                 // degrees of freedom and then need to compute the series
                 // expansion by multiplying this vector with the matrix ${\cal
                 // F}$ corresponding to this finite element.
+                local_dof_values.reinit(cell->get_fe().dofs_per_cell);
                 cell->get_dof_values(solution, local_dof_values);
 
                 fe_series.calculate(local_dof_values,
@@ -360,11 +368,16 @@ namespace SmoothnessEstimator
 
 
     template <int dim, int spacedim>
-    unsigned int
-    default_number_of_modes(
+    std::vector<unsigned int>
+    default_number_of_coefficients_per_direction(
       const hp::FECollection<dim, spacedim> &fe_collection)
     {
-      return fe_collection.max_degree() + 1;
+      std::vector<unsigned int> n_coefficients_per_direction;
+      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+        n_coefficients_per_direction.push_back(
+          std::max<unsigned int>(3, fe_collection[i].degree + 1));
+
+      return n_coefficients_per_direction;
     }
 
 
@@ -374,7 +387,8 @@ namespace SmoothnessEstimator
     default_quadrature_collection(
       const hp::FECollection<dim, spacedim> &fe_collection)
     {
-      const unsigned int n_modes = default_number_of_modes(fe_collection);
+      const std::vector<unsigned int> n_modes =
+        default_number_of_coefficients_per_direction(fe_collection);
 
       // We initialize a series expansion object object which will be used to
       // calculate the expansion coefficients. In addition to the
@@ -389,12 +403,13 @@ namespace SmoothnessEstimator
       // exp(ikx). Since the first mode corresponds to k = 0, the maximal wave
       // number is k = n_modes - 1.
       const QGauss<1>      base_quadrature(4);
-      const QIterated<dim> quadrature(base_quadrature, n_modes - 1);
-      const QSorted<dim>   quadrature_sorted(quadrature);
-
       hp::QCollection<dim> q_collection;
       for (unsigned int i = 0; i < fe_collection.size(); ++i)
-        q_collection.push_back(quadrature_sorted);
+        {
+          const QIterated<dim> quadrature(base_quadrature, n_modes[i] - 1);
+          const QSorted<dim>   quadrature_sorted(quadrature);
+          q_collection.push_back(quadrature_sorted);
+        }
 
       return q_collection;
     }

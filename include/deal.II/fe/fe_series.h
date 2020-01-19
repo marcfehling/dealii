@@ -105,7 +105,7 @@ namespace FESeries
      * is the hp::QCollection used to integrate the expansion for each
      * FiniteElement in @p fe_collection.
      */
-    Fourier(const unsigned int                     n_coefficients_per_direction,
+    Fourier(const std::vector<unsigned int> &      n_coefficients_per_direction,
             const hp::FECollection<dim, spacedim> &fe_collection,
             const hp::QCollection<dim> &           q_collection);
 
@@ -113,7 +113,7 @@ namespace FESeries
      * TODO: Doc.
      */
     void
-    initialize(const unsigned int n_coefficients_per_direction,
+    initialize(const std::vector<unsigned int> &n_coefficients_per_direction,
                const hp::FECollection<dim, spacedim> &fe_collection,
                const hp::QCollection<dim> &           q_collection);
 
@@ -132,7 +132,7 @@ namespace FESeries
      * Return number of coefficients in each coordinate direction.
      */
     unsigned int
-    get_n_coefficients_per_direction() const;
+    get_n_coefficients_per_direction(const unsigned int index) const;
 
     /**
      * Calculate all transformation matrices to transfer the finite element
@@ -178,7 +178,7 @@ namespace FESeries
     /**
      * Number of coefficients in each direction.
      */
-    unsigned int n_coefficients_per_direction;
+    std::vector<unsigned int> n_coefficients_per_direction;
 
     /**
      * hp::FECollection for which transformation matrices will be calculated.
@@ -269,7 +269,7 @@ namespace FESeries
      * is the hp::QCollection used to integrate the expansion for each
      * FiniteElement in @p fe_collection.
      */
-    Legendre(const unsigned int n_coefficients_per_direction,
+    Legendre(const std::vector<unsigned int> &n_coefficients_per_direction,
              const hp::FECollection<dim, spacedim> &fe_collection,
              const hp::QCollection<dim> &           q_collection);
 
@@ -277,7 +277,7 @@ namespace FESeries
      * TODO: Doc.
      */
     void
-    initialize(const unsigned int n_coefficients_per_direction,
+    initialize(const std::vector<unsigned int> &n_coefficients_per_direction,
                const hp::FECollection<dim, spacedim> &fe_collection,
                const hp::QCollection<dim> &           q_collection);
 
@@ -296,7 +296,7 @@ namespace FESeries
      * Return number of coefficients in each coordinate direction.
      */
     unsigned int
-    get_n_coefficients_per_direction() const;
+    get_n_coefficients_per_direction(const unsigned int index) const;
 
     /**
      * Calculate all transformation matrices to transfer the finite element
@@ -342,7 +342,7 @@ namespace FESeries
     /**
      * Number of coefficients in each direction.
      */
-    unsigned int n_coefficients_per_direction;
+    std::vector<unsigned int> n_coefficients_per_direction;
 
     /**
      * hp::FECollection for which transformation matrices will be calculated.

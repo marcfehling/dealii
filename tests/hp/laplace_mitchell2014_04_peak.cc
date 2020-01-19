@@ -111,9 +111,9 @@ private:
 
   hp::QCollection<dim - 1> quadrature_face;
 
-  unsigned int            n_modes;
-  hp::QCollection<dim>    expansion_q_collection;
-  FESeries::Legendre<dim> legendre;
+  std::vector<unsigned int> n_coefficients_per_direction;
+  hp::QCollection<dim>      expansion_q_collection;
+  FESeries::Legendre<dim>   legendre;
 };
 
 template <int dim>
@@ -143,12 +143,15 @@ Problem4<dim>::Problem4(const Function<dim> &force_function,
 
   // after the FECollection has been generated, create a corresponding legendre
   // series expansion object
-  n_modes =
-    SmoothnessEstimator::Legendre::default_number_of_modes(Laplace<dim>::fe);
+  n_coefficients_per_direction =
+    SmoothnessEstimator::Legendre::default_number_of_coefficients_per_direction(
+      Laplace<dim>::fe);
   expansion_q_collection =
     SmoothnessEstimator::Legendre::default_quadrature_collection(
       Laplace<dim>::fe);
-  legendre.initialize(n_modes, Laplace<dim>::fe, expansion_q_collection);
+  legendre.initialize(n_coefficients_per_direction,
+                      Laplace<dim>::fe,
+                      expansion_q_collection);
 }
 
 

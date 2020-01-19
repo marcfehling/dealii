@@ -157,8 +157,8 @@ namespace SmoothnessEstimator
      * just a constant.
      */
     template <int dim, int spacedim>
-    unsigned int
-    default_number_of_modes(
+    std::vector<unsigned int>
+    default_number_of_coefficients_per_direction(
       const hp::FECollection<dim, spacedim> &fe_collection);
 
     /**
@@ -281,8 +281,8 @@ namespace SmoothnessEstimator
      * elements used plus one, and at least three modes.
      */
     template <int dim, int spacedim>
-    unsigned int
-    default_number_of_modes(
+    std::vector<unsigned int>
+    default_number_of_coefficients_per_direction(
       const hp::FECollection<dim, spacedim> &fe_collection);
 
     /**

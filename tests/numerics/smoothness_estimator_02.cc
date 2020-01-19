@@ -188,8 +188,16 @@ template <int dim>
 void
 test(const unsigned int poly_degree)
 {
-  const unsigned int max_poly = 3;
-  const unsigned int n_modes  = std::max<unsigned int>(3, poly_degree + 1);
+  const unsigned int    max_poly = 3;
+  hp::FECollection<dim> fe_collection;
+  for (unsigned int p = 1; p <= max_poly; ++p)
+    fe_collection.push_back(FE_Q<dim>(p));
+
+  const unsigned int              fe_index = poly_degree - 1;
+  const std::vector<unsigned int> n_coefficients_per_direction =
+    SmoothnessEstimator::Fourier::default_number_of_coefficients_per_direction(
+      fe_collection);
+  const unsigned int n_modes = n_coefficients_per_direction[fe_index];
 
   Assert((poly_degree >= 1) && (poly_degree <= max_poly), ExcInternalError());
   Assert((n_modes >= 3) && (n_modes <= max_poly + 1), ExcInternalError());
@@ -255,19 +263,6 @@ test(const unsigned int poly_degree)
   Triangulation<dim> tria;
   GridGenerator::hyper_cube(tria, 0.0, 1.0); // reference cell
 
-  hp::FECollection<dim> fe_collection;
-  hp::QCollection<dim>  q_collection;
-  const QGauss<1>       base_quadrature(4);
-  const QIterated<dim>  quadrature(base_quadrature, n_modes - 1);
-  const QSorted<dim>    quadrature_sorted(quadrature);
-  // add some extra FEs in fe_collection
-  for (unsigned int p = 1; p <= max_poly; ++p)
-    {
-      fe_collection.push_back(FE_Q<dim>(p));
-      q_collection.push_back(quadrature_sorted);
-    }
-  const unsigned int fe_index = poly_degree - 1;
-
   hp::DoFHandler<dim> dof_handler(tria);
   dof_handler.begin_active()->set_active_fe_index(fe_index);
   dof_handler.distribute_dofs(fe_collection);
@@ -282,7 +277,12 @@ test(const unsigned int poly_degree)
   local_dof_values.reinit(cell->get_fe().dofs_per_cell);
   cell->get_dof_values(values, local_dof_values);
 
-  FESeries::Fourier<dim> fourier(n_modes, fe_collection, q_collection);
+  hp::QCollection<dim> q_collection =
+    SmoothnessEstimator::Fourier::default_quadrature_collection(fe_collection);
+  FESeries::Fourier<dim> fourier(n_coefficients_per_direction,
+                                 fe_collection,
+                                 q_collection);
+
   Table<dim, std::complex<double>> coeff_out;
   coeff_out.reinit(size);
   fourier.calculate(local_dof_values, cell->active_fe_index(), coeff_out);

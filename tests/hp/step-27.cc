@@ -105,9 +105,9 @@ namespace Step27
     Vector<double> solution;
     Vector<double> system_rhs;
 
-    const unsigned int                      max_degree;
-    hp::QCollection<dim>                    fourier_q_collection;
-    std::unique_ptr<FESeries::Fourier<dim>> fourier;
+    const unsigned int     max_degree;
+    hp::QCollection<dim>   fourier_q_collection;
+    FESeries::Fourier<dim> fourier;
   };
 
 
@@ -154,10 +154,11 @@ namespace Step27
     for (unsigned int i = 0; i < fe_collection.size(); ++i)
       fourier_q_collection.push_back(quadrature);
 
-    fourier =
-      std_cxx14::make_unique<FESeries::Fourier<dim>>(max_degree,
-                                                     fe_collection,
-                                                     fourier_q_collection);
+    const std::vector<unsigned int> n_coefficients_per_direction(
+      fe_collection.size(), max_degree);
+    fourier.initialize(n_coefficients_per_direction,
+                       fe_collection,
+                       fourier_q_collection);
   }
 
 
@@ -292,7 +293,7 @@ namespace Step27
 
     Vector<float> smoothness_indicators;
     SmoothnessEstimator::Fourier::coefficient_decay(
-      *fourier,
+      fourier,
       dof_handler,
       solution,
       smoothness_indicators,

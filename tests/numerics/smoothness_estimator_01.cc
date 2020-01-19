@@ -202,8 +202,12 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
 
   VectorTools::interpolate(dof_handler, func, values);
 
-  const unsigned int      n_modes = poly_degree + 1;
-  FESeries::Legendre<dim> legendre(n_modes, fe_collection, quadrature_formula);
+  const unsigned int              n_modes = poly_degree + 1;
+  const std::vector<unsigned int> n_coefficients_per_direction(
+    fe_collection.size(), n_modes);
+  FESeries::Legendre<dim> legendre(n_coefficients_per_direction,
+                                   fe_collection,
+                                   quadrature_formula);
 
   const Table<dim, double> &coeff_in = func.get_coefficients();
   Table<dim, double>        coeff_out;
