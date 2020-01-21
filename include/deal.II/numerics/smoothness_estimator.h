@@ -123,9 +123,10 @@ namespace SmoothnessEstimator
      * decide whether to perform h- or p-adaptation. So in most cases, we only
      * need to calculate those indicators on cells flagged for refinement or
      * coarsening. This parameter controls whether this particular subset or all
-     * cells will be considered. By default, only flagged cells will be
-     * considered: Smoothness indicators will only be set on those vector
-     * entries of flagged cells; the others will be set to NaN.
+     * cells will be considered. By default, all cells will be considered. When
+     * only flagged cells are supposed to be considered, smoothness indicators
+     * will only be set on those vector entries of flagged cells; the others
+     * will be set to NaN.
      *
      * For more theoretical details see @cite mavriplis1994hp
      * @cite houston2005hp @cite eibner2007hp and for the application within the
@@ -256,9 +257,10 @@ namespace SmoothnessEstimator
      * p-adaptation. So in most cases, we only need to calculate those
      * indicators on cells flagged for refinement or coarsening. The parameter
      * @p only_flagged_cells controls whether this particular subset or all
-     * cells will be considered. By default, only flagged cells will be
-     * considered: Smoothness indicators will only be set on those vector
-     * entries of flagged cells; the others will be set to NaN.
+     * cells will be considered. By default, all cells will be considered.
+     * When only flagged cells are supposed to be considered, smoothness
+     * indicators will only be set on those vector entries of flagged cells;
+     * the others will be set to NaN.
      *
      * @ingroup numerics
      * @author Denis Davydov, 2016, Marc Fehling, 2018

@@ -95,22 +95,29 @@ namespace FESeries
 
     /**
      * Default constructor.
+     *
+     * Leaves all members in an empty or uninitialized state. Please call
+     * initialize() once you have all data structures ready.
      */
     Fourier() = default;
 
     /**
-     * A non-default constructor. The @p n_coefficients_per_direction defines
-     * the number of modes in each direction, @p fe_collection is the
-     * hp::FECollection for which expansion will be used and @p q_collection
-     * is the hp::QCollection used to integrate the expansion for each
-     * FiniteElement in @p fe_collection.
+     * Constructor that initializes all required data structures.
+     *
+     * The @p n_coefficients_per_direction defines the number of coefficients in
+     * each direction, @p fe_collection is the hp::FECollection for which
+     * expansion will be used and @p q_collection is the hp::QCollection used to
+     * integrate the expansion for each FiniteElement in @p fe_collection.
      */
     Fourier(const std::vector<unsigned int> &      n_coefficients_per_direction,
             const hp::FECollection<dim, spacedim> &fe_collection,
             const hp::QCollection<dim> &           q_collection);
 
     /**
-     * TODO: Doc.
+     * Initialize and overwrite all mandatory data structures for the
+     * calculation calculation of transformation matrices.
+     *
+     * All previously calculated transformation matrices will be cleared.
      */
     void
     initialize(const std::vector<unsigned int> &n_coefficients_per_direction,
@@ -129,7 +136,8 @@ namespace FESeries
               Table<dim, CoefficientType> & fourier_coefficients);
 
     /**
-     * Return number of coefficients in each coordinate direction.
+     * Return the number of coefficients in each coordinate direction for the
+     * finite element associated with @p index in the provided hp::FECollection.
      */
     unsigned int
     get_n_coefficients_per_direction(const unsigned int index) const;
@@ -176,7 +184,8 @@ namespace FESeries
 
   private:
     /**
-     * Number of coefficients in each direction.
+     * Number of coefficients in each direction for each finite element in the
+     * registered hp::FECollection.
      */
     std::vector<unsigned int> n_coefficients_per_direction;
 
@@ -259,22 +268,29 @@ namespace FESeries
 
     /**
      * Default constructor.
+     *
+     * Leaves all members in an empty or uninitialized state. Please call
+     * initialize() once you have all data structures ready.
      */
     Legendre() = default;
 
     /**
-     * A non-default constructor. The @p n_coefficients_per_direction defines
-     * the number of coefficients in each direction, @p fe_collection is the
-     * hp::FECollection for which expansion will be used and @p q_collection
-     * is the hp::QCollection used to integrate the expansion for each
-     * FiniteElement in @p fe_collection.
+     * Constructor that initializes all required data structures.
+     *
+     * The @p n_coefficients_per_direction defines the number of coefficients in
+     * each direction, @p fe_collection is the hp::FECollection for which
+     * expansion will be used and @p q_collection is the hp::QCollection used to
+     * integrate the expansion for each FiniteElement in @p fe_collection.
      */
     Legendre(const std::vector<unsigned int> &n_coefficients_per_direction,
              const hp::FECollection<dim, spacedim> &fe_collection,
              const hp::QCollection<dim> &           q_collection);
 
     /**
-     * TODO: Doc.
+     * Initialize and overwrite all mandatory data structures for the
+     * calculation of transformation matrices.
+     *
+     * All previously calculated transformation matrices will be cleared.
      */
     void
     initialize(const std::vector<unsigned int> &n_coefficients_per_direction,
@@ -292,8 +308,9 @@ namespace FESeries
               const unsigned int            cell_active_fe_index,
               Table<dim, CoefficientType> & legendre_coefficients);
 
-    /**
-     * Return number of coefficients in each coordinate direction.
+    /*
+     * Return the number of coefficients in each coordinate direction for the
+     * finite element associated with @p index in the provided hp::FECollection.
      */
     unsigned int
     get_n_coefficients_per_direction(const unsigned int index) const;
@@ -340,7 +357,8 @@ namespace FESeries
 
   private:
     /**
-     * Number of coefficients in each direction.
+     * Number of coefficients in each direction for each finite element in the
+     * registered hp::FECollection.
      */
     std::vector<unsigned int> n_coefficients_per_direction;
 
