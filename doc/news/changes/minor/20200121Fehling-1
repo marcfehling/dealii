@@ -1,0 +1,7 @@
+New: Both classes FESeries::Fourier and FESeries::Legendre now offer a
+default constructor and can be initialized after their instantiation.
+Further, both classes now allow to use an individual number of
+coefficients per direction for each finite element registered in the
+provided FECollection.
+<br>
+(Marc Fehling, 2020/01/21)

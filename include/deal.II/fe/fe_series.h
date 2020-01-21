@@ -308,7 +308,7 @@ namespace FESeries
               const unsigned int            cell_active_fe_index,
               Table<dim, CoefficientType> & legendre_coefficients);
 
-    /*
+    /**
      * Return the number of coefficients in each coordinate direction for the
      * finite element associated with @p index in the provided hp::FECollection.
      */
@@ -395,9 +395,12 @@ namespace FESeries
    * used in calculation, whereas the latter is the unrolled value of indices
    * according to which the subsets of coefficients will be formed.
    *
-   * @note Only the following values of @p norm are implemented and make sense
-   * in this case: mean, L1_norm, L2_norm, Linfty_norm. The mean norm can only
-   * be applied to real valued coefficients.
+   * Only those coefficients will be considered which are larger than
+   * @p smallest_abs_coefficient.
+   *
+   * @note Only the following values of @p norm_type are implemented and make
+   * sense in this case: mean, L1_norm, L2_norm, Linfty_norm. The mean norm ca
+   * only be applied to real valued coefficients.
    */
   template <int dim, typename CoefficientType>
   std::pair<std::vector<unsigned int>, std::vector<double>>
