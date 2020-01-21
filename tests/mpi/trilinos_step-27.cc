@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------------
  *
- * Copyright (C) 2006 - 2018 by the deal.II authors
+ * Copyright (C) 2006 - 2020 by the deal.II authors
  *
  * This file is part of the deal.II library.
  *
@@ -29,7 +29,6 @@ namespace LA
 #include <deal.II/base/function.h>
 #include <deal.II/base/logstream.h>
 #include <deal.II/base/quadrature_lib.h>
-#include <deal.II/base/std_cxx14/memory.h>
 #include <deal.II/base/timer.h>
 #include <deal.II/base/utilities.h>
 
