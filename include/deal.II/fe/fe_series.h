@@ -614,12 +614,11 @@ FESeries::Fourier<dim, spacedim>::save_transformation_matrices(
   // Store information about those resources which have been used to generate
   // the transformation matrices.
   // mode vector
-  unsigned int size = k_vectors.n_elements();
-  ar &         size;
+  ar &n_coefficients_per_direction;
 
   // finite element collection
-  size = fe_collection->size();
-  ar &size;
+  unsigned int size = fe_collection->size();
+  ar &         size;
   for (unsigned int i = 0; i < size; ++i)
     ar &(*fe_collection)[i].get_name();
 
@@ -645,12 +644,16 @@ FESeries::Fourier<dim, spacedim>::load_transformation_matrices(
   // Check whether the currently registered resources are compatible with
   // the transformation matrices to load.
   // mode vector
-  unsigned int size;
-  ar &         size;
-  AssertDimension(size, k_vectors.n_elements());
+  std::vector<unsigned int> compare_coefficients;
+  ar &                      compare_coefficients;
+  Assert(compare_coefficients == n_coefficients_per_direction,
+         ExcMessage("A different number of coefficients vector has been used "
+                    "to generate the transformation matrices you are about "
+                    "to load!"));
 
   // finite element collection
-  ar &size;
+  unsigned int size;
+  ar &         size;
   AssertDimension(size, fe_collection->size());
   std::string name;
   for (unsigned int i = 0; i < size; ++i)
@@ -689,12 +692,11 @@ FESeries::Legendre<dim, spacedim>::save_transformation_matrices(
   // Store information about those resources which have been used to generate
   // the transformation matrices.
   // mode vector
-  unsigned int size = N;
-  ar &         size;
+  ar &n_coefficients_per_direction;
 
   // finite element collection
-  size = fe_collection->size();
-  ar &size;
+  unsigned int size = fe_collection->size();
+  ar &         size;
   for (unsigned int i = 0; i < size; ++i)
     ar &(*fe_collection)[i].get_name();
 
@@ -720,12 +722,16 @@ FESeries::Legendre<dim, spacedim>::load_transformation_matrices(
   // Check whether the currently registered resources are compatible with
   // the transformation matrices to load.
   // mode vector
-  unsigned int size;
-  ar &         size;
-  AssertDimension(size, N);
+  std::vector<unsigned int> compare_coefficients;
+  ar &                      compare_coefficients;
+  Assert(compare_coefficients == n_coefficients_per_direction,
+         ExcMessage("A different number of coefficients vector has been used "
+                    "to generate the transformation matrices you are about "
+                    "to load!"));
 
   // finite element collection
-  ar &size;
+  unsigned int size;
+  ar &         size;
   AssertDimension(size, fe_collection->size());
   std::string name;
   for (unsigned int i = 0; i < size; ++i)

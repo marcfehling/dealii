@@ -202,10 +202,12 @@ namespace FESeries
   Fourier<dim, spacedim>::
   operator==(const Fourier<dim, spacedim> &fourier) const
   {
-    return ((*fe_collection == *(fourier.fe_collection)) &&
-            (*q_collection == *(fourier.q_collection)) &&
-            (k_vectors == fourier.k_vectors) &&
-            (fourier_transform_matrices == fourier.fourier_transform_matrices));
+    return (
+      (n_coefficients_per_direction == fourier.n_coefficients_per_direction) &&
+      (*fe_collection == *(fourier.fe_collection)) &&
+      (*q_collection == *(fourier.q_collection)) &&
+      (k_vectors == fourier.k_vectors) &&
+      (fourier_transform_matrices == fourier.fourier_transform_matrices));
   }
 
 
@@ -217,7 +219,8 @@ namespace FESeries
     Threads::TaskGroup<> task_group;
     for (unsigned int fe = 0; fe < fe_collection->size(); ++fe)
       task_group += Threads::new_task([&, fe]() {
-        ensure_existence(*fe_collection,
+        ensure_existence(n_coefficients_per_direction,
+                         *fe_collection,
                          *q_collection,
                          k_vectors,
                          fe,

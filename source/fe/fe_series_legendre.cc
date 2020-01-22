@@ -224,7 +224,8 @@ namespace FESeries
   operator==(const Legendre<dim, spacedim> &legendre) const
   {
     return (
-      (N == legendre.N) && (*fe_collection == *(legendre.fe_collection)) &&
+      (n_coefficients_per_direction == legendre.n_coefficients_per_direction) &&
+      (*fe_collection == *(legendre.fe_collection)) &&
       (*q_collection == *(legendre.q_collection)) &&
       (legendre_transform_matrices == legendre.legendre_transform_matrices));
   }
@@ -238,8 +239,11 @@ namespace FESeries
     Threads::TaskGroup<> task_group;
     for (unsigned int fe = 0; fe < fe_collection->size(); ++fe)
       task_group += Threads::new_task([&, fe]() {
-        ensure_existence(
-          *fe_collection, *q_collection, N, fe, legendre_transform_matrices);
+        ensure_existence(n_coefficients_per_direction,
+                         *fe_collection,
+                         *q_collection,
+                         fe,
+                         legendre_transform_matrices);
       });
 
     task_group.join_all();
