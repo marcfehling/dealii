@@ -114,6 +114,20 @@ namespace FESeries
             const hp::QCollection<dim> &           q_collection);
 
     /**
+     * A non-default constructor. The @p n_coefficients_per_direction defines the
+     * number of modes in each direction, @p fe_collection is the hp::FECollection
+     * for which expansion will be used and @p q_collection is the hp::QCollection
+     * used to integrate the expansion for each FiniteElement
+     * in @p fe_collection.
+     *
+     * @deprecated Use a different constructor instead.
+     */
+    DEAL_II_DEPRECATED
+    Fourier(const unsigned int                     n_coefficients_per_direction,
+            const hp::FECollection<dim, spacedim> &fe_collection,
+            const hp::QCollection<dim> &           q_collection);
+
+    /**
      * Initialize and overwrite all mandatory data structures for the
      * calculation calculation of transformation matrices.
      *
@@ -283,6 +297,19 @@ namespace FESeries
      * integrate the expansion for each FiniteElement in @p fe_collection.
      */
     Legendre(const std::vector<unsigned int> &n_coefficients_per_direction,
+             const hp::FECollection<dim, spacedim> &fe_collection,
+             const hp::QCollection<dim> &           q_collection);
+
+    /**
+     * A non-default constructor. The @p size_in_each_direction defines the number
+     * of coefficients in each direction, @p fe_collection is the hp::FECollection
+     * for which expansion will be used and @p q_collection is the hp::QCollection
+     * used to integrate the expansion for each FiniteElement in @p fe_collection.
+     *
+     * @deprecated Use a different constructor instead.
+     */
+    DEAL_II_DEPRECATED
+    Legendre(const unsigned int n_coefficients_per_direction,
              const hp::FECollection<dim, spacedim> &fe_collection,
              const hp::QCollection<dim> &           q_collection);
 
