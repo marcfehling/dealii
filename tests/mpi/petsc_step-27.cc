@@ -385,6 +385,7 @@ namespace Step27
       solution,
       smoothness_indicators,
       /*regression_strategy=*/VectorTools::Linfty_norm,
+      /*smallest_abs_coefficient=*/1e-10,
       /*only_flagged_cells=*/true);
 
     hp::Refinement::p_adaptivity_from_relative_threshold(dof_handler,

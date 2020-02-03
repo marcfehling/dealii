@@ -179,35 +179,34 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
   deallog << dim << "d, p=" << poly_degree << ", max_p=" << max_poly
           << std::endl;
   deallog << "-----------------------------------" << std::endl;
-  Triangulation<dim>    triangulation;
-  hp::DoFHandler<dim>   dof_handler(triangulation);
-  hp::FECollection<dim> fe_collection;
-  hp::QCollection<dim>  quadrature_formula;
 
   // add some extra FEs in fe_collection
-  const QGauss<dim>  quadrature(poly_degree + 1);
-  const QSorted<dim> quadrature_sorted(quadrature);
+  hp::FECollection<dim> fe_collection;
   for (unsigned int p = 1; p <= max_poly; p++)
-    {
-      fe_collection.push_back(FE_Q<dim>(p));
-      quadrature_formula.push_back(quadrature_sorted);
-    }
+    fe_collection.push_back(FE_Q<dim>(p));
 
+  const unsigned int              fe_index = poly_degree - 1;
+  const std::vector<unsigned int> n_coefficients_per_direction =
+    SmoothnessEstimator::Legendre::default_number_of_coefficients_per_direction(
+      fe_collection);
+  const unsigned int n_modes = n_coefficients_per_direction[fe_index];
+
+  Triangulation<dim> triangulation;
   GridGenerator::hyper_cube(triangulation, 0.0, 1.0); // reference cell
-  const unsigned int fe_index = poly_degree - 1;
+
+  hp::DoFHandler<dim> dof_handler(triangulation);
+  dof_handler.set_fe(fe_collection);
   dof_handler.begin_active()->set_active_fe_index(fe_index);
   dof_handler.distribute_dofs(fe_collection);
 
   Vector<double> values(dof_handler.n_dofs());
-
   VectorTools::interpolate(dof_handler, func, values);
 
-  const unsigned int              n_modes = poly_degree + 1;
-  const std::vector<unsigned int> n_coefficients_per_direction(
-    fe_collection.size(), n_modes);
+  hp::QCollection<dim> q_collection =
+    SmoothnessEstimator::Legendre::default_quadrature_collection(fe_collection);
   FESeries::Legendre<dim> legendre(n_coefficients_per_direction,
                                    fe_collection,
-                                   quadrature_formula);
+                                   q_collection);
 
   const Table<dim, double> &coeff_in = func.get_coefficients();
   Table<dim, double>        coeff_out;
@@ -231,7 +230,7 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
 
   // finally test smoothness estimator:
   Vector<float> smoothness(1);
-  SmoothnessEstimator::Legendre::coefficient_decay(
+  SmoothnessEstimator::Legendre::coefficient_decay_per_direction(
     legendre,
     dof_handler,
     values,

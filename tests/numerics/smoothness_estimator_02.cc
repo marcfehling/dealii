@@ -301,6 +301,7 @@ test(const unsigned int poly_degree)
     values,
     regularity,
     /*regression_strategy=*/VectorTools::Linfty_norm,
+    /*smallest_abs_coefficient=*/1e-10,
     /*only_flagged_cells=*/false);
 
   deallog << "estimated regularity:" << std::endl << regularity[0] << std::endl;

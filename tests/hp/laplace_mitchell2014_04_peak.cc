@@ -162,10 +162,11 @@ Problem4<dim>::substitute_h_for_p()
 {
   Vector<float> smoothness_indicators(
     Laplace<dim>::triangulation.n_active_cells());
-  SmoothnessEstimator::Legendre::coefficient_decay(legendre,
-                                                   Laplace<dim>::dof_handler,
-                                                   Laplace<dim>::solution,
-                                                   smoothness_indicators);
+  SmoothnessEstimator::Legendre::coefficient_decay_per_direction(
+    legendre,
+    Laplace<dim>::dof_handler,
+    Laplace<dim>::solution,
+    smoothness_indicators);
 
   hp::Refinement::p_adaptivity_from_absolute_threshold(
     Laplace<dim>::dof_handler,
