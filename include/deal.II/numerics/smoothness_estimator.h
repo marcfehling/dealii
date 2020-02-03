@@ -62,6 +62,107 @@ namespace hp
  */
 namespace SmoothnessEstimator
 {
+  /**
+   * TODO: Doc.
+   */
+  template <int dim>
+  using PredicateFunction =
+    std::function<std::pair<bool, unsigned int>(const TableIndices<dim> &ind,
+                                                const unsigned int       N,
+                                                const bool include_zero)>;
+
+  /**
+   * Collection of predicates to determine which coefficients to consider
+   * for smoothness estimation.
+   *
+   * TODO: Doc.
+   */
+  namespace Predicates
+  {
+    /**
+     * TODO: Doc.
+     *
+     * combine this
+     */
+    template <int dim>
+    std::pair<bool, unsigned int>
+    only_nonzero_index_less_than_N(const TableIndices<dim> &ind,
+                                   const unsigned int       N,
+                                   const bool               include_zero)
+    {
+      bool         nonzero_found = false, nonzero_multiple = false;
+      unsigned int v = 0;
+      for (unsigned int i = 0; i < dim; i++)
+        {
+          v += ind[i];
+          if (ind[i] != 0)
+            {
+              if (nonzero_found)
+                nonzero_multiple = true;
+              nonzero_found = true;
+            }
+        }
+
+      if (!nonzero_multiple && (include_zero || nonzero_found) && v <= N)
+        return std::make_pair(true, v);
+      else
+        return std::make_pair(false, v);
+    }
+
+    /**
+     * TODO: Doc.
+     *
+     * In the current case we are
+     * interested in coefficients which correspond to $0 < i+j < N$ and
+     * $0 < i+j+k < N$ in 2D and 3D, respectively.
+     */
+    template <int dim>
+    std::pair<bool, unsigned int>
+    index_sum_less_than_N(const TableIndices<dim> &ind,
+                          const unsigned int       N,
+                          const bool               include_zero)
+    {
+      unsigned int v = 0;
+      for (unsigned int i = 0; i < dim; i++)
+        v += ind[i];
+
+      if ((include_zero || v > 0) && v <= N)
+        return std::make_pair(true, v);
+      else
+        return std::make_pair(false, v);
+    }
+
+    /**
+     * We will need to take the maximum absolute value of Fourier coefficients
+     * which correspond to $k$-vector $|{\bf k}|= const$. To filter the
+     * coefficients Table we will use the FESeries::process_coefficients()
+     * which requires a predicate to be specified. The predicate should
+     * operate on TableIndices and return a pair of <code>bool</code> and
+     * <code>unsigned int</code>. The latter is the value of the map from
+     * TableIndicies to unsigned int.  It is used to define subsets of
+     * coefficients from which we search for the one with highest absolute
+     * value, i.e. $l^\infty$-norm. The <code>bool</code> parameter defines
+     * which indices should be used in processing. In the current case we are
+     * interested in coefficients which correspond to $0 < i^2+j^2 < N^2$ and
+     * $0 < i^2+j^2+k^2 < N^2$ in 2D and 3D, respectively.
+     */
+    template <int dim>
+    std::pair<bool, unsigned int>
+    index_norm_less_than_N_squared(const TableIndices<dim> &ind,
+                                   const unsigned int       N,
+                                   const bool               include_zero)
+    {
+      unsigned int v = 0;
+      for (unsigned int i = 0; i < dim; i++)
+        v += ind[i] * ind[i];
+
+      if ((include_zero || v > 0) && v <= N * N)
+        return std::make_pair(true, v);
+      else
+        return std::make_pair(false, v);
+    }
+  } // namespace Predicates
+
   namespace Legendre
   {
     /**
@@ -270,7 +371,9 @@ namespace SmoothnessEstimator
     coefficient_decay(FESeries::Fourier<dim, spacedim> &   fe_series,
                       const hp::DoFHandler<dim, spacedim> &dof_handler,
                       const VectorType &                   solution,
-                      Vector<float> &             smoothness_indicators,
+                      Vector<float> &              smoothness_indicators,
+                      const PredicateFunction<dim> predicate_function =
+                        Predicates::index_norm_less_than_N_squared,
                       const VectorTools::NormType regression_strategy =
                         VectorTools::Linfty_norm,
                       const bool only_flagged_cells = false);

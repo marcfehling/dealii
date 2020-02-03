@@ -239,47 +239,15 @@ namespace SmoothnessEstimator
 
   namespace Fourier
   {
-    namespace
-    {
-      /**
-       * We will need to take the maximum absolute value of Fourier coefficients
-       * which correspond to $k$-vector $|{\bf k}|= const$. To filter the
-       * coefficients Table we will use the FESeries::process_coefficients()
-       * which requires a predicate to be specified. The predicate should
-       * operate on TableIndices and return a pair of <code>bool</code> and
-       * <code>unsigned int</code>. The latter is the value of the map from
-       * TableIndicies to unsigned int.  It is used to define subsets of
-       * coefficients from which we search for the one with highest absolute
-       * value, i.e. $l^\infty$-norm. The <code>bool</code> parameter defines
-       * which indices should be used in processing. In the current case we are
-       * interested in coefficients which correspond to $0 < i^2+j^2 < N^2$ and
-       * $0 < i^2+j^2+k^2 < N^2$ in 2D and 3D, respectively.
-       */
-      template <int dim>
-      std::pair<bool, unsigned int>
-      index_norm_less_than_N_squared(const TableIndices<dim> &ind,
-                                     const unsigned int       N)
-      {
-        unsigned int v = 0;
-        for (unsigned int i = 0; i < dim; i++)
-          v += ind[i] * ind[i];
-        if (v > 0 && v < N * N)
-          return std::make_pair(true, v);
-        else
-          return std::make_pair(false, v);
-      }
-    } // namespace
-
-
-
     template <int dim, int spacedim, typename VectorType>
     void
     coefficient_decay(FESeries::Fourier<dim, spacedim> &   fe_series,
                       const hp::DoFHandler<dim, spacedim> &dof_handler,
                       const VectorType &                   solution,
-                      Vector<float> &             smoothness_indicators,
-                      const VectorTools::NormType regression_strategy,
-                      const bool                  only_flagged_cells)
+                      Vector<float> &              smoothness_indicators,
+                      const PredicateFunction<dim> predicate_function,
+                      const VectorTools::NormType  regression_strategy,
+                      const bool                   only_flagged_cells)
     {
       using number = typename VectorType::value_type;
       using number_coeff =
@@ -321,8 +289,10 @@ namespace SmoothnessEstimator
                 // rework coefficients into the desired format.
                 res = FESeries::process_coefficients<dim>(
                   expansion_coefficients,
-                  [N](const TableIndices<dim> &indices) {
-                    return index_norm_less_than_N_squared<dim>(indices, N);
+                  [&predicate_function, N](const TableIndices<dim> &indices) {
+                    return predicate_function(indices,
+                                              N,
+                                              /*include_zero=*/false);
                   },
                   regression_strategy);
 

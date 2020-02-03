@@ -34,6 +34,7 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
         const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
         const VEC &,
         Vector<float> &,
+        const PredicateFunction<deal_II_dimension>,
         const VectorTools::NormType,
         const bool);
 #endif
