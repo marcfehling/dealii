@@ -35,7 +35,7 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
            const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
            const VEC &,
            Vector<float> &,
-           const std::function<void(std::vector<bool> & flags)> &,
+           const ComponentMask &,
            const double,
            const bool);
 
@@ -55,7 +55,7 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
            const hp::DoFHandler<deal_II_dimension, deal_II_space_dimension> &,
            const VEC &,
            Vector<float> &,
-           const std::function<void(std::vector<bool> & flags)> &,
+           const ComponentMask &,
            const double,
            const bool);
 #endif

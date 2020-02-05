@@ -21,6 +21,7 @@
 #include <deal.II/base/function.h>
 #include <deal.II/base/quadrature_lib.h>
 
+#include <deal.II/fe/component_mask.h>
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_series.h>
 
@@ -167,13 +168,6 @@ template <int dim>
 void
 test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
 {
-  // custom predicate:
-  // p-ref for linear elements and use j=1,...,pe otherwise.
-  const auto coefficients_predicate = [](std::vector<bool> &flags) -> void {
-    std::fill(flags.begin(), flags.end(), flags.size() > 2);
-    flags[0] = false;
-  };
-
   const unsigned int max_poly = poly_degree + 3;
   deallog << "-----------------------------------" << std::endl;
   deallog << dim << "d, p=" << poly_degree << ", max_p=" << max_poly
@@ -190,6 +184,11 @@ test(const LegendreFunction<dim> &func, const unsigned int poly_degree)
     SmoothnessEstimator::Legendre::default_number_of_coefficients_per_direction(
       fe_collection);
   const unsigned int n_modes = n_coefficients_per_direction[fe_index];
+
+  // custom predicate:
+  // p-ref for linear elements and use j=1,...,pe otherwise.
+  ComponentMask coefficients_predicate(n_modes, true);
+  coefficients_predicate.set(0, false);
 
   Triangulation<dim> triangulation;
   GridGenerator::hyper_cube(triangulation, 0.0, 1.0); // reference cell

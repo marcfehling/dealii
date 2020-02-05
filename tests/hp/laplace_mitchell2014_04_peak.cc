@@ -15,8 +15,8 @@
 
 
 
-// test SmoothnessEstimator::legendre_coefficient_decay() on
-// problem 4 (peak) in Mitchell 2014.
+// test SmoothnessEstimator::Legendre::coefficient_decay_per_direction()
+// on problem 4 (peak) in Mitchell 2014.
 
 
 #include "laplace.h"

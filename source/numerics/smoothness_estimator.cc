@@ -178,10 +178,9 @@ namespace SmoothnessEstimator
       const hp::DoFHandler<dim, spacedim> &dof_handler,
       const VectorType &                   solution,
       Vector<float> &                      smoothness_indicators,
-      const std::function<void(std::vector<bool> &flags)>
-        &          coefficients_predicate,
-      const double smallest_abs_coefficient,
-      const bool   only_flagged_cells)
+      const ComponentMask &                coefficients_predicate,
+      const double                         smallest_abs_coefficient,
+      const bool                           only_flagged_cells)
     {
       Assert(smallest_abs_coefficient >= 0.,
              ExcMessage("smallest_abs_coefficient should be non-negative."));
@@ -205,16 +204,6 @@ namespace SmoothnessEstimator
       x.reserve(max_degree);
       y.reserve(max_degree);
 
-      // precalculate predicates for each degree:
-      std::vector<std::vector<bool>> predicates(max_degree);
-      for (unsigned int p = 1; p <= max_degree; ++p)
-        {
-          auto &pred = predicates[p - 1];
-          // we have p+1 coefficients for degree p
-          pred.resize(p + 1);
-          coefficients_predicate(pred);
-        }
-
       for (const auto &cell : dof_handler.active_cell_iterators())
         if (cell->is_locally_owned())
           {
@@ -226,9 +215,7 @@ namespace SmoothnessEstimator
                 resize(expansion_coefficients, n_modes);
 
                 const unsigned int pe = cell->get_fe().degree;
-
                 Assert(pe > 0, ExcInternalError());
-                const auto &pred = predicates[pe - 1];
 
                 // since we use coefficients with indices [1,pe] in each
                 // direction, the number of coefficients we need to calculate is
@@ -252,9 +239,8 @@ namespace SmoothnessEstimator
 
                     // will use all non-zero coefficients allowed by the
                     // predicate function
-                    Assert(pred.size() == pe + 1, ExcInternalError());
                     for (unsigned int i = 0; i <= pe; ++i)
-                      if (pred[i])
+                      if (coefficients_predicate[i])
                         {
                           TableIndices<dim> ind;
                           ind[d] = i;
@@ -482,10 +468,9 @@ namespace SmoothnessEstimator
       const hp::DoFHandler<dim, spacedim> &dof_handler,
       const VectorType &                   solution,
       Vector<float> &                      smoothness_indicators,
-      const std::function<void(std::vector<bool> &flags)>
-        &          coefficients_predicate,
-      const double smallest_abs_coefficient,
-      const bool   only_flagged_cells)
+      const ComponentMask &                coefficients_predicate,
+      const double                         smallest_abs_coefficient,
+      const bool                           only_flagged_cells)
     {
       Assert(smallest_abs_coefficient >= 0.,
              ExcMessage("smallest_abs_coefficient should be non-negative."));
@@ -509,16 +494,6 @@ namespace SmoothnessEstimator
       x.reserve(max_degree);
       y.reserve(max_degree);
 
-      // precalculate predicates for each degree:
-      std::vector<std::vector<bool>> predicates(max_degree);
-      for (unsigned int p = 1; p <= max_degree; ++p)
-        {
-          auto &pred = predicates[p - 1];
-          // we have p+1 coefficients for degree p
-          pred.resize(p + 1);
-          coefficients_predicate(pred);
-        }
-
       for (const auto &cell : dof_handler.active_cell_iterators())
         if (cell->is_locally_owned())
           {
@@ -530,9 +505,7 @@ namespace SmoothnessEstimator
                 resize(expansion_coefficients, n_modes);
 
                 const unsigned int pe = cell->get_fe().degree;
-
                 Assert(pe > 0, ExcInternalError());
-                const auto &pred = predicates[pe - 1];
 
                 // since we use coefficients with indices [1,pe] in each
                 // direction, the number of coefficients we need to calculate is
@@ -556,9 +529,10 @@ namespace SmoothnessEstimator
 
                     // will use all non-zero coefficients allowed by the
                     // predicate function
-                    Assert(pred.size() == pe + 1, ExcInternalError());
+                    //
+                    // skip i=0 because of logarithm
                     for (unsigned int i = 1; i <= pe; ++i)
-                      if (pred[i])
+                      if (coefficients_predicate[i])
                         {
                           TableIndices<dim> ind;
                           ind[d] = i;

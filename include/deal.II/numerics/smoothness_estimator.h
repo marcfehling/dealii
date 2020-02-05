@@ -156,12 +156,9 @@ namespace SmoothnessEstimator
       const hp::DoFHandler<dim, spacedim> &dof_handler,
       const VectorType &                   solution,
       Vector<float> &                      smoothness_indicators,
-      const std::function<void(std::vector<bool> &flags)>
-        &coefficients_predicate = [](std::vector<bool> &flags) -> void {
-        std::fill(flags.begin(), flags.end(), true);
-      },
-      const double smallest_abs_coefficient = 1e-10,
-      const bool   only_flagged_cells       = false);
+      const ComponentMask &coefficients_predicate   = ComponentMask(),
+      const double         smallest_abs_coefficient = 1e-10,
+      const bool           only_flagged_cells       = false);
 
     /**
      * Number of modes for the default configuration of the Legendre series
@@ -300,12 +297,9 @@ namespace SmoothnessEstimator
       const hp::DoFHandler<dim, spacedim> &dof_handler,
       const VectorType &                   solution,
       Vector<float> &                      smoothness_indicators,
-      const std::function<void(std::vector<bool> &flags)>
-        &coefficients_predicate = [](std::vector<bool> &flags) -> void {
-        std::fill(flags.begin(), flags.end(), true);
-      },
-      const double smallest_abs_coefficient = 1e-10,
-      const bool   only_flagged_cells       = false);
+      const ComponentMask &coefficients_predicate   = ComponentMask(),
+      const double         smallest_abs_coefficient = 1e-10,
+      const bool           only_flagged_cells       = false);
 
     /**
      * Number of modes for the default configuration of the Fourier series
