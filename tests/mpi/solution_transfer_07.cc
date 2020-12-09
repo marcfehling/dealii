@@ -109,9 +109,9 @@ test()
   dofh.distribute_dofs(fes);
 
   // Interpolate solution on new grid
-  locally_owned_dofs = dof_handler.locally_owned_dofs();
+  locally_owned_dofs = dofh.locally_owned_dofs();
   locally_relevant_dofs.clear();
-  DoFTools::extract_locally_relevant_dofs(dof_handler, locally_relevant_dofs);
+  DoFTools::extract_locally_relevant_dofs(dofh, locally_relevant_dofs);
 
   completely_distributed_solution.reinit(locally_owned_dofs, mpi_communicator);
   locally_relevant_solution.reinit(locally_owned_dofs,
