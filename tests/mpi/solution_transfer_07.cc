@@ -100,10 +100,13 @@ test()
         cell->set_refine_flag();
 
   // Perform refinement
+  LinearAlgebraTrilinos::MPI::Vector previous_locally_relevant_solution;
+  previous_locally_relevant_solution = locally_relevant_solution;
+
   parallel::distributed::SolutionTransfer<dim,
                                           LinearAlgebraTrilinos::MPI::Vector>
     soltrans(dofh);
-  soltrans.prepare_for_coarsening_and_refinement(locally_relevant_solution);
+  soltrans.prepare_for_coarsening_and_refinement(previous_locally_relevant_solution);
 
   tria.execute_coarsening_and_refinement();
   dofh.distribute_dofs(fes);
