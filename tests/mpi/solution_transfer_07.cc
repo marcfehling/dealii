@@ -118,7 +118,7 @@ test()
                                    locally_relevant_dofs,
                                    mpi_communicator);
 
-  solution_trans.interpolate(completely_distributed_solution);
+  soltrans.interpolate(completely_distributed_solution);
   locally_relevant_solution = completely_distributed_solution;
 }
 
