@@ -22,6 +22,7 @@
 #include <deal.II/base/smartpointer.h>
 
 #include <deal.II/grid/cell_id.h>
+#include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/tria.h>
 
 #include <boost/signals2.hpp>
@@ -116,6 +117,15 @@ namespace GridTools
      */
     void
     update_surface_cells();
+
+    /**
+     * Allow the extracting function to access the internal mapping.
+     */
+    friend MappingVolumeSurface<volumedim, spacedim>
+    GridGenerator::extract_surface_mesh<volumedim, spacedim>(
+      const Triangulation<volumedim, spacedim> &,
+      Triangulation<surfacedim, spacedim> &,
+      const std::set<types::boundary_id> &);
   };
 } // namespace GridTools
 

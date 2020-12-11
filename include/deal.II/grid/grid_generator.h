@@ -32,6 +32,15 @@
 
 DEAL_II_NAMESPACE_OPEN
 
+#ifndef DOXYGEN
+// forward declarations
+namespace GridTools
+{
+  template <int volumedim, int spacedim>
+  class MappingVolumeSurface;
+}
+#endif
+
 /**
  * This namespace provides a collection of functions for generating
  * triangulations for some basic geometries.
@@ -2210,6 +2219,16 @@ namespace GridGenerator
                         MeshType<dim - 1, spacedim> &       surface_mesh,
                         const std::set<types::boundary_id> &boundary_ids =
                           std::set<types::boundary_id>());
+
+  /**
+   * TODO: Doc
+   */
+  template <int dim, int spacedim>
+  GridTools::MappingVolumeSurface<dim, spacedim>
+  extract_surface_mesh(const Triangulation<dim, spacedim> &volume,
+                       Triangulation<dim - 1, spacedim> &  surface,
+                       const std::set<types::boundary_id> &boundary_ids =
+                         std::set<types::boundary_id>());
 
   ///@}
 

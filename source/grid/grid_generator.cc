@@ -20,6 +20,7 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_reordering.h>
 #include <deal.II/grid/grid_tools.h>
+#include <deal.II/grid/grid_tools_mapping.h>
 #include <deal.II/grid/intergrid_map.h>
 #include <deal.II/grid/manifold_lib.h>
 #include <deal.II/grid/tria.h>
@@ -7376,6 +7377,23 @@ namespace GridGenerator
     return surface_to_volume_mapping;
   }
 
+
+
+  template <int dim, int spacedim>
+  GridTools::MappingVolumeSurface<dim, spacedim>
+  extract_surface_mesh(const Triangulation<dim, spacedim> &volume,
+                       Triangulation<dim - 1, spacedim> &  surface,
+                       const std::set<types::boundary_id> &boundary_ids)
+  {
+    (void)boundary_ids;
+
+    GridTools::MappingVolumeSurface<dim, spacedim> mapping(volume, surface);
+
+    // create surface triangulation
+    // ...
+
+    return mapping;
+  }
 } // namespace GridGenerator
 
 // explicit instantiations
