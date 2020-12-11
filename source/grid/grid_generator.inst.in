@@ -124,15 +124,6 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS)
       general_cell(Triangulation<deal_II_dimension, deal_II_space_dimension> &,
                    const std::vector<Point<deal_II_space_dimension>> &,
                    const bool);
-
-#  if deal_II_dimension > 1
-      template GridTools::MappingVolumeSurface<deal_II_dimension,
-                                               deal_II_space_dimension>
-      extract_surface_mesh(
-        const Triangulation<deal_II_dimension, deal_II_space_dimension> &volume,
-        Triangulation<deal_II_dimension - 1, deal_II_space_dimension> &surface,
-        const std::set<types::boundary_id> &boundary_ids);
-#  endif
 #endif
     \}
   }
@@ -162,6 +153,14 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
           Container<deal_II_dimension - 1, deal_II_space_dimension>
             &                                 boundary_mesh,
           const std::set<types::boundary_id> &boundary_ids);
+
+      template GridTools::MappingVolumeSurface<Container,
+                                               deal_II_dimension,
+                                               deal_II_space_dimension>
+      extract_surface_mesh(
+        const Container<deal_II_dimension, deal_II_space_dimension> &volume,
+        Container<deal_II_dimension - 1, deal_II_space_dimension> &  surface,
+        const std::set<types::boundary_id> &boundary_ids);
 #  endif
     \}
 #endif

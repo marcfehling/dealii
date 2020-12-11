@@ -23,7 +23,6 @@
 
 #include <deal.II/grid/cell_id.h>
 #include <deal.II/grid/grid_generator.h>
-#include <deal.II/grid/tria.h>
 
 #include <boost/signals2.hpp>
 
@@ -39,7 +38,9 @@ namespace GridTools
   /**
    * TODO: Doc
    */
-  template <int volumedim, int spacedim = volumedim>
+  template <template <int, int> class MeshType,
+            int volumedim,
+            int spacedim = volumedim>
   class MappingVolumeSurface : public Subscriptor
   {
   public:
@@ -53,8 +54,8 @@ namespace GridTools
     /**
      * Constructor.
      */
-    MappingVolumeSurface(const Triangulation<volumedim, spacedim> & volume,
-                         const Triangulation<surfacedim, spacedim> &surface);
+    MappingVolumeSurface(const MeshType<volumedim, spacedim> & volume,
+                         const MeshType<surfacedim, spacedim> &surface);
 
     /**
      * Destructor.
@@ -79,12 +80,12 @@ namespace GridTools
     /**
      * The volume triangulation.
      */
-    SmartPointer<const Triangulation<volumedim, spacedim>> volume;
+    SmartPointer<const MeshType<volumedim, spacedim>> volume;
 
     /**
      * The surface triangulation.
      */
-    SmartPointer<const Triangulation<surfacedim, spacedim>> surface;
+    SmartPointer<const MeshType<surfacedim, spacedim>> surface;
 
     /**
      * Volume to surface map.
@@ -97,34 +98,18 @@ namespace GridTools
     std::map<CellId, std::pair<CellId, unsigned int>> surface_to_volume;
 
     /**
-     * Connection to signal of volume triangulation.
-     */
-    boost::signals2::connection connection_to_volume;
-
-    /**
-     * Update volume.
+     * Update mapping after adaptation.
      */
     void
-    update_volume_faces();
-
-    /**
-     * Connection to signal of surface triangulation.
-     */
-    boost::signals2::connection connection_to_surface;
-
-    /**
-     * Update surface.
-     */
-    void
-    update_surface_cells();
+    update_mapping();
 
     /**
      * Allow the extracting function to access the internal mapping.
      */
-    friend MappingVolumeSurface<volumedim, spacedim>
-    GridGenerator::extract_surface_mesh<volumedim, spacedim>(
-      const Triangulation<volumedim, spacedim> &,
-      Triangulation<surfacedim, spacedim> &,
+    friend MappingVolumeSurface<MeshType, volumedim, spacedim>
+    GridGenerator::extract_surface_mesh<MeshType, volumedim, spacedim>(
+      const MeshType<volumedim, spacedim> &,
+      MeshType<surfacedim, spacedim> &,
       const std::set<types::boundary_id> &);
   };
 } // namespace GridTools

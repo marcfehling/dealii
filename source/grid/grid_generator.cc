@@ -7379,15 +7379,16 @@ namespace GridGenerator
 
 
 
-  template <int dim, int spacedim>
-  GridTools::MappingVolumeSurface<dim, spacedim>
-  extract_surface_mesh(const Triangulation<dim, spacedim> &volume,
-                       Triangulation<dim - 1, spacedim> &  surface,
+  template <template <int, int> class MeshType, int dim, int spacedim>
+  GridTools::MappingVolumeSurface<MeshType, dim, spacedim>
+  extract_surface_mesh(const MeshType<dim, spacedim> &     volume,
+                       MeshType<dim - 1, spacedim> &       surface,
                        const std::set<types::boundary_id> &boundary_ids)
   {
     (void)boundary_ids;
 
-    GridTools::MappingVolumeSurface<dim, spacedim> mapping(volume, surface);
+    GridTools::MappingVolumeSurface<MeshType, dim, spacedim> mapping(volume,
+                                                                     surface);
 
     // create surface triangulation
     // ...

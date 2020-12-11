@@ -36,7 +36,7 @@ DEAL_II_NAMESPACE_OPEN
 // forward declarations
 namespace GridTools
 {
-  template <int volumedim, int spacedim>
+  template <template <int, int> class MeshType, int volumedim, int spacedim>
   class MappingVolumeSurface;
 }
 #endif
@@ -2223,10 +2223,10 @@ namespace GridGenerator
   /**
    * TODO: Doc
    */
-  template <int dim, int spacedim>
-  GridTools::MappingVolumeSurface<dim, spacedim>
-  extract_surface_mesh(const Triangulation<dim, spacedim> &volume,
-                       Triangulation<dim - 1, spacedim> &  surface,
+  template <template <int, int> class MeshType, int dim, int spacedim>
+  GridTools::MappingVolumeSurface<MeshType, dim, spacedim>
+  extract_surface_mesh(const MeshType<dim, spacedim> &     volume,
+                       MeshType<dim - 1, spacedim> &       surface,
                        const std::set<types::boundary_id> &boundary_ids =
                          std::set<types::boundary_id>());
 
