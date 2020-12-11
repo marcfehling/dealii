@@ -19,9 +19,9 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
 #if deal_II_dimension > 1 && deal_II_dimension <= deal_II_space_dimension
     namespace GridTools
     \{
-      template class MappingVolumeSurface<Container,
-                                          deal_II_dimension,
-                                          deal_II_space_dimension>;
+      template class VolumeToSurfaceCellMap<
+        Container<deal_II_dimension, deal_II_space_dimension>,
+        Container<deal_II_dimension - 1, deal_II_space_dimension>>;
     \}
 #endif
   }

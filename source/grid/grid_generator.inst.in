@@ -154,9 +154,9 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS;
             &                                 boundary_mesh,
           const std::set<types::boundary_id> &boundary_ids);
 
-      template GridTools::MappingVolumeSurface<Container,
-                                               deal_II_dimension,
-                                               deal_II_space_dimension>
+      template GridTools::VolumeToSurfaceCellMap<
+        Container<deal_II_dimension, deal_II_space_dimension>,
+        Container<deal_II_dimension - 1, deal_II_space_dimension>>
       extract_surface_mesh(
         const Container<deal_II_dimension, deal_II_space_dimension> &volume,
         Container<deal_II_dimension - 1, deal_II_space_dimension> &  surface,

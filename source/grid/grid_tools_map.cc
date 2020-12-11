@@ -19,7 +19,7 @@
 
 #include <deal.II/dofs/dof_handler.h>
 
-#include <deal.II/grid/grid_tools_mapping.h>
+#include <deal.II/grid/grid_tools_map.h>
 #include <deal.II/grid/tria.h>
 
 #include <deal.II/hp/dof_handler.h>
@@ -30,25 +30,26 @@ DEAL_II_NAMESPACE_OPEN
 
 namespace GridTools
 {
-  template <template <int, int> class MeshType, int volumedim, int spacedim>
-  MappingVolumeSurface<MeshType, volumedim, spacedim>::MappingVolumeSurface(
-    const MeshType<volumedim, spacedim> & volume,
-    const MeshType<surfacedim, spacedim> &surface)
+  template <class VolumeMeshType, class SurfaceMeshType>
+  VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>::
+    VolumeToSurfaceCellMap(const VolumeMeshType & volume,
+                           const SurfaceMeshType &surface)
     : volume(&volume)
     , surface(&surface)
   {}
 
 
 
-  template <template <int, int> class MeshType, int volumedim, int spacedim>
-  MappingVolumeSurface<MeshType, volumedim, spacedim>::~MappingVolumeSurface()
+  template <class VolumeMeshType, class SurfaceMeshType>
+  VolumeToSurfaceCellMap<VolumeMeshType,
+                         SurfaceMeshType>::~VolumeToSurfaceCellMap()
   {}
 
 
 
-  template <template <int, int> class MeshType, int volumedim, int spacedim>
+  template <class VolumeMeshType, class SurfaceMeshType>
   CellId &
-  MappingVolumeSurface<MeshType, volumedim, spacedim>::get_surface_cell(
+  VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>::get_surface_cell(
     const std::pair<CellId, unsigned int> &volume_face)
   {
     return volume_to_surface[volume_face];
@@ -56,9 +57,20 @@ namespace GridTools
 
 
 
-  template <template <int, int> class MeshType, int volumedim, int spacedim>
+  template <class VolumeMeshType, class SurfaceMeshType>
+  CellId &
+  VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>::get_surface_cell(
+    const CellId &     volume_cell,
+    const unsigned int face_number)
+  {
+    return get_surface_cell({volume_cell, face_number});
+  }
+
+
+
+  template <class VolumeMeshType, class SurfaceMeshType>
   std::pair<CellId, unsigned int> &
-  MappingVolumeSurface<MeshType, volumedim, spacedim>::get_volume_face(
+  VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>::get_volume_face(
     const CellId &surface_cell)
   {
     return surface_to_volume[surface_cell];
@@ -66,9 +78,9 @@ namespace GridTools
 
 
 
-  template <template <int, int> class MeshType, int volumedim, int spacedim>
+  template <class VolumeMeshType, class SurfaceMeshType>
   void
-  MappingVolumeSurface<MeshType, volumedim, spacedim>::update_mapping()
+  VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>::update_maps()
   {
     // update volume_to_surface map
     // ...
@@ -80,6 +92,6 @@ namespace GridTools
 
 
 // explicit instantiations
-#include "grid_tools_mapping.inst"
+#include "grid_tools_map.inst"
 
 DEAL_II_NAMESPACE_CLOSE

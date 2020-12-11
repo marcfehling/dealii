@@ -37,7 +37,7 @@ SET(_separate_src
   grid_generator.cc
   grid_tools.cc
   grid_tools_cache.cc
-  grid_tools_mapping.cc
+  grid_tools_map.cc
   grid_tools_nontemplates.cc
   grid_tools_dof_handlers.cc
   tria.cc
@@ -62,7 +62,7 @@ SET(_inst
   grid_tools.inst.in
   grid_tools_dof_handlers.inst.in
   grid_tools_cache.inst.in
-  grid_tools_mapping.inst.in
+  grid_tools_map.inst.in
   intergrid_map.inst.in
   manifold.inst.in
   manifold_lib.inst.in

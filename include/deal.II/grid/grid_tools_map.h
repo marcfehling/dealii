@@ -24,7 +24,7 @@
 #include <deal.II/grid/cell_id.h>
 #include <deal.II/grid/grid_generator.h>
 
-#include <boost/signals2.hpp>
+// #include <boost/signals2.hpp>
 
 #include <map>
 #include <utility>
@@ -38,29 +38,38 @@ namespace GridTools
   /**
    * TODO: Doc
    */
-  template <template <int, int> class MeshType,
-            int volumedim,
-            int spacedim = volumedim>
-  class MappingVolumeSurface : public Subscriptor
+  template <class VolumeMeshType, class SurfaceMeshType>
+  class VolumeToSurfaceCellMap : public Subscriptor
   {
   public:
     /**
      * Dimension of the surface triangulation has to be one lower than the
      * surface triangulation.
      */
-    static constexpr unsigned int surfacedim = volumedim - 1;
-    static_assert(surfacedim > 0, "Surfaces must be at least one dimensional");
+    static_assert(
+      VolumeMeshType::dimension == SurfaceMeshType::dimension + 1,
+      "Dimension of volume and surface meshes do not fulfil the codim 1 criterion.");
+    static_assert(
+      VolumeMeshType::space_dimension == SurfaceMeshType::space_dimension,
+      "Space dimensions of volume and surface meshes do not match.");
 
     /**
-     * Constructor.
+     * Extract dimension parameters.
      */
-    MappingVolumeSurface(const MeshType<volumedim, spacedim> & volume,
-                         const MeshType<surfacedim, spacedim> &surface);
+    static constexpr unsigned int volumedim  = VolumeMeshType::dimension;
+    static constexpr unsigned int surfacedim = SurfaceMeshType::dimension;
+    static constexpr unsigned int spacedim   = VolumeMeshType::space_dimension;
 
     /**
      * Destructor.
      */
-    ~MappingVolumeSurface();
+    ~VolumeToSurfaceCellMap();
+
+    /**
+     * Update mapping after adaptation.
+     */
+    void
+    update_maps();
 
     /**
      * Get surface cell.
@@ -68,6 +77,11 @@ namespace GridTools
     CellId &
     get_surface_cell(const std::pair<CellId, unsigned int> &volume_face);
 
+    /**
+     * Same as above, but for two separate parameters.
+     */
+    CellId &
+    get_surface_cell(const CellId &volume_cell, const unsigned int face_number);
 
     /**
      * Get volume face.
@@ -78,14 +92,23 @@ namespace GridTools
 
   private:
     /**
+     * Private constructor.
+     *
+     * Objects of this class will only be constructed during
+     * GridGenerator::extract_surface_mesh().
+     */
+    VolumeToSurfaceCellMap(const VolumeMeshType & volume,
+                           const SurfaceMeshType &surface);
+
+    /**
      * The volume triangulation.
      */
-    SmartPointer<const MeshType<volumedim, spacedim>> volume;
+    SmartPointer<const VolumeMeshType> volume;
 
     /**
      * The surface triangulation.
      */
-    SmartPointer<const MeshType<surfacedim, spacedim>> surface;
+    SmartPointer<const SurfaceMeshType> surface;
 
     /**
      * Volume to surface map.
@@ -98,18 +121,12 @@ namespace GridTools
     std::map<CellId, std::pair<CellId, unsigned int>> surface_to_volume;
 
     /**
-     * Update mapping after adaptation.
-     */
-    void
-    update_mapping();
-
-    /**
      * Allow the extracting function to access the internal mapping.
      */
-    friend MappingVolumeSurface<MeshType, volumedim, spacedim>
-    GridGenerator::extract_surface_mesh<MeshType, volumedim, spacedim>(
-      const MeshType<volumedim, spacedim> &,
-      MeshType<surfacedim, spacedim> &,
+    friend VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>
+    GridGenerator::extract_surface_mesh<VolumeMeshType, SurfaceMeshType>(
+      const VolumeMeshType &,
+      SurfaceMeshType &,
       const std::set<types::boundary_id> &);
   };
 } // namespace GridTools

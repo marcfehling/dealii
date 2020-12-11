@@ -20,7 +20,7 @@
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_reordering.h>
 #include <deal.II/grid/grid_tools.h>
-#include <deal.II/grid/grid_tools_mapping.h>
+#include <deal.II/grid/grid_tools_map.h>
 #include <deal.II/grid/intergrid_map.h>
 #include <deal.II/grid/manifold_lib.h>
 #include <deal.II/grid/tria.h>
@@ -7379,16 +7379,23 @@ namespace GridGenerator
 
 
 
-  template <template <int, int> class MeshType, int dim, int spacedim>
-  GridTools::MappingVolumeSurface<MeshType, dim, spacedim>
-  extract_surface_mesh(const MeshType<dim, spacedim> &     volume,
-                       MeshType<dim - 1, spacedim> &       surface,
+  template <class VolumeMeshType, class SurfaceMeshType>
+  GridTools::VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType>
+  extract_surface_mesh(const VolumeMeshType &              volume,
+                       SurfaceMeshType &                   surface,
                        const std::set<types::boundary_id> &boundary_ids)
   {
+    static_assert(
+      VolumeMeshType::dimension == SurfaceMeshType::dimension + 1,
+      "Dimension of volume and surface meshes do not fulfil the codim 1 criterion.");
+    static_assert(
+      VolumeMeshType::space_dimension == SurfaceMeshType::space_dimension,
+      "Space dimensions of volume and surface meshes do not match.");
+
     (void)boundary_ids;
 
-    GridTools::MappingVolumeSurface<MeshType, dim, spacedim> mapping(volume,
-                                                                     surface);
+    GridTools::VolumeToSurfaceCellMap<VolumeMeshType, SurfaceMeshType> mapping(
+      volume, surface);
 
     // create surface triangulation
     // ...
