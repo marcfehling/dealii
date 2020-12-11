@@ -41,24 +41,28 @@ namespace GridTools
   template <class VolumeMeshType, class SurfaceMeshType>
   class VolumeToSurfaceCellMap : public Subscriptor
   {
-  public:
-    /**
-     * Dimension of the surface triangulation has to be one lower than the
-     * surface triangulation.
-     */
     static_assert(
       VolumeMeshType::dimension == SurfaceMeshType::dimension + 1,
-      "Dimension of volume and surface meshes do not fulfil the codim 1 criterion.");
-    static_assert(
-      VolumeMeshType::space_dimension == SurfaceMeshType::space_dimension,
-      "Space dimensions of volume and surface meshes do not match.");
+      "Dimensions of volume and surface mesh do not have codimension 1.");
+    static_assert(VolumeMeshType::space_dimension ==
+                    SurfaceMeshType::space_dimension,
+                  "Space dimensions of volume and surface mesh do not match.");
+
+  public:
+    /**
+     * The dimension of the volume mesh.
+     */
+    static constexpr unsigned int volumedim = VolumeMeshType::dimension;
 
     /**
-     * Extract dimension parameters.
+     * The dimension of the surface mesh.
      */
-    static constexpr unsigned int volumedim  = VolumeMeshType::dimension;
     static constexpr unsigned int surfacedim = SurfaceMeshType::dimension;
-    static constexpr unsigned int spacedim   = VolumeMeshType::space_dimension;
+
+    /**
+     * The space dimension of both volume and surface meshes.
+     */
+    static constexpr unsigned int spacedim = VolumeMeshType::space_dimension;
 
     /**
      * Destructor.
@@ -88,7 +92,6 @@ namespace GridTools
      */
     std::pair<CellId, unsigned int> &
     get_volume_face(const CellId &surface_cell);
-
 
   private:
     /**

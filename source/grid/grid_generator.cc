@@ -7387,10 +7387,10 @@ namespace GridGenerator
   {
     static_assert(
       VolumeMeshType::dimension == SurfaceMeshType::dimension + 1,
-      "Dimension of volume and surface meshes do not fulfil the codim 1 criterion.");
-    static_assert(
-      VolumeMeshType::space_dimension == SurfaceMeshType::space_dimension,
-      "Space dimensions of volume and surface meshes do not match.");
+      "Dimensions of volume and surface mesh do not have codimension 1.");
+    static_assert(VolumeMeshType::space_dimension ==
+                    SurfaceMeshType::space_dimension,
+                  "Space dimensions of volume and surface mesh do not match.");
 
     (void)boundary_ids;
 
