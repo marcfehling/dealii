@@ -255,7 +255,10 @@ namespace Step75
     SmootherParameters     smoother;
     CoarseSolverParameters coarse_solver;
 
-    std::string p_sequence = "decreasebyone"; // TODO
+    MGTransferGlobalCoarseningTools::PolynomialSequenceType p_sequence =
+      MGTransferGlobalCoarseningTools::PolynomialSequenceType::decrease_by_one;
+
+    bool perform_h_transfer = true;
   };
 
 
@@ -693,13 +696,13 @@ namespace Step75
     // This function loops over all cell batches within a cell-batch range and
     // calls the above function.
     void do_cell_integral_range(
-      const dealii::MatrixFree<dim, number> &      matrix_free,
+      const MatrixFree<dim, number> &              matrix_free,
       VectorType &                                 dst,
       const VectorType &                           src,
       const std::pair<unsigned int, unsigned int> &range) const;
 
     // MatrixFree object.
-    dealii::MatrixFree<dim, number> matrix_free;
+    MatrixFree<dim, number> matrix_free;
 
     // Constraints potentially needed for the computation of the system matrix.
     AffineConstraints<number> constraints;
@@ -757,7 +760,7 @@ namespace Step75
       this->initialize_dof_vector(b);
       this->initialize_dof_vector(x);
 
-      dealii::MatrixFree<dim, number> matrix_free;
+      MatrixFree<dim, number> matrix_free;
       matrix_free.reinit(
         mapping, dof_handler, constraints_without_dbc, quad, data);
 
@@ -886,7 +889,7 @@ namespace Step75
 
   template <int dim, typename number>
   void LaplaceOperatorMatrixFree<dim, number>::do_cell_integral_range(
-    const dealii::MatrixFree<dim, number> &      matrix_free,
+    const MatrixFree<dim, number> &              matrix_free,
     VectorType &                                 dst,
     const VectorType &                           src,
     const std::pair<unsigned int, unsigned int> &range) const
@@ -980,13 +983,23 @@ namespace Step75
                    const DoFHandler<dim> &          dof_handler,
                    const hp::QCollection<dim> &     quadrature_collection)
     {
-      // parameters
-      const GMGParameters mg_data; // TODO
+      const GMGParameters mg_data; // TODO -> MF
 
-      // TODO
+      // Create a DoFHandler and operator for each multigrid level defined
+      // by p-coarsening, as well as, create transfer operators.
       MGLevelObject<DoFHandler<dim>>                     dof_handlers;
       MGLevelObject<Operator>                            operators;
       MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
+
+      MGLevelObject<std::shared_ptr<Triangulation<dim>>>
+        coarse_grid_triangulations;
+
+      if (mg_data.perform_h_transfer)
+        MGTransferGlobalCoarseningTools::create_global_coarsening_sequence(
+          coarse_grid_triangulations, dof_handler.get_triangulation());
+
+      const unsigned int n_h_levels = coarse_grid_triangulations.max_level() -
+                                      coarse_grid_triangulations.min_level();
 
       // Determine the number of levels.
       const auto get_max_active_fe_index = [&](const auto &dof_handler) {
@@ -1001,24 +1014,33 @@ namespace Step75
         return Utilities::MPI::max(min, MPI_COMM_WORLD);
       };
 
-      const unsigned int n_levels =
-        create_p_sequence(get_max_active_fe_index(dof_handler) + 1,
-                          mg_data.p_sequence)
+      const unsigned int n_p_levels =
+        MGTransferGlobalCoarseningTools::create_p_sequence(
+          get_max_active_fe_index(dof_handler) + 1, mg_data.p_sequence)
           .size();
 
-      unsigned int minlevel = 0;
-      unsigned int maxlevel = n_levels - 1;
+      unsigned int minlevel   = 0;
+      unsigned int minlevel_p = n_h_levels;
+      unsigned int maxlevel   = n_h_levels + n_p_levels - 1;
 
       // Allocate memory for all levels.
-      dof_handlers.resize(minlevel, maxlevel, dof_handler.get_triangulation());
+      dof_handlers.resize(minlevel, maxlevel);
       operators.resize(minlevel, maxlevel);
       transfers.resize(minlevel, maxlevel);
 
-      // Loop from max to min level and set up DoFHandler with lower polynomial
-      // degrees.
-      for (unsigned int i = 0, l = maxlevel; i < n_levels; ++i, --l)
+      // Loop from max to min level and set up DoFHandler with coarser mesh...
+      for (unsigned int l = 0; l < n_h_levels; ++l)
         {
-          if (l == maxlevel) // set FEs on finest level
+          dof_handlers[l].reinit(*coarse_grid_triangulations[l]);
+          dof_handlers[l].distribute_dofs(dof_handler.get_fe_collection());
+        }
+
+      // ... with lower polynomial degrees
+      for (unsigned int i = 0, l = maxlevel; i < n_p_levels; ++i, --l)
+        {
+          dof_handlers[l].reinit(dof_handler.get_triangulation());
+
+          if (l == maxlevel) // finest level
             {
               auto &dof_handler_mg = dof_handlers[l];
 
@@ -1030,7 +1052,7 @@ namespace Step75
                   cell_other++;
                 }
             }
-          else // set FEs on coarse level
+          else // coarse level
             {
               auto &dof_handler_fine   = dof_handlers[l + 1];
               auto &dof_handler_coarse = dof_handlers[l + 0];
@@ -1040,14 +1062,13 @@ namespace Step75
                 {
                   if (cell->is_locally_owned())
                     cell->set_active_fe_index(
-                      generate_level_degree(cell_other->active_fe_index() + 1,
-                                            mg_data.p_sequence) -
+                      MGTransferGlobalCoarseningTools::generate_level_degree(
+                        cell_other->active_fe_index() + 1, mg_data.p_sequence) -
                       1);
                   cell_other++;
                 }
             }
 
-          // create dof_handler
           dof_handlers[l].distribute_dofs(dof_handler.get_fe_collection());
         }
 
@@ -1086,7 +1107,13 @@ namespace Step75
         }
 
       // Set up intergrid operators.
-      for (unsigned int level = minlevel; level < maxlevel; level++)
+      for (unsigned int level = minlevel; level < minlevel_p; ++level)
+        transfers[level + 1].reinit_geometric_transfer(dof_handlers[level + 1],
+                                                       dof_handlers[level],
+                                                       constraints[level + 1],
+                                                       constraints[level]);
+
+      for (unsigned int level = minlevel_p; level < maxlevel; ++level)
         transfers[level + 1].reinit_polynomial_transfer(dof_handlers[level + 1],
                                                         dof_handlers[level],
                                                         constraints[level + 1],
@@ -1128,25 +1155,22 @@ namespace Step75
       const unsigned int max_level = mg_matrices.max_level();
 
       using Number                     = typename VectorType::value_type;
-      using SmootherPreconditionerType = dealii::DiagonalMatrix<VectorType>;
+      using SmootherPreconditionerType = DiagonalMatrix<VectorType>;
       using SmootherType               = PreconditionChebyshev<LevelMatrixType,
                                                  VectorType,
                                                  SmootherPreconditionerType>;
-
       using PreconditionerType =
-        dealii::PreconditionMG<dim, VectorType, MGTransferType>;
+        PreconditionMG<dim, VectorType, MGTransferType>;
 
-      // 1) initialize level mg_matrices
-      dealii::mg::Matrix<VectorType> mg_matrix(mg_matrices);
+      // Initialize level operators.
+      mg::Matrix<VectorType> mg_matrix(mg_matrices);
 
-      // 2) initialize smoothers
-      dealii::MGLevelObject<typename SmootherType::AdditionalData>
-        smoother_data(min_level, max_level);
+      // Initialize smoothers.
+      MGLevelObject<typename SmootherType::AdditionalData> smoother_data(
+        min_level, max_level);
 
-      // ... initialize levels
       for (unsigned int level = min_level; level <= max_level; level++)
         {
-          // ... initialize smoother
           smoother_data[level].preconditioner =
             std::make_shared<SmootherPreconditionerType>();
           mg_matrices[level].compute_inverse_diagonal(
@@ -1158,47 +1182,42 @@ namespace Step75
             mg_data.smoother.eig_cg_n_iterations;
         }
 
-      // ... collect in one object
-      dealii::MGSmootherPrecondition<LevelMatrixType, SmootherType, VectorType>
+      MGSmootherPrecondition<LevelMatrixType, SmootherType, VectorType>
         mg_smoother;
       mg_smoother.initialize(mg_matrices, smoother_data);
 
-      // 3) initialize coarse-grid solver
-      dealii::ReductionControl coarse_grid_solver_control(
-        mg_data.coarse_solver.maxiter,
-        mg_data.coarse_solver.abstol,
-        mg_data.coarse_solver.reltol,
-        false,
-        false);
-      dealii::SolverCG<VectorType> coarse_grid_solver(
-        coarse_grid_solver_control);
+      // Initialize coarse-grid solver.
+      ReductionControl coarse_grid_solver_control(mg_data.coarse_solver.maxiter,
+                                                  mg_data.coarse_solver.abstol,
+                                                  mg_data.coarse_solver.reltol,
+                                                  false,
+                                                  false);
+      SolverCG<VectorType> coarse_grid_solver(coarse_grid_solver_control);
 
       PreconditionIdentity precondition_identity;
       PreconditionChebyshev<LevelMatrixType,
                             VectorType,
-                            dealii::DiagonalMatrix<VectorType>>
+                            DiagonalMatrix<VectorType>>
         precondition_chebyshev;
 
 #ifdef DEAL_II_WITH_TRILINOS
       TrilinosWrappers::PreconditionAMG precondition_amg;
 #endif
 
-      std::shared_ptr<MGCoarseGridBase<VectorType>> mg_coarse;
+      std::unique_ptr<MGCoarseGridBase<VectorType>> mg_coarse;
 
       if (mg_data.coarse_solver.type == "cg")
         {
           // CG with identity matrix as preconditioner
-          auto temp = new dealii::MGCoarseGridIterativeSolver<
-            VectorType,
-            dealii::SolverCG<VectorType>,
-            LevelMatrixType,
-            PreconditionIdentity>();
 
-          temp->initialize(coarse_grid_solver,
-                           mg_matrices[min_level],
-                           precondition_identity);
-
-          mg_coarse.reset(temp);
+          mg_coarse =
+            std::make_unique<MGCoarseGridIterativeSolver<VectorType,
+                                                         SolverCG<VectorType>,
+                                                         LevelMatrixType,
+                                                         PreconditionIdentity>>(
+              coarse_grid_solver,
+              mg_matrices[min_level],
+              precondition_identity);
         }
       else if (mg_data.coarse_solver.type == "cg_with_chebyshev")
         {
@@ -1207,7 +1226,7 @@ namespace Step75
           typename SmootherType::AdditionalData smoother_data;
 
           smoother_data.preconditioner =
-            std::make_shared<dealii::DiagonalMatrix<VectorType>>();
+            std::make_shared<DiagonalMatrix<VectorType>>();
           mg_matrices[min_level].compute_inverse_diagonal(
             smoother_data.preconditioner->get_vector());
           smoother_data.smoothing_range = mg_data.smoother.smoothing_range;
@@ -1218,20 +1237,17 @@ namespace Step75
           precondition_chebyshev.initialize(mg_matrices[min_level],
                                             smoother_data);
 
-          auto temp = new dealii::MGCoarseGridIterativeSolver<
-            VectorType,
-            dealii::SolverCG<VectorType>,
-            LevelMatrixType,
-            decltype(precondition_chebyshev)>();
-
-          temp->initialize(coarse_grid_solver,
-                           mg_matrices[min_level],
-                           precondition_chebyshev);
-
-          mg_coarse.reset(temp);
+          mg_coarse = std::make_unique<
+            MGCoarseGridIterativeSolver<VectorType,
+                                        SolverCG<VectorType>,
+                                        LevelMatrixType,
+                                        decltype(precondition_chebyshev)>>(
+            coarse_grid_solver, mg_matrices[min_level], precondition_chebyshev);
         }
       else if (mg_data.coarse_solver.type == "cg_with_amg")
         {
+          // CG with AMG as preconditioner
+
 #ifdef DEAL_II_WITH_TRILINOS
           TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
           amg_data.smoother_sweeps = mg_data.coarse_solver.smoother_sweeps;
@@ -1242,17 +1258,12 @@ namespace Step75
           precondition_amg.initialize(
             mg_matrices[min_level].get_system_matrix(), amg_data);
 
-          auto temp = new dealii::MGCoarseGridIterativeSolver<
-            VectorType,
-            dealii::SolverCG<VectorType>,
-            LevelMatrixType,
-            decltype(precondition_amg)>();
-
-          temp->initialize(coarse_grid_solver,
-                           mg_matrices[min_level],
-                           precondition_amg);
-
-          mg_coarse.reset(temp);
+          mg_coarse = std::make_unique<
+            MGCoarseGridIterativeSolver<VectorType,
+                                        SolverCG<VectorType>,
+                                        LevelMatrixType,
+                                        decltype(precondition_amg)>>(
+            coarse_grid_solver, mg_matrices[min_level], precondition_amg);
 #else
           AssertThrow(false, ExcNotImplemented());
 #endif
@@ -1262,54 +1273,16 @@ namespace Step75
           AssertThrow(false, ExcNotImplemented());
         }
 
-      // 4) create multigrid object
+      // Create multigrid object.
       Multigrid<VectorType> mg(
         mg_matrix, *mg_coarse, mg_transfer, mg_smoother, mg_smoother);
 
-      // 5) convert it to a preconditioner
+      // Convert it to a preconditioner.
       PreconditionerType preconditioner(dof, mg, mg_transfer);
 
-      // 6) solve with CG preconditioned with multigrid
-      dealii::SolverCG<VectorType> solver(solver_control);
-
-      solver.solve(fine_matrix, dst, src, preconditioner);
-    }
-
-    static unsigned int
-    generate_level_degree(const unsigned int previous_fe_degree,
-                          const std::string &p_sequence)
-    {
-      if (p_sequence == "bisect")
-        return std::max(previous_fe_degree / 2, 1u);
-      else if (p_sequence == "decreasebyone")
-        return std::max(previous_fe_degree - 1, 1u);
-      else if (p_sequence == "gotoone")
-        return 1u;
-
-      Assert(false, StandardExceptions::ExcNotImplemented());
-
-      return 1;
-    }
-
-    static std::vector<unsigned int>
-    create_p_sequence(const unsigned int degree, const std::string p_sequence)
-    {
-      std::vector<unsigned int> degrees;
-      degrees.push_back(degree);
-
-      unsigned int previous_fe_degree = degree;
-      while (previous_fe_degree > 1)
-        {
-          const unsigned int level_degree =
-            generate_level_degree(previous_fe_degree, p_sequence);
-
-          degrees.push_back(level_degree);
-          previous_fe_degree = level_degree;
-        }
-
-      std::reverse(degrees.begin(), degrees.end());
-
-      return degrees;
+      // Finally, solve.
+      SolverCG<VectorType>(solver_control)
+        .solve(fine_matrix, dst, src, preconditioner);
     }
   };
 
