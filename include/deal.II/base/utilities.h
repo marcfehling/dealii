@@ -1259,9 +1259,9 @@ namespace Utilities
 
   template <typename T, typename Container>
   T
-  unpack(const Container::const_iterator &cbegin,
-         const Container::const_iterator &cend,
-         const bool                       allow_compression)
+  unpack(const typename Container::const_iterator &cbegin,
+         const typename Container::const_iterator &cend,
+         const bool                                allow_compression)
   {
     T object;
 
@@ -1331,8 +1331,8 @@ namespace Utilities
 
   template <typename T, int N, typename Container>
   void
-  unpack(const Container::const_iterator &cbegin,
-         const Container::const_iterator &cend,
+  unpack(const typename Container::const_iterator &cbegin,
+         const typename Container::const_iterator &cend,
          T (&unpacked_object)[N],
          const bool allow_compression)
   {
