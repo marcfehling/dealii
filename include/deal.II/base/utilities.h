@@ -1177,11 +1177,9 @@ namespace Utilities
 
   // --------------------- non-inline functions
 
-  template <typename T>
+  template <typename T, typename Container>
   size_t
-  pack(const T &          object,
-       std::vector<char> &dest_buffer,
-       const bool         allow_compression)
+  pack(const T &object, Container &dest_buffer, const bool allow_compression)
   {
     // the data is never compressed when we can't use zlib.
     (void)allow_compression;
@@ -1249,21 +1247,21 @@ namespace Utilities
   }
 
 
-  template <typename T>
-  std::vector<char>
+  template <typename T, typename Container = std::vector<char>>
+  Container
   pack(const T &object, const bool allow_compression)
   {
-    std::vector<char> buffer;
-    pack<T>(object, buffer, allow_compression);
+    Container buffer;
+    pack<T, Container>(object, buffer, allow_compression);
     return buffer;
   }
 
 
-  template <typename T>
+  template <typename T, typename Container>
   T
-  unpack(const std::vector<char>::const_iterator &cbegin,
-         const std::vector<char>::const_iterator &cend,
-         const bool                               allow_compression)
+  unpack(const Container::const_iterator &cbegin,
+         const Container::const_iterator &cend,
+         const bool                       allow_compression)
   {
     T object;
 
@@ -1321,18 +1319,20 @@ namespace Utilities
   }
 
 
-  template <typename T>
+  template <typename T, typename Container>
   T
-  unpack(const std::vector<char> &buffer, const bool allow_compression)
+  unpack(const Container &buffer, const bool allow_compression)
   {
-    return unpack<T>(buffer.cbegin(), buffer.cend(), allow_compression);
+    return unpack<T, Container>(buffer.cbegin(),
+                                buffer.cend(),
+                                allow_compression);
   }
 
 
-  template <typename T, int N>
+  template <typename T, int N, typename Container>
   void
-  unpack(const std::vector<char>::const_iterator &cbegin,
-         const std::vector<char>::const_iterator &cend,
+  unpack(const Container::const_iterator &cbegin,
+         const Container::const_iterator &cend,
          T (&unpacked_object)[N],
          const bool allow_compression)
   {
@@ -1385,16 +1385,16 @@ namespace Utilities
   }
 
 
-  template <typename T, int N>
+  template <typename T, int N, typename Container>
   void
-  unpack(const std::vector<char> &buffer,
+  unpack(const Container &buffer,
          T (&unpacked_object)[N],
          const bool allow_compression)
   {
-    unpack<T, N>(buffer.cbegin(),
-                 buffer.cend(),
-                 unpacked_object,
-                 allow_compression);
+    unpack<T, N, Container>(buffer.cbegin(),
+                            buffer.cend(),
+                            unpacked_object,
+                            allow_compression);
   }
 
 

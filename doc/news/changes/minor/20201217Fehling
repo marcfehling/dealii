@@ -1,0 +1,4 @@
+New: Utilities::pack() und Utilities::unpack() now allow to use general
+container types as buffers for serialization.
+<br>
+(Marc Fehling, 2020/12/17)
