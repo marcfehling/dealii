@@ -288,7 +288,7 @@ namespace parallel
       std::vector<::dealii::Vector<typename VectorType::value_type>> dof_values(
         input_vectors.size());
 
-      unsigned int fe_index = 0;
+      unsigned int fe_index = DoFHandlerType::default_fe_index;
       if (dof_handler->has_hp_capabilities())
         {
           switch (status)
@@ -328,6 +328,15 @@ namespace parallel
             }
         }
 
+      // check that the continuity requirements of active and future finite
+      // elements are compatible
+      Assert(dof_handler->get_fe(fe_index).compare_for_domination(
+               cell->get_fe()) != FiniteElementDomination::no_requirements,
+             ExcMessage(
+               "You are about to interpolate your solution onto a "
+               "finite element with different continuity requirements. "
+               "This is not allowed and will result in undefined behavior!"));
+
       const unsigned int dofs_per_cell =
         dof_handler->get_fe(fe_index).n_dofs_per_cell();
 
@@ -362,7 +371,7 @@ namespace parallel
     {
       typename DoFHandlerType::cell_iterator cell(*cell_, dof_handler);
 
-      unsigned int fe_index = 0;
+      unsigned int fe_index = DoFHandlerType::default_fe_index;
       if (dof_handler->has_hp_capabilities())
         {
           switch (status)

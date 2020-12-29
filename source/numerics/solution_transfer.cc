@@ -160,6 +160,17 @@ SolutionTransfer<dim, VectorType, DoFHandlerType>::refine_interpolate(
         {
           const unsigned int this_fe_index =
             pointerstruct->second.active_fe_index;
+
+          // check that the continuity requirements of active and future
+          // finite elements are compatible
+          Assert(
+            cell->get_fe().compare_for_domination(dof_handler->get_fe(
+              this_fe_index)) != FiniteElementDomination::no_requirements,
+            ExcMessage(
+              "You are about to interpolate your solution onto a "
+              "finite element with different continuity requirements. "
+              "This is not allowed and will result in undefined behavior!"));
+
           const unsigned int dofs_per_cell =
             cell->get_dof_handler().get_fe(this_fe_index).n_dofs_per_cell();
           local_values.reinit(dofs_per_cell, true);
@@ -471,6 +482,16 @@ SolutionTransfer<dim, VectorType, DoFHandlerType>::interpolate(
               const unsigned int old_fe_index =
                 pointerstruct->second.active_fe_index;
 
+              // check that the continuity requirements of active and future
+              // finite elements are compatible
+              Assert(
+                cell->get_fe().compare_for_domination(dof_handler->get_fe(
+                  old_fe_index)) != FiniteElementDomination::no_requirements,
+                ExcMessage(
+                  "You are about to interpolate your solution onto a "
+                  "finite element with different continuity requirements. "
+                  "This is not allowed and will result in undefined behavior!"));
+
               // get the values of each of the input data vectors on this cell
               // and prolong it to its children
               unsigned int in_size = indexptr->size();
@@ -513,6 +534,18 @@ SolutionTransfer<dim, VectorType, DoFHandlerType>::interpolate(
                     {
                       const unsigned int old_index =
                         pointerstruct->second.active_fe_index;
+
+                      // check that the continuity requirements of active and
+                      // future finite elements are compatible
+                      Assert(
+                        cell->get_fe().compare_for_domination(
+                          dof_handler->get_fe(old_index)) !=
+                          FiniteElementDomination::no_requirements,
+                        ExcMessage(
+                          "You are about to interpolate your solution onto a "
+                          "finite element with different continuity requirements. "
+                          "This is not allowed and will result in undefined behavior!"));
+
                       const FullMatrix<double> &interpolation_matrix =
                         interpolation_hp(active_fe_index, old_index);
                       // The interpolation matrix might be empty when using
