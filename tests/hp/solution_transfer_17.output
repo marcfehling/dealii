@@ -1,0 +1,31 @@
+
+DEAL::FE_Nothing dominates: false
+DEAL:1d::pre-refinement constraints:
+DEAL:1d::ExcMessage
+DEAL:2d::pre-refinement constraints:
+DEAL:2d::ExcMessage
+DEAL:3d::pre-refinement constraints:
+DEAL:3d::ExcMessage
+DEAL::FE_Nothing dominates: true
+DEAL:1d::pre-refinement constraints:
+    1 :  0
+DEAL:1d::post-refinement dof values:
+DEAL:1d::cell 0: 0 0
+DEAL:1d::cell 1: 0 1
+DEAL:1d::OK
+DEAL:2d::pre-refinement constraints:
+    1 :  0
+    3 :  0
+DEAL:2d::post-refinement dof values:
+DEAL:2d::cell 0: 0 0 0 0
+DEAL:2d::cell 1: 0 1 0 1
+DEAL:2d::OK
+DEAL:3d::pre-refinement constraints:
+    1 :  0
+    3 :  0
+    5 :  0
+    7 :  0
+DEAL:3d::post-refinement dof values:
+DEAL:3d::cell 0: 0 0 0 0 0 0 0 0
+DEAL:3d::cell 1: 0 1 0 1 0 1 0 1
+DEAL:3d::OK
