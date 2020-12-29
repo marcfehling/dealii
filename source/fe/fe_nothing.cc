@@ -14,6 +14,9 @@
 // ---------------------------------------------------------------------
 
 
+#include <deal.II/fe/fe_dgp_monomial.h>
+#include <deal.II/fe/fe_dgp_nonparametric.h>
+#include <deal.II/fe/fe_dgq.h>
 #include <deal.II/fe/fe_nothing.h>
 
 #include <memory>
@@ -221,16 +224,33 @@ operator==(const FiniteElement<dim, spacedim> &f) const
 template <int dim, int spacedim>
 FiniteElementDomination::Domination
 FE_Nothing<dim, spacedim>::compare_for_domination(
-  const FiniteElement<dim, spacedim> &fe,
+  const FiniteElement<dim, spacedim> &fe_other,
   const unsigned int                  codim) const
 {
   Assert(codim <= dim, ExcImpossibleInDim(dim));
-  (void)codim;
 
   if (!dominate)
     // if FE_Nothing does not dominate, there are no requirements
     return FiniteElementDomination::no_requirements;
-  else if (dynamic_cast<const FE_Nothing<dim> *>(&fe) != nullptr)
+
+  // vertex/line/face domination
+  // (if fe_other is derived from FE_DGQ,
+  //  FE_DGPMonomial, FE_DGPNonparametric)
+  // -------------------------------------
+  if (codim > 0)
+    if ((dynamic_cast<const FE_DGQ<dim, spacedim> *>(&fe_other) != nullptr) ||
+        (dynamic_cast<const FE_DGPMonomial<dim> *>(&fe_other) != nullptr) ||
+        (dynamic_cast<const FE_DGPNonparametric<dim, spacedim> *>(&fe_other) !=
+         nullptr))
+      // there are no requirements with discontinuous elements
+      return FiniteElementDomination::no_requirements;
+
+  // vertex/line/face domination
+  // (if fe_other is not derived from FE_DGQ,
+  //  FE_DGPMonomial, FE_DGPNonparametric)
+  // & cell domination
+  // ----------------------------------------
+  if (dynamic_cast<const FE_Nothing<dim> *>(&fe_other) != nullptr)
     // if it does and the other is FE_Nothing, either can dominate
     return FiniteElementDomination::either_element_can_dominate;
   else
