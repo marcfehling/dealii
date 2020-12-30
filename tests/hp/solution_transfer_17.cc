@@ -84,7 +84,7 @@ test(const bool fe_nothing_dominates)
   Vector<double> solution(dofh.n_dofs());
   VectorTools::project(dofh,
                        constraints,
-                       hp::QCollection<dim>(QGauss<dim>(2), Quadrature<dim>(0)),
+                       hp::QCollection<dim>(QGauss<dim>(2), Quadrature<dim>(1)),
                        Functions::ConstantFunction<dim>(1.),
                        solution);
 
@@ -121,6 +121,7 @@ test(const bool fe_nothing_dominates)
   Vector<double> cell_values;
   for (const auto &cell : dofh.active_cell_iterators())
     {
+      cell_values.reinit(cell->get_fe().n_dofs_per_cell());
       cell->get_dof_values(new_solution, cell_values);
 
       deallog << "cell " << cell->active_cell_index() << ":";
