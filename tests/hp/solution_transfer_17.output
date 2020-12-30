@@ -1,11 +1,11 @@
 
 DEAL::FE_Nothing dominates: false
 DEAL:1d::pre-refinement constraints:
-DEAL:1d::ExcMessage
+DEAL:1d::Interpolation from FE_Nothing to FE_Q failed.
 DEAL:2d::pre-refinement constraints:
-DEAL:2d::ExcMessage
+DEAL:2d::Interpolation from FE_Nothing to FE_Q failed.
 DEAL:3d::pre-refinement constraints:
-DEAL:3d::ExcMessage
+DEAL:3d::Interpolation from FE_Nothing to FE_Q failed.
 DEAL::FE_Nothing dominates: true
 DEAL:1d::pre-refinement constraints:
     1 :  0

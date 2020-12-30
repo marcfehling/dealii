@@ -22,6 +22,7 @@
 // FiniteElementDomination logic enabled.
 
 
+#include <deal.II/base/exceptions.h>
 #include <deal.II/base/function.h>
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/quadrature_lib.h>
@@ -102,16 +103,16 @@ test(const bool fe_nothing_dominates)
       // will work only if FE_Nothing dominates
       soltrans.refine_interpolate(solution, new_solution);
     }
-  catch (const ExceptionBase &e)
+  catch (const ExcMessage &)
     {
-      deallog << e.get_exc_name() << std::endl;
+      deallog << "Interpolation from FE_Nothing to FE_Q failed." << std::endl;
       return;
     }
 #ifndef DEBUG
   // output exception which is not triggered in release mode
   if (!fe_nothing_dominates)
     {
-      deallog << "ExcMessage" << std::endl;
+      deallog << "Interpolation from FE_Nothing to FE_Q failed." << std::endl;
       return;
     }
 #endif
@@ -138,6 +139,8 @@ int
 main()
 {
   initlog();
+
+  deal_II_exceptions::disable_abort_on_exception();
 
   deallog << std::boolalpha;
   for (const bool fe_nothing_dominates : {false, true})
