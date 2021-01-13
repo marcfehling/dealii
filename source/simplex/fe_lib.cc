@@ -400,6 +400,39 @@ namespace Simplex
 
 
   template <int dim, int spacedim>
+  void
+  FE_P<dim, spacedim>::get_interpolation_matrix(const FiniteElement<dim, spacedim> &source,
+                                                FullMatrix<double> &matrix) const
+  {
+    // TODO
+  }
+
+
+
+  template <int dim, int spacedim>
+  void
+  FE_P<dim, spacedim>::get_face_interpolation_matrix(const FiniteElement<dim, spacedim> &source,
+                                                     FullMatrix<double> &matrix,
+                                                     const unsigned int face_no) const
+  {
+    // TODO
+  }
+
+
+
+  template <int dim, int spacedim>
+  void
+  FE_P<dim, spacedim>::get_subface_interpolation_matrix(const FiniteElement<dim, spacedim> &source,
+                                                        const unsigned int subface,
+                                                        FullMatrix<double> &matrix,
+                                                        const unsigned int face_no) const
+  {
+    // TODO
+  }
+
+
+
+  template <int dim, int spacedim>
   FiniteElementDomination::Domination
   FE_P<dim, spacedim>::compare_for_domination(
     const FiniteElement<dim, spacedim> &fe_other,

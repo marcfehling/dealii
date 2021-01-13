@@ -107,6 +107,31 @@ namespace Simplex
     get_name() const override;
 
     /**
+     * @copydoc dealii::FiniteElement::get_interpolation_matrix()
+     */
+    virtual void
+    get_interpolation_matrix(const FiniteElement<dim, spacedim> &source,
+                             FullMatrix<double> &matrix) const override;
+
+    /**
+     * @copydoc dealii::FiniteElement::get_face_interpolation_matrix()
+     */
+    virtual void
+    get_face_interpolation_matrix(const FiniteElement<dim, spacedim> &source,
+                                  FullMatrix<double> &                matrix,
+                                  const unsigned int face_no = 0) const override;
+
+    /**
+     * @copydoc dealii::FiniteElement::get_subface_interpolation_matrix()
+     */
+    virtual void
+    get_subface_interpolation_matrix(
+      const FiniteElement<dim, spacedim> &source,
+      const unsigned int                  subface,
+      FullMatrix<double> &                matrix,
+      const unsigned int                  face_no = 0) const override;
+
+    /**
      * @copydoc dealii::FiniteElement::compare_for_domination()
      */
     FiniteElementDomination::Domination
