@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2020 by the deal.II authors
+// Copyright (C) 2021 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -22,19 +22,13 @@
 
 #include <deal.II/simplex/fe_lib.h>
 
-//#include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
-//#include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/tria.h>
-//#include <deal.II/grid/tria_accessor.h>
-//#include <deal.II/grid/tria_iterator.h>
 
 #include <deal.II/lac/affine_constraints.h>
 
 #include <deal.II/simplex/grid_generator.h>
 
-#include <fstream>
-//#include <iostream>
 
 #include "../tests.h"
 
@@ -43,6 +37,7 @@ template <int dim>
 void
 test()
 {
+  // setup grid
   Triangulation<dim> tria;
   GridGenerator::subdivided_hyper_cube_with_simplices(tria, 1);
 
@@ -50,17 +45,10 @@ test()
   tria.execute_coarsening_and_refinement();
 
   GridOut grid_out;
-#if true
-  std::ofstream out("mesh.out.vtk");
-  grid_out.write_vtk(tria, out);
-#else
   grid_out.write_vtk(tria, deallog.get_file_stream());
-#endif
 
-
+  // setup dofs and constraints
   DoFHandler<dim> dofh(tria);
-  //Simplex::FE_P<dim> fe(1);
-  //dofh.distribute_dofs(fe);
   dofh.distribute_dofs(Simplex::FE_P<dim>(1));
 
   AffineConstraints<double> constraints;
