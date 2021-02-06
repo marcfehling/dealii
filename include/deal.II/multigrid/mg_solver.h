@@ -21,6 +21,11 @@
 
 #include <deal.II/base/mg_level_object.h>
 
+#include <deal.II/lac/diagonal_matrix.h>
+#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/solver_control.h>
+#include <deal.II/lac/trilinos_precondition.h>
+
 #include <deal.II/multigrid/mg_coarse.h>
 #include <deal.II/multigrid/mg_constrained_dofs.h>
 #include <deal.II/multigrid/mg_matrix.h>
