@@ -670,14 +670,19 @@ namespace Step75
     MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
 
     std::vector<std::shared_ptr<Triangulation<dim>>> coarse_grid_triangulations;
-
     if (mg_data.perform_h_transfer)
       coarse_grid_triangulations =
         MGTransferGlobalCoarseningTools::create_geometric_coarsening_sequence(
           dof_handler.get_triangulation());
+    else
+      coarse_grid_triangulations.emplace_back(
+        const_cast<Triangulation<dim> *>(&(dof_handler.get_triangulation())),
+        [](auto &) {
+          // empty deleter, since fine_triangulation_in is an external field
+          // and its destructor is called somewhere else
+        });
 
-    const unsigned int n_h_levels =
-      dof_handler.get_triangulation().n_global_levels() - 1;
+    const unsigned int n_h_levels = coarse_grid_triangulations.size() - 1;
 
     // Determine the number of levels.
     const auto get_max_active_fe_index = [&](const auto &dof_handler) {
