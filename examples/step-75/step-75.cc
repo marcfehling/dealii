@@ -843,6 +843,7 @@ namespace Step75
           const LinearAlgebra::distributed::Vector<double> &system_rhs);
 
     void compute_errors();
+    void compute_indicators();
     void adapt_resolution();
     void output_results(const unsigned int cycle) const;
 
@@ -1097,7 +1098,7 @@ namespace Step75
 
 
   template <int dim>
-  void LaplaceProblem<dim>::adapt_resolution()
+  void LaplaceProblem<dim>::compute_indicators()
   {
     // estimate error
     estimated_error_per_cell.grow_or_shrink(triangulation.n_active_cells());
@@ -1115,27 +1116,33 @@ namespace Step75
       /*strategy=*/
       KellyErrorEstimator<dim>::Strategy::face_diameter_over_twice_max_degree);
 
-    // decide adaptation
-    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-      triangulation, estimated_error_per_cell, 0.3, 0.03);
-
     // estimate smoothness
-    hp_decision_indicators.grow_or_shrink(this->triangulation.n_active_cells());
+    hp_decision_indicators.grow_or_shrink(triangulation.n_active_cells());
     SmoothnessEstimator::Legendre::coefficient_decay(
       *legendre,
-      this->dof_handler,
+      dof_handler,
       locally_relevant_solution,
       hp_decision_indicators,
       /*regression_strategy=*/VectorTools::Linfty_norm,
       /*smallest_abs_coefficient=*/1e-10,
-      /*only_flagged_cells=*/true);
+      /*only_flagged_cells=*/false);
+  }
+
+
+
+  template <int dim>
+  void LaplaceProblem<dim>::adapt_resolution()
+  {
+    // decide adaptation
+    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
+      triangulation, estimated_error_per_cell, 0.3, 0.03);
 
     // decide hp
-    hp::Refinement::p_adaptivity_fixed_number(this->dof_handler,
+    hp::Refinement::p_adaptivity_fixed_number(dof_handler,
                                               hp_decision_indicators,
                                               0.9,
                                               0.9);
-    hp::Refinement::choose_p_over_h(this->dof_handler);
+    hp::Refinement::choose_p_over_h(dof_handler);
 
     // limit levels
     Assert(triangulation.n_levels() >= prm.prm_adaptation.min_level + 1 &&
@@ -1150,6 +1157,9 @@ namespace Step75
     for (const auto &cell : triangulation.active_cell_iterators_on_level(
            prm.prm_adaptation.min_level))
       cell->clear_coarsen_flag();
+
+    // execute adaptation
+    triangulation.execute_coarsening_and_refinement();
   }
 
 
@@ -1226,6 +1236,7 @@ namespace Step75
 
         solve(laplace_operator, locally_relevant_solution, system_rhs);
         compute_errors();
+        compute_indicators();
 
         if (Utilities::MPI::n_mpi_processes(mpi_communicator) <= 32)
           {
