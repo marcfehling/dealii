@@ -669,15 +669,15 @@ namespace Step75
                                                        operators;
     MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
 
-    MGLevelObject<std::shared_ptr<Triangulation<dim>>>
-      coarse_grid_triangulations;
+    std::vector<std::shared_ptr<Triangulation<dim>>> coarse_grid_triangulations;
 
     if (mg_data.perform_h_transfer)
-      MGTransferGlobalCoarseningTools::create_global_coarsening_sequence(
-        coarse_grid_triangulations, dof_handler.get_triangulation());
+      coarse_grid_triangulations =
+        MGTransferGlobalCoarseningTools::create_geometric_coarsening_sequence(
+          dof_handler.get_triangulation());
 
-    const unsigned int n_h_levels = coarse_grid_triangulations.max_level() -
-                                    coarse_grid_triangulations.min_level();
+    const unsigned int n_h_levels =
+      dof_handler.get_triangulation().n_global_levels() - 1;
 
     // Determine the number of levels.
     const auto get_max_active_fe_index = [&](const auto &dof_handler) {
@@ -693,7 +693,7 @@ namespace Step75
     };
 
     const unsigned int n_p_levels =
-      MGTransferGlobalCoarseningTools::create_p_sequence(
+      MGTransferGlobalCoarseningTools::create_polynomial_coarsening_sequence(
         get_max_active_fe_index(dof_handler) + 1, mg_data.p_sequence)
         .size();
 
@@ -740,8 +740,9 @@ namespace Step75
               {
                 if (cell->is_locally_owned())
                   cell->set_active_fe_index(
-                    MGTransferGlobalCoarseningTools::generate_level_degree(
-                      cell_other->active_fe_index() + 1, mg_data.p_sequence) -
+                    MGTransferGlobalCoarseningTools::
+                      create_next_polynomial_coarsening_degree(
+                        cell_other->active_fe_index() + 1, mg_data.p_sequence) -
                     1);
                 cell_other++;
               }
@@ -804,10 +805,10 @@ namespace Step75
 
     // Collect transfer operators within a single operator as needed by
     // the Multigrid solver class.
-    MGTransferGlobalCoarsening<
-      MGSolverOperatorBase<dim, typename VectorType::value_type>,
-      VectorType>
-      transfer(operators, transfers);
+    MGTransferGlobalCoarsening<dim, VectorType> transfer(
+      transfers, [&](const auto l, auto &vec) {
+        operators[l]->initialize_dof_vector(vec);
+      });
 
     // Proceed to solve the problem with multigrid.
     mg_solve(solver_control,
