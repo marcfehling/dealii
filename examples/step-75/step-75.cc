@@ -985,21 +985,6 @@ namespace Step75
     DoFTools::make_hanging_node_constraints(dof_handler, constraints);
     VectorTools::interpolate_boundary_values(
       mapping_collection, dof_handler, 0, Solution<dim>(), constraints);
-
-#ifdef DEBUG
-    // We have not dealt with chains of constraints on ghost cells yet.
-    // Thus, we are content with verifying their consistency for now.
-    IndexSet locally_active_dofs;
-    DoFTools::extract_locally_active_dofs(dof_handler, locally_active_dofs);
-    AssertThrow(constraints.is_consistent_in_parallel(
-                  Utilities::MPI::all_gather(mpi_communicator,
-                                             dof_handler.locally_owned_dofs()),
-                  locally_active_dofs,
-                  mpi_communicator,
-                  /*verbose=*/true),
-                ExcMessage(
-                  "AffineConstraints object contains inconsistencies!"));
-#endif
     constraints.close();
 
     DynamicSparsityPattern dsp(locally_relevant_dofs);
