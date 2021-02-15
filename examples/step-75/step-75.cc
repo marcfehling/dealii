@@ -629,11 +629,11 @@ namespace Step75
 
   // @sect4{Conjugate-gradient solver preconditioned by a algebraic multigrid approach}
 
-  template <typename VectorType, typename Operator>
-  void solve_with_amg(SolverControl &   solver_control,
-                      const Operator &  system_matrix,
-                      VectorType &      dst,
-                      const VectorType &src)
+  template <typename VectorType, typename OperatorType>
+  void solve_with_amg(SolverControl &     solver_control,
+                      const OperatorType &system_matrix,
+                      VectorType &        dst,
+                      const VectorType &  src)
   {
     LA::MPI::PreconditionAMG::AdditionalData data;
     data.elliptic              = true;
@@ -650,9 +650,9 @@ namespace Step75
 
   // @sect4{Conjugate-gradient solver preconditioned by hybrid polynomial-global-coarsening multigrid approach}
 
-  template <typename VectorType, typename Operator, int dim>
+  template <typename VectorType, typename OperatorType, int dim>
   void solve_with_gmg(SolverControl &                  solver_control,
-                      const Operator &                 system_matrix,
+                      const OperatorType &             system_matrix,
                       VectorType &                     dst,
                       const VectorType &               src,
                       const hp::MappingCollection<dim> mapping_collection,
@@ -787,11 +787,12 @@ namespace Step75
         {
           VectorType dummy;
 
-          operators[level] = std::make_unique<Operator>(mapping_collection,
-                                                        dof_handler,
-                                                        quadrature_collection,
-                                                        constraint,
-                                                        dummy);
+          operators[level] =
+            std::make_unique<OperatorType>(mapping_collection,
+                                           dof_handler,
+                                           quadrature_collection,
+                                           constraint,
+                                           dummy);
         }
       }
 
@@ -842,9 +843,9 @@ namespace Step75
     void create_coarse_grid();
     void setup_system();
 
-    template <typename Operator>
+    template <typename OperatorType>
     void
-    solve(const Operator &                            system_matrix,
+    solve(const OperatorType &                        system_matrix,
           LinearAlgebra::distributed::Vector<double> &locally_relevant_solution,
           const LinearAlgebra::distributed::Vector<double> &system_rhs);
 
@@ -1017,9 +1018,9 @@ namespace Step75
 
 
   template <int dim>
-  template <typename Operator>
+  template <typename OperatorType>
   void LaplaceProblem<dim>::solve(
-    const Operator &                                  system_matrix,
+    const OperatorType &                              system_matrix,
     LinearAlgebra::distributed::Vector<double> &      locally_relevant_solution,
     const LinearAlgebra::distributed::Vector<double> &system_rhs)
   {
