@@ -715,7 +715,6 @@ namespace Step75
           LinearAlgebra::distributed::Vector<double> &locally_relevant_solution,
           const LinearAlgebra::distributed::Vector<double> &system_rhs);
 
-    void compute_errors();
     void compute_indicators();
     void adapt_resolution();
     void output_results(const unsigned int cycle) const;
@@ -910,45 +909,6 @@ namespace Step75
 
 
   template <int dim>
-  void LaplaceProblem<dim>::compute_errors()
-  {
-    TimerOutput::Scope t(computing_timer, "compute errors");
-
-    Vector<float> difference_per_cell(triangulation.n_active_cells());
-    VectorTools::integrate_difference(mapping_collection,
-                                      dof_handler,
-                                      locally_relevant_solution,
-                                      Solution<dim>(),
-                                      difference_per_cell,
-                                      quadrature_collection,
-                                      VectorTools::L2_norm);
-    const double L2_error =
-      VectorTools::compute_global_error(triangulation,
-                                        difference_per_cell,
-                                        VectorTools::L2_norm);
-
-    VectorTools::integrate_difference(mapping_collection,
-                                      dof_handler,
-                                      locally_relevant_solution,
-                                      Solution<dim>(),
-                                      difference_per_cell,
-                                      quadrature_collection,
-                                      VectorTools::H1_norm);
-    const double H1_error =
-      VectorTools::compute_global_error(triangulation,
-                                        difference_per_cell,
-                                        VectorTools::H1_norm);
-
-    pcout << "L2 error: " << L2_error << std::endl
-          << "H1 error: " << H1_error << std::endl;
-
-    // TODO
-    // Store errors in Convergence table
-  }
-
-
-
-  template <int dim>
   void LaplaceProblem<dim>::compute_indicators()
   {
     // estimate error
@@ -1082,9 +1042,8 @@ namespace Step75
                                 quadrature_collection,
                                 constraints,
                                 system_rhs);
-
         solve(laplace_operator, locally_relevant_solution, system_rhs);
-        compute_errors();
+
         compute_indicators();
 
         if (Utilities::MPI::n_mpi_processes(mpi_communicator) <= 32)
