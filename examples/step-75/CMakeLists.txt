@@ -37,22 +37,15 @@ ENDIF()
 #
 # Are all dependencies fulfilled?
 #
-IF(NOT DEAL_II_WITH_P4EST OR NOT ((DEAL_II_WITH_PETSC AND DEAL_II_PETSC_WITH_HYPRE AND NOT DEAL_II_PETSC_WITH_COMPLEX) OR DEAL_II_WITH_TRILINOS)) # keep in one line
+IF(NOT DEAL_II_WITH_P4EST OR NOT DEAL_II_WITH_TRILINOS)
   MESSAGE(FATAL_ERROR "
 Error! This tutorial requires a deal.II library that was configured with the following options:
-    DEAL_II_WITH_P4EST = ON
-    DEAL_II_WITH_PETSC = ON
-    DEAL_II_PETSC_WITH_COMPLEX = OFF
-or
     DEAL_II_WITH_P4EST = ON
     DEAL_II_WITH_TRILINOS = ON
 However, the deal.II library found at ${DEAL_II_PATH} was configured with these options
     DEAL_II_WITH_P4EST = ${DEAL_II_WITH_P4EST}
-    DEAL_II_WITH_PETSC = ${DEAL_II_WITH_PETSC}
-    DEAL_II_PETSC_WITH_COMPLEX = ${DEAL_II_PETSC_WITH_COMPLEX}
     DEAL_II_WITH_TRILINOS = ${DEAL_II_WITH_TRILINOS}
-which conflict with the requirements.
-One or both of the aforementioned combinations of prerequisites are not met by your installation, but at least one is required for this tutorial step."
+which conflict with the requirements."
     )
 ENDIF()
 
