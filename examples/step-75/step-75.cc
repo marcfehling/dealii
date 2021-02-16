@@ -108,127 +108,6 @@ namespace Step75
 
 
 
-  // @sect3{The <code>Parameter</code> class implementation}
-
-  // Parameter class.
-
-  // forward declarations
-  template <int dim>
-  class LaplaceProblem;
-
-  class SolverAMG;
-  class SolverGMG;
-
-
-
-  class AdaptationParameters : public ParameterAcceptor
-  {
-  public:
-    AdaptationParameters();
-
-  private:
-    unsigned int min_level, max_level;
-    unsigned int min_degree, max_degree;
-
-    // double refine_fraction, coarsen_fraction;
-    // double hp_refine_fraction, hp_coarsen_fraction;
-
-    template <int dim>
-    friend class LaplaceProblem;
-  };
-
-
-  AdaptationParameters::AdaptationParameters()
-    : ParameterAcceptor("adaptation")
-  {
-    min_level = 5;
-    add_parameter("minlevel", min_level);
-
-    max_level = 10;
-    add_parameter("maxlevel", max_level);
-
-    min_degree = 2;
-    add_parameter("mindegree", min_degree);
-
-    max_degree = 7;
-    add_parameter("maxdegree", max_degree);
-  }
-
-
-
-  class OperatorParameters : public ParameterAcceptor
-  {
-  public:
-    OperatorParameters();
-
-  private:
-    std::string type;
-
-    template <int dim>
-    friend class LaplaceProblem;
-  };
-
-  OperatorParameters::OperatorParameters()
-    : ParameterAcceptor("operator")
-  {
-    type = "MatrixFree";
-    add_parameter("type", type);
-  }
-
-
-
-  class SolverParameters : public ParameterAcceptor
-  {
-  public:
-    SolverParameters();
-
-  private:
-    std::string type;
-
-    friend class SolverAMG;
-    friend class SolverGMG;
-    template <int dim>
-    friend class LaplaceProblem;
-  };
-
-  SolverParameters::SolverParameters()
-    : ParameterAcceptor("solver")
-  {
-    type = "GMG";
-    add_parameter("type", type);
-  }
-
-
-
-  class ProblemParameters : public ParameterAcceptor
-  {
-  public:
-    ProblemParameters();
-
-  private:
-    unsigned int dim;
-    unsigned int n_cycles;
-
-    AdaptationParameters prm_adaptation;
-    OperatorParameters   prm_operator;
-    SolverParameters     prm_solver;
-
-    template <int dim>
-    friend class LaplaceProblem;
-  };
-
-  ProblemParameters::ProblemParameters()
-    : ParameterAcceptor("problem")
-  {
-    dim = 2;
-    add_parameter("dimension", dim);
-
-    n_cycles = 8;
-    add_parameter("ncycles", n_cycles);
-  }
-
-
-
   // @sect3{The <code>Solution</code> class template}
 
   // Analytic solution for the scenario described above.
@@ -810,14 +689,32 @@ namespace Step75
   }
 
 
+
   // @sect3{The <code>LaplaceProblem</code> class template}
+
+  // Simplified set of parameters.
+  struct Parameters
+  {
+    unsigned int n_cycles;
+    double       tolerance_factor;
+
+    unsigned int min_h_level;
+    unsigned int max_h_level;
+    double       refine_fraction;
+    double       coarsen_fraction;
+
+    unsigned int min_p_degree;
+    unsigned int max_p_degree;
+    double       p_refine_fraction;
+    double       p_coarsen_fraction;
+  };
 
   // Solving the Laplace equation on subsequently refined function spaces.
   template <int dim>
   class LaplaceProblem
   {
   public:
-    LaplaceProblem(const ProblemParameters &prm);
+    LaplaceProblem(const Parameters &prm);
 
     void run();
 
@@ -838,12 +735,11 @@ namespace Step75
 
     MPI_Comm mpi_communicator;
 
-    const ProblemParameters &prm;
+    const Parameters prm;
 
     parallel::distributed::Triangulation<dim> triangulation;
-    const unsigned int                        min_level, max_level;
+    DoFHandler<dim>                           dof_handler;
 
-    DoFHandler<dim>            dof_handler;
     hp::MappingCollection<dim> mapping_collection;
     hp::FECollection<dim>      fe_collection;
     hp::QCollection<dim>       quadrature_collection;
@@ -871,15 +767,13 @@ namespace Step75
 
 
   template <int dim>
-  LaplaceProblem<dim>::LaplaceProblem(const ProblemParameters &prm)
+  LaplaceProblem<dim>::LaplaceProblem(const Parameters &prm)
     : mpi_communicator(MPI_COMM_WORLD)
     , prm(prm)
     , triangulation(mpi_communicator,
                     typename Triangulation<dim>::MeshSmoothing(
                       Triangulation<dim>::smoothing_on_refinement |
                       Triangulation<dim>::smoothing_on_coarsening))
-    , min_level(5)
-    , max_level(dim <= 2 ? 10 : 8)
     , dof_handler(triangulation)
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_communicator) == 0))
@@ -890,16 +784,15 @@ namespace Step75
   {
     TimerOutput::Scope t(computing_timer, "init");
 
-    Assert(prm.prm_adaptation.min_level <= prm.prm_adaptation.max_level,
+    Assert(prm.min_h_level <= prm.max_h_level,
            ExcMessage(
              "Triangulation level limits have been incorrectly set up."));
-    Assert(prm.prm_adaptation.min_degree <= prm.prm_adaptation.max_degree,
+    Assert(prm.min_p_degree <= prm.max_p_degree,
            ExcMessage("FECollection degrees have been incorrectly set up."));
 
     mapping_collection.push_back(MappingQ1<dim>());
 
-    for (unsigned int degree = prm.prm_adaptation.min_degree;
-         degree <= prm.prm_adaptation.max_degree;
+    for (unsigned int degree = prm.min_p_degree; degree <= prm.max_p_degree;
          ++degree)
       {
         fe_collection.push_back(FE_Q<dim>(degree));
@@ -1002,7 +895,7 @@ namespace Step75
     system_rhs_.copy_locally_owned_data_from(system_rhs);
 
     SolverControl solver_control(system_rhs_.size(),
-                                 1e-12 * system_rhs_.l2_norm());
+                                 prm.tolerance_factor * system_rhs_.l2_norm());
 
     if (prm.prm_solver.type == "AMG")
       solve_with_amg(solver_control,
@@ -1109,27 +1002,30 @@ namespace Step75
   {
     // decide adaptation
     parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
-      triangulation, estimated_error_per_cell, 0.3, 0.03);
+      triangulation,
+      estimated_error_per_cell,
+      prm.refine_fraction,
+      prm.coarsen_fraction);
 
     // decide hp
     hp::Refinement::p_adaptivity_fixed_number(dof_handler,
                                               hp_decision_indicators,
-                                              0.9,
-                                              0.9);
+                                              prm.p_refine_fraction,
+                                              prm.p_coarsen_fraction);
     hp::Refinement::choose_p_over_h(dof_handler);
 
     // limit levels
-    Assert(triangulation.n_levels() >= prm.prm_adaptation.min_level + 1 &&
-             triangulation.n_levels() <= prm.prm_adaptation.max_level + 1,
+    Assert(triangulation.n_levels() >= prm.min_h_level + 1 &&
+             triangulation.n_levels() <= prm.max_h_level + 1,
            ExcInternalError());
 
-    if (triangulation.n_levels() > prm.prm_adaptation.max_level)
-      for (const auto &cell : triangulation.active_cell_iterators_on_level(
-             prm.prm_adaptation.max_level))
+    if (triangulation.n_levels() > prm.max_h_level)
+      for (const auto &cell :
+           triangulation.active_cell_iterators_on_level(prm.max_h_level))
         cell->clear_refine_flag();
 
-    for (const auto &cell : triangulation.active_cell_iterators_on_level(
-           prm.prm_adaptation.min_level))
+    for (const auto &cell :
+         triangulation.active_cell_iterators_on_level(prm.min_h_level))
       cell->clear_coarsen_flag();
 
     // execute adaptation
@@ -1183,7 +1079,7 @@ namespace Step75
         if (cycle == 0)
           {
             create_coarse_grid();
-            triangulation.refine_global(prm.prm_adaptation.min_level);
+            triangulation.refine_global(prm.min_h_level);
           }
         else
           {
@@ -1235,26 +1131,24 @@ int main(int argc, char *argv[])
 
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
-      ProblemParameters prm_problem;
+      Parameters prm;
+      {
+        prm.n_cycles         = 8;
+        prm.tolerance_factor = 1e-12;
 
-      const std::string filename        = (argc > 1) ? argv[1] : "",
-                        output_filename = (argc > 1) ? "" : "default.json";
-      ParameterAcceptor::initialize(filename, output_filename);
+        prm.min_h_level      = 5;
+        prm.max_h_level      = 10;
+        prm.refine_fraction  = 0.3;
+        prm.coarsen_fraction = 0.03;
 
-      const int dim =
-        ParameterAcceptor::prm.get_integer({"problem"}, "dimension");
-      if (dim == 2)
-        {
-          LaplaceProblem<2> laplace_problem(prm_problem);
-          laplace_problem.run();
-        }
-      else if (dim == 3)
-        {
-          LaplaceProblem<3> laplace_problem(prm_problem);
-          laplace_problem.run();
-        }
-      else
-        Assert(false, ExcNotImplemented());
+        prm.min_p_degree       = 2;
+        prm.max_p_degree       = 7;
+        prm.p_refine_fraction  = 0.9;
+        prm.p_coarsen_fraction = 0.9;
+      }
+
+      LaplaceProblem<2> laplace_problem(prm);
+      laplace_problem.run();
     }
   catch (std::exception &exc)
     {
