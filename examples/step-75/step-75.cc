@@ -884,21 +884,18 @@ namespace Step75
     SolverControl solver_control(system_rhs_.size(),
                                  prm.tolerance_factor * system_rhs_.l2_norm());
 
-    if (prm.prm_solver.type == "AMG")
-      solve_with_amg(solver_control,
-                     system_matrix,
-                     locally_relevant_solution_,
-                     system_rhs_);
-    else if (prm.prm_solver.type == "GMG")
-      solve_with_gmg(solver_control,
-                     system_matrix,
-                     locally_relevant_solution_,
-                     system_rhs_,
-                     mapping_collection,
-                     dof_handler,
-                     quadrature_collection);
-    else
-      Assert(false, ExcNotImplemented());
+    // TODO: Remove for the sake of simplicity
+    // solve_with_amg(solver_control,
+    //                system_matrix,
+    //                locally_relevant_solution_,
+    //                system_rhs);
+    solve_with_gmg(solver_control,
+                   system_matrix,
+                   locally_relevant_solution_,
+                   system_rhs_,
+                   mapping_collection,
+                   dof_handler,
+                   quadrature_collection);
 
     pcout << "   Solved in " << solver_control.last_step() << " iterations."
           << std::endl;
