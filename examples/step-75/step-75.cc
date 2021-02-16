@@ -91,23 +91,6 @@ namespace Step75
 {
   using namespace dealii;
 
-  // @sect4{Utility functions}
-
-  // Helper functions for this tutorial.
-  template <typename MeshType>
-  MPI_Comm get_mpi_comm(const MeshType &mesh)
-  {
-    const auto *tria_parallel = dynamic_cast<
-      const parallel::TriangulationBase<MeshType::dimension,
-                                        MeshType::space_dimension> *>(
-      &(mesh.get_triangulation()));
-
-    return tria_parallel != nullptr ? tria_parallel->get_communicator() :
-                                      MPI_COMM_SELF;
-  }
-
-
-
   // @sect3{The <code>Solution</code> class template}
 
   // Analytic solution for the scenario described above.
@@ -415,8 +398,12 @@ namespace Step75
         // Set up sparsity pattern of system matrix.
         const auto &dof_handler = this->matrix_free.get_dof_handler();
 
-        TrilinosWrappers::SparsityPattern dsp(dof_handler.locally_owned_dofs(),
-                                              get_mpi_comm(dof_handler));
+        const auto *tria_parallel =
+          dynamic_cast<const parallel::TriangulationBase<dim> *>(
+            &(dof_handler.get_triangulation()));
+
+        TrilinosWrappers::SparsityPattern dsp(
+          dof_handler.locally_owned_dofs(), tria_parallel->get_communicator());
 
         DoFTools::make_sparsity_pattern(dof_handler, dsp, this->constraints);
 
