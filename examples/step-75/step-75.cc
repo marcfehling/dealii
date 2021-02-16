@@ -30,23 +30,7 @@
 #include <deal.II/base/timer.h>
 
 #include <deal.II/lac/generic_linear_algebra.h>
-
-// uncomment the following \#define if you have PETSc and Trilinos installed
-// and you prefer using Trilinos in this example:
-// @code
-#define FORCE_USE_OF_TRILINOS
-// @endcode
-
-// This will either import PETSc or TrilinosWrappers into the namespace
-// LA. Note that we are defining the macro USE_PETSC_LA so that we can detect
-// if we are using PETSc (see solve() for an example where this is necessary)
-namespace LA
-{
-  using namespace dealii::LinearAlgebraTrilinos;
-} // namespace LA
-
 #include <deal.II/lac/la_parallel_vector.h>
-
 
 #include <deal.II/lac/vector.h>
 #include <deal.II/lac/full_matrix.h>
@@ -72,8 +56,6 @@ namespace LA
 #include <deal.II/lac/sparsity_tools.h>
 #include <deal.II/distributed/tria.h>
 #include <deal.II/distributed/grid_refinement.h>
-
-
 #include <deal.II/distributed/error_predictor.h>
 
 #include <deal.II/hp/fe_collection.h>
@@ -635,11 +617,11 @@ namespace Step75
                       VectorType &        dst,
                       const VectorType &  src)
   {
-    LA::MPI::PreconditionAMG::AdditionalData data;
+    LinearAlgebraTrilinos::MPI::PreconditionAMG::AdditionalData data;
     data.elliptic              = true;
     data.higher_order_elements = true;
 
-    LA::MPI::PreconditionAMG preconditioner;
+    LinearAlgebraTrilinos::MPI::PreconditionAMG preconditioner;
     preconditioner.initialize(system_matrix.get_system_matrix(), data);
 
     SolverCG<LinearAlgebra::distributed::Vector<double>> cg(solver_control);
@@ -875,7 +857,7 @@ namespace Step75
 
     AffineConstraints<double> constraints;
 
-    LA::MPI::SparseMatrix                      system_matrix;
+    LinearAlgebraTrilinos::MPI::SparseMatrix   system_matrix;
     LinearAlgebra::distributed::Vector<double> locally_relevant_solution;
     LinearAlgebra::distributed::Vector<double> system_rhs;
 
@@ -1188,13 +1170,8 @@ namespace Step75
   template <int dim>
   void LaplaceProblem<dim>::run()
   {
-    pcout << "Running with "
-#ifdef USE_PETSC_LA
-          << "PETSc"
-#else
-          << "Trilinos"
-#endif
-          << " on " << Utilities::MPI::n_mpi_processes(mpi_communicator)
+    pcout << "Running with Trilinos on "
+          << Utilities::MPI::n_mpi_processes(mpi_communicator)
           << " MPI rank(s)..." << std::endl;
 
     LaplaceOperator<dim, double> laplace_operator;
