@@ -313,12 +313,13 @@ namespace Step75
       VectorType b, x;
 
       this->initialize_dof_vector(system_rhs);
-      this->initialize_dof_vector(b);
-      this->initialize_dof_vector(x);
 
       MatrixFree<dim, number> matrix_free;
       matrix_free.reinit(
         mapping, dof_handler, constraints_without_dbc, quad, data);
+
+      matrix_free.initialize_dof_vector(b);
+      matrix_free.initialize_dof_vector(x);
 
       constraints.distribute(x);
 
