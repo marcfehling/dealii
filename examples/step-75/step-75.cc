@@ -959,7 +959,7 @@ namespace Step75
                                               prm.p_coarsen_fraction);
     hp::Refinement::choose_p_over_h(dof_handler);
 
-    // limit levels
+    // limit h-levels
     Assert(triangulation.n_levels() >= prm.min_h_level + 1 &&
              triangulation.n_levels() <= prm.max_h_level + 1,
            ExcInternalError());
@@ -972,6 +972,9 @@ namespace Step75
     for (const auto &cell :
          triangulation.active_cell_iterators_on_level(prm.min_h_level))
       cell->clear_coarsen_flag();
+
+    // smoothen p-levels
+    dof_handler.prepare_coarsening_and_refinement();
 
     // execute adaptation
     triangulation.execute_coarsening_and_refinement();
