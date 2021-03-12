@@ -536,16 +536,14 @@ namespace Step75
 
     // Determine the number of levels.
     const auto get_max_active_fe_degree = [&](const auto &dof_handler) {
-      unsigned int min = 0;
+      unsigned int max = 0;
 
       for (auto &cell : dof_handler.active_cell_iterators())
-        {
-          if (cell->is_locally_owned())
-            min =
-              std::max(min, dof_handler.get_fe(cell->active_fe_index()).degree);
-        }
+        if (cell->is_locally_owned())
+          max =
+            std::max(max, dof_handler.get_fe(cell->active_fe_index()).degree);
 
-      return Utilities::MPI::max(min, MPI_COMM_WORLD);
+      return Utilities::MPI::max(max, MPI_COMM_WORLD);
     };
 
     const unsigned int n_p_levels =
