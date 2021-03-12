@@ -807,19 +807,24 @@ namespace Step75
   {
     TimerOutput::Scope t(computing_timer, "coarse grid");
 
-    std::vector<unsigned int> repetitions(dim, 2);
+    std::vector<unsigned int> repetitions(dim);
     Point<dim>                bottom_left, top_right;
     for (unsigned int d = 0; d < dim; ++d)
-      {
-        bottom_left[d] = -1.;
-        top_right[d]   = 1.;
-      }
+      if (d < 2)
+        {
+          repetitions[d] = 2;
+          bottom_left[d] = -1.;
+          top_right[d]   = 1.;
+        }
+      else
+        {
+          repetitions[d] = 1;
+          bottom_left[d] = 0.;
+          top_right[d]   = 1.;
+        }
 
     std::vector<int> cells_to_remove(dim, 1);
     cells_to_remove[0] = -1;
-
-    // TODO
-    // expand domain by 1 cell in z direction for 3d case
 
     GridGenerator::subdivided_hyper_L(
       triangulation, repetitions, bottom_left, top_right, cells_to_remove);
