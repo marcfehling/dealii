@@ -535,13 +535,14 @@ namespace Step75
     const unsigned int n_h_levels = coarse_grid_triangulations.size() - 1;
 
     // Determine the number of levels.
-    const auto get_max_active_fe_index = [&](const auto &dof_handler) {
+    const auto get_max_active_fe_degree = [&](const auto &dof_handler) {
       unsigned int min = 0;
 
       for (auto &cell : dof_handler.active_cell_iterators())
         {
           if (cell->is_locally_owned())
-            min = std::max(min, cell->active_fe_index());
+            min =
+              std::max(min, dof_handler.get_fe(cell->active_fe_index()).degree);
         }
 
       return Utilities::MPI::max(min, MPI_COMM_WORLD);
@@ -549,7 +550,7 @@ namespace Step75
 
     const unsigned int n_p_levels =
       MGTransferGlobalCoarseningTools::create_polynomial_coarsening_sequence(
-        get_max_active_fe_index(dof_handler) + 1, mg_data.p_sequence)
+        get_max_active_fe_degree(dof_handler), mg_data.p_sequence)
         .size();
 
     unsigned int minlevel   = 0;
