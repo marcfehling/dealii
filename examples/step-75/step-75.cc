@@ -518,7 +518,8 @@ namespace Step75
                                                        operators;
     MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
 
-    std::vector<std::shared_ptr<Triangulation<dim>>> coarse_grid_triangulations;
+    std::vector<std::shared_ptr<const Triangulation<dim>>>
+      coarse_grid_triangulations;
     if (mg_data.perform_h_transfer)
       coarse_grid_triangulations =
         MGTransferGlobalCoarseningTools::create_geometric_coarsening_sequence(
