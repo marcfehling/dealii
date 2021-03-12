@@ -553,6 +553,15 @@ namespace Step75
         get_max_active_fe_degree(dof_handler), mg_data.p_sequence)
         .size();
 
+    std::map<unsigned int, unsigned int> fe_index_for_degree;
+    for (unsigned int i = 0; i < dof_handler.get_fe_collection().size(); ++i)
+      {
+        const unsigned int degree = dof_handler.get_fe(i).degree;
+        Assert(fe_index_for_degree.find(degree) == fe_index_for_degree.end(),
+               ExcMessage("FECollection does not contain unique degrees."));
+        fe_index_for_degree[degree] = i;
+      }
+
     unsigned int minlevel   = 0;
     unsigned int minlevel_p = n_h_levels;
     unsigned int maxlevel   = n_h_levels + n_p_levels - 1;
@@ -596,10 +605,10 @@ namespace Step75
               {
                 if (cell->is_locally_owned())
                   cell->set_active_fe_index(
-                    MGTransferGlobalCoarseningTools::
-                      create_next_polynomial_coarsening_degree(
-                        cell_other->active_fe_index() + 1, mg_data.p_sequence) -
-                    1);
+                    fe_index_for_degree
+                      [MGTransferGlobalCoarseningTools::
+                         create_next_polynomial_coarsening_degree(
+                           cell_other->get_fe().degree, mg_data.p_sequence)]);
                 cell_other++;
               }
           }
