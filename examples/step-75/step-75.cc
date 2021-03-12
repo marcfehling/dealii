@@ -123,8 +123,8 @@ namespace Step75
   double Solution<dim>::value(const Point<dim> &p,
                               const unsigned int /*component*/) const
   {
-    const std::array<double, 2> p_sphere =
-      GeometricUtilities::Coordinates::to_spherical(Point<2>(p[0], p[1]));
+    const std::array<double, dim> p_sphere =
+      GeometricUtilities::Coordinates::to_spherical(p);
 
     return std::pow(p_sphere[0], alpha) * std::sin(alpha * p_sphere[1]);
   }
@@ -135,8 +135,8 @@ namespace Step75
   Tensor<1, dim> Solution<dim>::gradient(const Point<dim> &p,
                                          const unsigned int /*component*/) const
   {
-    const std::array<double, 2> p_sphere =
-      GeometricUtilities::Coordinates::to_spherical(Point<2>(p[0], p[1]));
+    const std::array<double, dim> p_sphere =
+      GeometricUtilities::Coordinates::to_spherical(p);
 
     std::array<double, dim> ret_sphere;
     // only for polar coordinates
@@ -707,8 +707,7 @@ namespace Step75
     void run();
 
   private:
-    void create_coarse_grid(Triangulation<2, 2> &triangulation);
-    void create_coarse_grid(Triangulation<3, 3> &triangulation);
+    void create_coarse_grid();
     void setup_system();
 
     template <typename OperatorType>
@@ -733,6 +732,7 @@ namespace Step75
     hp::QCollection<dim>       quadrature_collection;
     hp::QCollection<dim - 1>   face_quadrature_collection;
 
+    std::unique_ptr<hp::FEValues<dim>>       fe_values_collection;
     std::unique_ptr<FESeries::Legendre<dim>> legendre;
 
     IndexSet locally_owned_dofs;
@@ -787,6 +787,14 @@ namespace Step75
         face_quadrature_collection.push_back(QGauss<dim - 1>(degree + 1));
       }
 
+    fe_values_collection =
+      std::make_unique<hp::FEValues<dim>>(fe_collection,
+                                          quadrature_collection,
+                                          update_gradients |
+                                            update_quadrature_points |
+                                            update_JxW_values);
+    fe_values_collection->precalculate_fe_values();
+
     legendre = std::make_unique<FESeries::Legendre<dim>>(
       SmoothnessEstimator::Legendre::default_fe_series(fe_collection));
     legendre->precalculate_all_transformation_matrices();
@@ -795,35 +803,26 @@ namespace Step75
 
 
   template <int dim>
-  void
-    LaplaceProblem<dim>::create_coarse_grid(Triangulation<2, 2> &triangulation)
+  void LaplaceProblem<dim>::create_coarse_grid()
   {
-    std::vector<unsigned int> repetitions(2, 2);
-    Point<2>                  bottom_left, top_right;
-    for (unsigned int d = 0; d < 2; ++d)
+    TimerOutput::Scope t(computing_timer, "coarse grid");
+
+    std::vector<unsigned int> repetitions(dim, 2);
+    Point<dim>                bottom_left, top_right;
+    for (unsigned int d = 0; d < dim; ++d)
       {
         bottom_left[d] = -1.;
         top_right[d]   = 1.;
       }
 
-    std::vector<int> cells_to_remove(2, 1);
+    std::vector<int> cells_to_remove(dim, 1);
     cells_to_remove[0] = -1;
+
+    // TODO
+    // expand domain by 1 cell in z direction for 3d case
 
     GridGenerator::subdivided_hyper_L(
       triangulation, repetitions, bottom_left, top_right, cells_to_remove);
-  }
-
-
-
-  template <int dim>
-  void
-    LaplaceProblem<dim>::create_coarse_grid(Triangulation<3, 3> &triangulation)
-  {
-    Triangulation<2, 2> tria_2D;
-
-    create_coarse_grid(tria_2D);
-
-    GridGenerator::extrude_triangulation(tria_2D, 3, 2.0, triangulation);
   }
 
 
@@ -1024,7 +1023,7 @@ namespace Step75
 
         if (cycle == 0)
           {
-            create_coarse_grid(triangulation);
+            create_coarse_grid();
             triangulation.refine_global(prm.min_h_level);
           }
         else
