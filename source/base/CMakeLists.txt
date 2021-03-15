@@ -42,6 +42,7 @@ SET(_unity_include_src
   function_tools.cc
   geometry_info.cc
   geometric_utilities.cc
+  ghosted_vector.cc
   graph_coloring.cc
   incremental_function.cc
   index_set.cc
@@ -114,6 +115,7 @@ IF(DEAL_II_WITH_CUDA)
   SET(_separate_src
     ${_separate_src}
     cuda.cu
+    ghosted_vector.cu
     partitioner.cu
   )
 ENDIF()
@@ -137,6 +139,7 @@ SET(_inst
   function_tools.inst.in
   incremental_function.inst.in
   geometric_utilities.inst.in
+  ghosted_vector.inst.in
   mpi.inst.in
   mpi_noncontiguous_partitioner.inst.in
   mpi_remote_point_evaluation.inst.in

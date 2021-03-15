@@ -1,0 +1,6 @@
+New: Container class GhostedVector as a leightweight alternative to the
+the LinearAlgebra::distributed::Vector class: it provides the same
+interface for ghost communication, but without the additional
+LinearAlgebra overhead.
+<br>
+(Marc Fehling, 2021/03/15)
