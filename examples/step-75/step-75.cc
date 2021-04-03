@@ -704,6 +704,7 @@ namespace Step75
     unsigned int max_p_degree;
     double       p_refine_fraction;
     double       p_coarsen_fraction;
+    unsigned int max_p_level_difference;
   };
 
   // Solving the Laplace equation on subsequently refined function spaces.
@@ -763,9 +764,9 @@ namespace Step75
 
 
   template <int dim>
-  LaplaceProblem<dim>::LaplaceProblem(const Parameters &prm)
+  LaplaceProblem<dim>::LaplaceProblem(const Parameters &parameters)
     : mpi_communicator(MPI_COMM_WORLD)
-    , prm(prm)
+    , prm(parameters)
     , triangulation(mpi_communicator,
                     typename Triangulation<dim>::MeshSmoothing(
                       Triangulation<dim>::smoothing_on_refinement |
@@ -807,6 +808,15 @@ namespace Step75
     legendre = std::make_unique<FESeries::Legendre<dim>>(
       SmoothnessEstimator::Legendre::default_fe_series(fe_collection));
     legendre->precalculate_all_transformation_matrices();
+
+    triangulation.signals.post_p4est_refinement.connect(
+      [&]() {
+        const internal::parallel::distributed::TemporarilyMatchRefineFlags<dim>
+          refine_modifier(triangulation);
+        hp::Refinement::limit_p_level_difference(dof_handler,
+                                                 prm.max_p_level_difference);
+      },
+      boost::signals2::at_front);
   }
 
 
@@ -987,9 +997,6 @@ namespace Step75
          triangulation.active_cell_iterators_on_level(prm.min_h_level))
       cell->clear_coarsen_flag();
 
-    // smoothen p-levels
-    dof_handler.prepare_coarsening_and_refinement();
-
     // execute adaptation
     triangulation.execute_coarsening_and_refinement();
   }
@@ -1102,10 +1109,11 @@ int main(int argc, char *argv[])
         prm.refine_fraction  = 0.3;
         prm.coarsen_fraction = 0.03;
 
-        prm.min_p_degree       = 2;
-        prm.max_p_degree       = 7;
-        prm.p_refine_fraction  = 0.9;
-        prm.p_coarsen_fraction = 0.9;
+        prm.min_p_degree           = 2;
+        prm.max_p_degree           = 7;
+        prm.p_refine_fraction      = 0.9;
+        prm.p_coarsen_fraction     = 0.9;
+        prm.max_p_level_difference = 1;
       }
 
       LaplaceProblem<2> laplace_problem(prm);
