@@ -197,7 +197,7 @@ corner in the origin of the coordinate system.
 To be able to determine the actual error, we manufacture a boundary
 value problem with a known solution. On the above mentioned domain, one
 solution to the Laplace equation looks as follows in polar coordinates
-$(r, \varphi)$. See also @cite brenner2008 or @cite mitchell2014hp:
+$(r, \varphi)$. See also @cite brenner2008 or @cite mitchell2014hp :
 @f[
 u_\text{sol} = r^{2\3} \sin(2/3 \varphi) .
 @f]
