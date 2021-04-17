@@ -81,7 +81,6 @@
 #include <deal.II/multigrid/mg_coarse.h>
 #include <deal.II/multigrid/mg_constrained_dofs.h>
 #include <deal.II/multigrid/mg_matrix.h>
-#include <deal.II/multigrid/mg_solver.h>
 #include <deal.II/multigrid/mg_smoother.h>
 #include <deal.II/multigrid/mg_tools.h>
 #include <deal.II/multigrid/mg_transfer_global_coarsening.h>
@@ -124,14 +123,197 @@ namespace Step75
 
 
 
+  // @sect3{mg solve operation}
+
+  struct GMGParameters
+  {
+    struct CoarseSolverParameters
+    {
+      std::string  type            = "cg_with_amg"; // "cg";
+      unsigned int maxiter         = 10000;
+      double       abstol          = 1e-20;
+      double       reltol          = 1e-4;
+      unsigned int smoother_sweeps = 1;
+      unsigned int n_cycles        = 1;
+      std::string  smoother_type   = "ILU";
+    };
+
+    struct SmootherParameters
+    {
+      std::string  type                = "chebyshev";
+      double       smoothing_range     = 20;
+      unsigned int degree              = 5;
+      unsigned int eig_cg_n_iterations = 20;
+    };
+
+    SmootherParameters     smoother;
+    CoarseSolverParameters coarse_solver;
+
+    MGTransferGlobalCoarseningTools::PolynomialCoarseningSequenceType
+      p_sequence = MGTransferGlobalCoarseningTools::
+        PolynomialCoarseningSequenceType::decrease_by_one; // TODO: move
+    bool perform_h_transfer = true;                        // TODO: move
+  };
+
+
+
+  template <typename VectorType,
+            int dim,
+            typename SystemMatrixType,
+            typename LevelMatrixType,
+            typename MGTransferType>
+  static void
+  mg_solve(SolverControl &         solver_control,
+           VectorType &            dst,
+           const VectorType &      src,
+           const GMGParameters &   mg_data,
+           const DoFHandler<dim> & dof,
+           const SystemMatrixType &fine_matrix,
+           const MGLevelObject<std::unique_ptr<LevelMatrixType>> &mg_matrices,
+           const MGTransferType &                                 mg_transfer)
+  {
+    AssertThrow(mg_data.smoother.type == "chebyshev", ExcNotImplemented());
+
+    const unsigned int min_level = mg_matrices.min_level();
+    const unsigned int max_level = mg_matrices.max_level();
+
+    using Number                     = typename VectorType::value_type;
+    using SmootherPreconditionerType = DiagonalMatrix<VectorType>;
+    using SmootherType               = PreconditionChebyshev<LevelMatrixType,
+                                               VectorType,
+                                               SmootherPreconditionerType>;
+    using PreconditionerType = PreconditionMG<dim, VectorType, MGTransferType>;
+
+    // Initialize level operators.
+    mg::Matrix<VectorType> mg_matrix(mg_matrices);
+
+    // Initialize smoothers.
+    MGLevelObject<typename SmootherType::AdditionalData> smoother_data(
+      min_level, max_level);
+
+    for (unsigned int level = min_level; level <= max_level; level++)
+      {
+        smoother_data[level].preconditioner =
+          std::make_shared<SmootherPreconditionerType>();
+        mg_matrices[level]->compute_inverse_diagonal(
+          smoother_data[level].preconditioner->get_vector());
+        smoother_data[level].smoothing_range = mg_data.smoother.smoothing_range;
+        smoother_data[level].degree          = mg_data.smoother.degree;
+        smoother_data[level].eig_cg_n_iterations =
+          mg_data.smoother.eig_cg_n_iterations;
+      }
+
+    MGSmootherPrecondition<LevelMatrixType, SmootherType, VectorType>
+      mg_smoother;
+    mg_smoother.initialize(mg_matrices, smoother_data);
+
+    // Initialize coarse-grid solver.
+    ReductionControl coarse_grid_solver_control(mg_data.coarse_solver.maxiter,
+                                                mg_data.coarse_solver.abstol,
+                                                mg_data.coarse_solver.reltol,
+                                                false,
+                                                false);
+    SolverCG<VectorType> coarse_grid_solver(coarse_grid_solver_control);
+
+    PreconditionIdentity precondition_identity;
+    PreconditionChebyshev<LevelMatrixType,
+                          VectorType,
+                          DiagonalMatrix<VectorType>>
+      precondition_chebyshev;
+
+#ifdef DEAL_II_WITH_TRILINOS
+    TrilinosWrappers::PreconditionAMG precondition_amg;
+#endif
+
+    std::unique_ptr<MGCoarseGridBase<VectorType>> mg_coarse;
+
+    if (mg_data.coarse_solver.type == "cg")
+      {
+        // CG with identity matrix as preconditioner
+
+        mg_coarse =
+          std::make_unique<MGCoarseGridIterativeSolver<VectorType,
+                                                       SolverCG<VectorType>,
+                                                       LevelMatrixType,
+                                                       PreconditionIdentity>>(
+            coarse_grid_solver, *mg_matrices[min_level], precondition_identity);
+      }
+    else if (mg_data.coarse_solver.type == "cg_with_chebyshev")
+      {
+        // CG with Chebyshev as preconditioner
+
+        typename SmootherType::AdditionalData smoother_data;
+
+        smoother_data.preconditioner =
+          std::make_shared<DiagonalMatrix<VectorType>>();
+        mg_matrices[min_level]->compute_inverse_diagonal(
+          smoother_data.preconditioner->get_vector());
+        smoother_data.smoothing_range = mg_data.smoother.smoothing_range;
+        smoother_data.degree          = mg_data.smoother.degree;
+        smoother_data.eig_cg_n_iterations =
+          mg_data.smoother.eig_cg_n_iterations;
+
+        precondition_chebyshev.initialize(*mg_matrices[min_level],
+                                          smoother_data);
+
+        mg_coarse = std::make_unique<
+          MGCoarseGridIterativeSolver<VectorType,
+                                      SolverCG<VectorType>,
+                                      LevelMatrixType,
+                                      decltype(precondition_chebyshev)>>(
+          coarse_grid_solver, *mg_matrices[min_level], precondition_chebyshev);
+      }
+    else if (mg_data.coarse_solver.type == "cg_with_amg")
+      {
+        // CG with AMG as preconditioner
+
+#ifdef DEAL_II_WITH_TRILINOS
+        TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
+        amg_data.smoother_sweeps = mg_data.coarse_solver.smoother_sweeps;
+        amg_data.n_cycles        = mg_data.coarse_solver.n_cycles;
+        amg_data.smoother_type   = mg_data.coarse_solver.smoother_type.c_str();
+
+        // CG with AMG as preconditioner
+        precondition_amg.initialize(mg_matrices[min_level]->get_system_matrix(),
+                                    amg_data);
+
+        mg_coarse = std::make_unique<
+          MGCoarseGridIterativeSolver<VectorType,
+                                      SolverCG<VectorType>,
+                                      LevelMatrixType,
+                                      decltype(precondition_amg)>>(
+          coarse_grid_solver, *mg_matrices[min_level], precondition_amg);
+#else
+        AssertThrow(false, ExcNotImplemented());
+#endif
+      }
+    else
+      {
+        AssertThrow(false, ExcNotImplemented());
+      }
+
+    // Create multigrid object.
+    Multigrid<VectorType> mg(
+      mg_matrix, *mg_coarse, mg_transfer, mg_smoother, mg_smoother);
+
+    // Convert it to a preconditioner.
+    PreconditionerType preconditioner(dof, mg, mg_transfer);
+
+    // Finally, solve.
+    SolverCG<VectorType>(solver_control)
+      .solve(fine_matrix, dst, src, preconditioner);
+  }
+
+
+
   // @sect3{Matrix-free Laplace operator}
 
   // A matrix-free implementation of the Laplace operator.
   template <int dim, typename number>
-  class LaplaceOperator : public MGSolverOperatorBase<dim, number>
+  class LaplaceOperator : public Subscriptor
   {
   public:
-    using typename MGSolverOperatorBase<dim, number>::VectorType;
+    using VectorType = LinearAlgebra::distributed::Vector<number>;
 
     // An alias to the FEEvaluation class. Please note that, in contrast to
     // other tutorials, the template arguments `degree` is set to -1 and
@@ -165,33 +347,37 @@ namespace Step75
 
     // Since we do not have a matrix, query the DoFHandler for the number of
     // degrees of freedom.
-    types::global_dof_index m() const override;
+    types::global_dof_index m() const;
+
+    // Access a particular element in the matrix. This function is neither
+    // needed nor implemented, however, is required to compile the program.
+    number el(unsigned int, unsigned int) const;
 
     // Delegate the task to MatrixFree.
-    void initialize_dof_vector(VectorType &vec) const override;
+    void initialize_dof_vector(VectorType &vec) const;
 
     // Perform an operator evaluation by looping with the help of MatrixFree
     // over all cells and evaluating the effect of the cell integrals (see also:
     // do_cell_integral_local() and do_cell_integral_global()).
-    void vmult(VectorType &dst, const VectorType &src) const override;
+    void vmult(VectorType &dst, const VectorType &src) const;
 
     // Perform the transposed operator evaluation. Since we are considering
     // symmetric matrices, this function is identical to the above function.
-    void Tvmult(VectorType &dst, const VectorType &src) const override;
+    void Tvmult(VectorType &dst, const VectorType &src) const;
 
     // Since we do not have a system matrix, we cannot loop over the the
     // diagonal entries of the matrix. Instead, we compute the diagonal by
     // performing a sequence of operator evaluations to unit basis vectors.
     // For this purpose, an optimized function from the MatrixFreeTools
     // namespace is used.
-    void compute_inverse_diagonal(VectorType &diagonal) const override;
+    void compute_inverse_diagonal(VectorType &diagonal) const;
 
     // In the default case, no system matrix is set up during initialization
     // of this class. As a consequence, it has to be computed here. Just like
     // in the case of compute_inverse_diagonal(), the matrix entries are
     // obtained via sequence of operator evaluations. For this purpose, an
     // optimized function from the MatrixFreeTools namespace is used.
-    const TrilinosWrappers::SparseMatrix &get_system_matrix() const override;
+    const TrilinosWrappers::SparseMatrix &get_system_matrix() const;
 
   private:
     // Perform cell integral on a cell batch without gathering and scattering
@@ -308,6 +494,15 @@ namespace Step75
   types::global_dof_index LaplaceOperator<dim, number>::m() const
   {
     return matrix_free.get_dof_handler().n_dofs();
+  }
+
+
+
+  template <int dim, typename number>
+  number LaplaceOperator<dim, number>::el(unsigned int, unsigned int) const
+  {
+    Assert(false, ExcNotImplemented());
+    return 0;
   }
 
 
@@ -459,10 +654,8 @@ namespace Step75
 
     // Create a DoFHandler and operator for each multigrid level defined
     // by p-coarsening, as well as, create transfer operators.
-    MGLevelObject<DoFHandler<dim>> dof_handlers;
-    MGLevelObject<std::unique_ptr<
-      MGSolverOperatorBase<dim, typename VectorType::value_type>>>
-                                                       operators;
+    MGLevelObject<DoFHandler<dim>>                     dof_handlers;
+    MGLevelObject<std::unique_ptr<OperatorType>>       operators;
     MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
 
     std::vector<std::shared_ptr<const Triangulation<dim>>>
