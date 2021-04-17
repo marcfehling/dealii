@@ -1481,7 +1481,7 @@ int main(int argc, char *argv[])
         prm.min_h_level            = 5;
         prm.max_h_level            = 12;
         prm.min_p_degree           = 2;
-        prm.max_p_degree           = 7;
+        prm.max_p_degree           = 6;
         prm.max_p_level_difference = 1;
 
         prm.refine_fraction    = 0.3;

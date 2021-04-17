@@ -75,7 +75,10 @@ Let us have a look at the graphical output of the program. After all
 refinement cycles in the given parameter configuration, the actual
 discretized function space looks like the following with its
 partitioning on twelve processes on the left and the polynomial degrees
-of finite elements on the right.
+of finite elements on the right. In the left picture, each color
+represents a unique subdomain. In the right picture, the lightest color
+corresponds to the polynomial degree two and the darkest one corresponds
+to degree six:
 
 <table width="100%">
 <tr>
