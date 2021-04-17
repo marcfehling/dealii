@@ -47,8 +47,10 @@
 
 #include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
-#include <deal.II/lac/generic_linear_algebra.h>
+#include <deal.II/lac/precondition.h>
 #include <deal.II/lac/solver_cg.h>
+#include <deal.II/lac/trilinos_precondition.h>
+#include <deal.II/lac/trilinos_sparse_matrix.h>
 #include <deal.II/lac/vector.h>
 
 #include <deal.II/numerics/data_out.h>
