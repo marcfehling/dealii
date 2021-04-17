@@ -37,7 +37,7 @@ ENDIF()
 #
 # Are all dependencies fulfilled?
 #
-IF(NOT DEAL_II_WITH_P4EST OR NOT DEAL_II_WITH_TRILINOS)
+IF(NOT DEAL_II_WITH_P4EST OR NOT DEAL_II_WITH_TRILINOS) # keep in one line
   MESSAGE(FATAL_ERROR "
 Error! This tutorial requires a deal.II library that was configured with the following options:
     DEAL_II_WITH_P4EST = ON
