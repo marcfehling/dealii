@@ -1,54 +1,61 @@
 <h1>Results</h1>
 
-When you run the program with the given parameters on two processes in
+When you run the program with the given parameters on four processes in
 debug mode, your terminal output should look like this:
 @code
-Running with Trilinos on 2 MPI rank(s)...
+Running with Trilinos on 4 MPI rank(s)...
 Calculating transformation matrices...
 Cycle 0:
    Number of active cells:       3072
+     by partition:               768 768 768 768
    Number of degrees of freedom: 12545
+     by partition:               3201 3104 3136 3104
+   Frequencies of poly. degrees: 2:3072
    Solved in 5 iterations.
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    |         8s |            |
+| Total wallclock time elapsed since start    |      6.34s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| calculate transformation        |         1 |      0.58s |       7.2% |
-| compute indicators              |         1 |     0.526s |       6.6% |
-| initialize grid                 |         1 |     0.521s |       6.5% |
-| output results                  |         1 |     0.182s |       2.3% |
-| reinit operator                 |         1 |     0.252s |       3.1% |
-| setup system                    |         1 |     0.587s |       7.3% |
-| solve system                    |         1 |      5.31s |        66% |
+| calculate transformation        |         1 |     0.679s |        11% |
+| compute indicators              |         1 |     0.404s |       6.4% |
+| initialize grid                 |         1 |      0.35s |       5.5% |
+| output results                  |         1 |     0.182s |       2.9% |
+| setup system                    |         1 |     0.521s |       8.2% |
+| solve system                    |         1 |      4.16s |        66% |
 +---------------------------------+-----------+------------+------------+
 
 
 Cycle 1:
    Number of active cells:       3351
+     by partition:               875 761 843 872
    Number of degrees of freedom: 18228
+     by partition:               4535 4735 4543 4415
+   Frequencies of poly. degrees: 2:2522 3:829
    Solved in 5 iterations.
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    |      9.96s |            |
+| Total wallclock time elapsed since start    |      9.64s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| adapt resolution                |         1 |     0.694s |         7% |
-| compute indicators              |         1 |     0.624s |       6.3% |
-| output results                  |         1 |     0.175s |       1.8% |
-| reinit operator                 |         1 |     0.273s |       2.7% |
-| setup system                    |         1 |     0.615s |       6.2% |
-| solve system                    |         1 |      7.57s |        76% |
+| adapt resolution                |         1 |     0.918s |       9.5% |
+| compute indicators              |         1 |     0.403s |       4.2% |
+| output results                  |         1 |     0.103s |       1.1% |
+| setup system                    |         1 |      1.19s |        12% |
+| solve system                    |         1 |      7.01s |        73% |
 +---------------------------------+-----------+------------+------------+
 
 
 Cycle 2:
    Number of active cells:       3651
+     by partition:               958 818 933 942
    Number of degrees of freedom: 26519
+     by partition:               6651 6822 6563 6483
+   Frequencies of poly. degrees: 2:2385 3:758 4:508
    Solved in 6 iterations.
 ...
 @endcode
@@ -73,11 +80,11 @@ of finite elements on the right.
 <table width="100%">
 <tr>
 <td>
-    <img src="https://www.dealii.org/images/steps/developer/step-75-subdomains-07.svg"
+    <img src="https://www.dealii.org/images/steps/developer/step-75-subdomains-07.svgz"
          alt="Partitioning after seven refinements.">
 </td>
 <td>
-    <img src="https://www.dealii.org/images/steps/developer/step-75-fedegrees-07.svg"
+    <img src="https://www.dealii.org/images/steps/developer/step-75-fedegrees-07.svgz"
          alt="Local approximation degrees after seven refinements.">
 </td>
 </tr>
