@@ -142,7 +142,7 @@ index $k$:
 \exists C,\sigma > 0 : \quad \forall k \in \mathbb{N}_0 : \quad |c_k|
 \leq C \exp\left( - \sigma k \right) .
 @f]
-The rate of decay \$sigma_K$ can be interpreted as a measure for the
+The rate of decay $sigma_K$ can be interpreted as a measure for the
 local smoothness of the finite element approximation. We can get it as
 the slope of a linear regression fit of the transformation coefficients:
 @f[

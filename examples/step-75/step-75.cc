@@ -1049,7 +1049,7 @@ namespace Step75
   // dimensions and treat the higher thrid dimension separately.
   //
   // To create a L-shaped domain, we need to remove the excess cells. For this,
-  // we specify the <code>cells_to_remove</cells> accordingly. We would like to
+  // we specify the <code>cells_to_remove</code> accordingly. We would like to
   // remove one cell in every cell from the negative direction, but remove one
   // from the positive x-direction.
   //
