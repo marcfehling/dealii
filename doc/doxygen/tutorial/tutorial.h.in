@@ -603,6 +603,13 @@
  *       <br/> Keywords: MeshWorker::mesh_loop(), FEInterfaceValues, ConvergenceTable
  *       </td></tr>
  *
+ *   <tr valign="top">
+ *       <td>step-75</td>
+ *       <td>Solving the Laplace equation on hp-adaptive meshes with MatrixFree
+ *       methods on thousands of processors.
+ *       <br/> Keywords: parallel::distributed::Triangulation, hp::Refinement, MatrixFree
+ *       </td></tr>
+ *
  * </table>
  *
  *
@@ -708,7 +715,8 @@
  *       step-42,
  *       step-43,
  *       step-50,
- *       step-55
+ *       step-55,
+ *       step-75
  *     </td>
  *   </tr>
  *
@@ -766,7 +774,8 @@
  *       step-59,
  *       step-67,
  *       step-69,
- *       step-70
+ *       step-70,
+ *       step-75
  *     </td>
  *   </tr>
  *
@@ -854,7 +863,8 @@
  *     </td>
  *     <td>
  *       step-27,
- *       step-46
+ *       step-46,
+ *       step-75
  *     </td>
  *   </tr>
  *
@@ -999,7 +1009,8 @@
  *       step-50,
  *       step-56,
  *       step-59,
- *       step-63
+ *       step-63,
+ *       step-75
  *     </td>
  *   </tr>
  *
@@ -1015,7 +1026,8 @@
  *       step-42,
  *       step-50,
  *       step-55,
- *       step-59
+ *       step-59,
+ *       step-75
  *     </td>
  *   </tr>
  *

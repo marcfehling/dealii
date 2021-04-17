@@ -1,0 +1,224 @@
+<br>
+
+<i>This program was contributed by Marc Fehling, Peter Munch and
+Wolfgang Bangerth.
+<br>
+This material is based upon work partly supported by the National
+Science Foundation under Award No. DMS-1821210, EAR-1550901, and
+OAC-1835673, as well as Forschungszentrum J&uuml;lich GmbH. Any
+opinions, findings, and conclusions or recommendations expressed in this
+publication are those of the authors and do not necessarily reflect the
+views of the National Science Foundation or of Forschungszentrum
+J&uuml;lich Gmbh.
+<br>
+Peter Munch would like to thank Timo Heister, Martin Kronbichler, and
+Laura Prieto Saavedra for many very interesting discussions.
+</i>
+
+
+@note As a prerequisite of this program, you need to have the p4est
+library and the Trilinos library installed. The installation of deal.II
+together with these additional libraries is described in the
+<a href="../../readme.html" target="body"> README</a> file.
+
+
+
+<a name="Intro"></a>
+<h1>Introduction</h1>
+
+In the finite element context, more degrees of freedom usually yield a
+more accurate solution but also require more computational effort.
+
+Throughout previous tutorials, we found ways to effectively distribute
+degrees of freedom by aligning the grid resolution locally with the
+complexity of the solution (adaptive mesh refinement, step-6). This
+approach is particularly effective if we do not only adapt the grid
+alone, but also locally adjust the polynomial degree of the associated
+finite element on each cell (hp-adaptation, step-27).
+
+In addition, assigning more processes to run your program simultaneously
+helps to tackle the computational workload in lesser time. Depending on
+the hardware architecture of your machine, your program must either be
+prepared for the case that all processes have access to the same memory
+(shared memory, step-18), or that processes are hosted on several
+independent nodes (distributed memory, step-40).
+
+In the high-performance computing segment, memory access turns out to be
+the current bottleneck on supercomputers. We can avoid storing matrices
+altogether by computing matrix elements on the fly with MatrixFree
+methods (step-37). They can be used for geometric multigrid methods to
+speed solving the system of equation tremendously (step-50).
+
+This tutorial combines all of these particularities and presents a
+state-of-the-art way how to solve a simple Laplace problem: utilizing
+both hp-adaptation and geometric multigrid methods on machines with
+distributed memory.
+
+
+<h3>Load balancing</h3>
+
+For parallel applications in FEM, we partition the grid into smaller
+subdomains that each process will be assigned to. This partitioning
+happens on active cells in deal.II as demonstrated in step-40. There,
+each cell has the same finite element and the same number of degrees of
+freedom assigned, and ultimately represents the same workload. To
+balance the workload among all processes, we have to balance the number
+of cells on all participating processes.
+
+With hp-adaptive methods, this is no longer the case: the finite element
+type may vary from cell to cell and consequently also the number of
+degrees of freedom. Matching the number of cells does not yield a
+balanced workload. The workload here is proportional the number of
+degrees of freedom.
+
+We can balance the workload by assigning weights to every cell which are
+proportional to the number of degrees of freedom, and balance the sum of
+all weights between all processes. Assigning individual weights to each
+cell can be realizes with the class parallel::CellWeights which we will
+use later.
+
+
+<h3>hp-decision indicators</h3>
+
+With hp-adaptive methods, we not only have to decide which cells we want
+to refine or coarsen, but also how we want to do that: either by
+adjusting the grid resolution or the polynomial degree of the finite
+element.
+
+We will again base the decision on which cells to adapt on (a
+posteriori) computed error estimates of the current solution, e.g.,
+using the KellyErrorEstimator. We will similarly decide how to adapt
+with (a posterirori) computed smoothness estimates: large polynomial
+degrees work best on smooth parts of the solution while fine grid
+resolutions are favorable on irregular parts. In step-27, we presented a
+way to calculate smoothness estimates based on the decay of Fourier
+coefficients. Let us take the opportunity and present an alternative
+that follows the same idea, but with Legendre coefficients.
+
+We could also use the Fourier coefficient decay strategy from step-27
+here as well. The benefit of the Legendre method is that its base
+functions are polynomials which are easier to handle in the finite
+element context than the sinusoids of the Fourier expansion.
+
+We will briefly present the idea of this new technique, but limit its
+description to 1D for simplicity. A general function can be represented
+with Legendre polynomials as basis functions:
+@f[
+u(x) = \sum\limits_{k \geq 0} c_k P_k(x) ,
+@f]
+and the Legendre expansion coefficients can be calculated as follows:
+@f[
+c_k = \frac{2k+1}{2} \int u(x) P_k(x) dx .
+@f]
+The first factor in the brackets is a normalization constant. With a
+sufficient mapping $F_K$ from an actual cell $K$ to the reference cell
+$\hat{K}$, we can get the coefficients for our finite element
+approximation $u_{hp}$ while performing all calculations on the
+reference cell:
+@f[
+c_{k,K} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{u}_{hp}(\hat{x})
+\hat{P}_k(\hat{x}) \left|\det \tensorsym{J}(\hat{x})\right|
+\mathrm{d}\hat{x} ,
+@f]
+where $\varphi(x) = \varphi(F_K(\hat{x})) = \hat{\varphi}(\hat{x})$ for
+a general function $\varphi$. A non-degenerate mapping, i.e.,
+$\left|\det \tensorsym{J}(\hat{x})\right| \approx 1$, allows us to
+perform the transformation on any cell $K$ exclusively on the reference
+cell $\hat{K}$ and pre-calculate the necessary transformation matrices
+only once:
+@f[
+c_{k,K} = \sum_{j} L_{kj} u_{j,K} , \quad
+L_{kj} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{\varphi}_j(\hat{x})
+\hat{P}_k(\hat{x}) \mathrm{d}\hat{x} ,
+@f]
+with degrees of freedom $u_{j,K}$ on cell $K$ and its corresponding
+shape function $\varphi_j$.
+
+Eibner and Melenk @cite eibner2007hp argued that a function is analytic,
+i.e., representable by a power series, if and only if the absolute
+values of the expansion coefficients decay exponentially with increasing
+index $k$:
+@f[
+\exists C,\sigma > 0 : \quad \forall k \in \mathbb{N}_0 : \quad |c_k|
+\leq C \exp\left( - \sigma k \right) .
+@f]
+The rate of decay \$sigma_K$ can be interpreted as a measure for the
+local smoothness of the finite element approximation. We can get it as
+the slope of a linear regression fit of the transformation coefficients:
+@f[
+\ln(|c_{k,K}|) \sim C_K - \sigma_K k .
+@f]
+For a finite element on a cell $K$ with a polynomial degree $p$,
+calculating the coefficients for $k \leq (p+1)$ proved to be a
+reasonable choice to estimate smoothness. You can find a more detailed
+and dimension independent description in @cite fehling2020.
+
+All of the above is already implemented in the FESeries::Legendre class
+and the SmoothnessEstimator::Legendre namespace. With the error
+estimates and smoothness indicators, we are then left to flag the flags
+for actual refinement and coarsening. Functions of the
+parallel::GridRefinement and hp::Refinement namespaces will help us with
+that later.
+
+
+<h3>Geometric Multigrid</h3>
+
+Matrices are typically very sparse in general, but have a varying amount
+of non-zero entries in context of hp-adaptive methods. Some
+state-of-the-art preconditioners like the algebraic multigrid (AMG) ones
+as used in step-40 behave poorly with this restriction.
+
+We will thus rely on geometric multigrid (GMG) preconditioners. step-50
+has already demonstrated the superiority of this method when combined
+with the MatrixFree framework.The application on hp-adaptive FEM
+requires some additional work though.
+
+Mitchell @cite mitchell2010hpmg suggests to perform p-relaxation first,
+then perform h-relaxation, solve the equation system on the coarsest
+possible mesh and function space, prolongate on the grid, and then
+finally prolongate on the finite elements with the correct polynomial
+degrees.
+
+(...)
+
+
+<h3>The testcase</h3>
+
+For elliptic equations, each reentrant corner typically invokes a
+singularity @cite brenner2008. We can use this circumstance to put our
+hp-decision algorithms to a test: on all cells to be adapted, we would
+prefer a fine grid near the singularity, and a high polynomial degree
+otherwise.
+
+As the simplest elliptic problem to solve with these constraints, we
+chose the Laplace equation in a L-shaped domain with the reentrant
+corner in the origin of the coordinate system.
+
+To be able to determine the actual error, we manufacture a boundary
+value problem with a known solution. On the above mentioned domain, one
+solution to the Laplace equation looks as follows in polar coordinates
+$(r, \varphi)$. See also @cite brenner2008 or @cite mitchell2014hp:
+@f[
+u_\text{sol} = r^{2\3} \sin(2/3 \varphi) .
+@f]
+
+The solution looks as follows:
+
+<img src="https://www.dealii.org/images/steps/developer/step-75-solution.svg"
+     alt="Analytic solution.">
+
+The singularity becomes obvious by investigating the solution's gradient
+in the vicinity of the reentrant corner, i.e., the origin
+@f[
+\left\| \nabla u_\text{sol} \right\|_{2} = 2/3 r^{-1/3} , \quad
+\lim\limits_{r \rightarrow 0} \left\| \nabla u_\text{sol} \right\|_{2} =
+\infty .
+@f]
+
+As we know where the singularity will be located, we expect that our
+hp-decision algorithm decides for a fine grid resolution in this
+particular region, and high polynomial degree anywhere else.
+
+So let us figure out if that is actually the case, and how hp-adaptation
+performs compared to pure h-adaptation. But first let us have a detailed
+look at the actual code.

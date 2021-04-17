@@ -1,0 +1,84 @@
+<h1>Results</h1>
+
+When you run the program with the given parameters on two processes in
+debug mode, your terminal output should look like this:
+@code
+Running with Trilinos on 2 MPI rank(s)...
+Calculating transformation matrices...
+Cycle 0:
+   Number of active cells:       3072
+   Number of degrees of freedom: 12545
+   Solved in 5 iterations.
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    |         8s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| calculate transformation        |         1 |      0.58s |       7.2% |
+| compute indicators              |         1 |     0.526s |       6.6% |
+| initialize grid                 |         1 |     0.521s |       6.5% |
+| output results                  |         1 |     0.182s |       2.3% |
+| reinit operator                 |         1 |     0.252s |       3.1% |
+| setup system                    |         1 |     0.587s |       7.3% |
+| solve system                    |         1 |      5.31s |        66% |
++---------------------------------+-----------+------------+------------+
+
+
+Cycle 1:
+   Number of active cells:       3351
+   Number of degrees of freedom: 18228
+   Solved in 5 iterations.
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    |      9.96s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| adapt resolution                |         1 |     0.694s |         7% |
+| compute indicators              |         1 |     0.624s |       6.3% |
+| output results                  |         1 |     0.175s |       1.8% |
+| reinit operator                 |         1 |     0.273s |       2.7% |
+| setup system                    |         1 |     0.615s |       6.2% |
+| solve system                    |         1 |      7.57s |        76% |
++---------------------------------+-----------+------------+------------+
+
+
+Cycle 2:
+   Number of active cells:       3651
+   Number of degrees of freedom: 26519
+   Solved in 6 iterations.
+...
+@endcode
+
+When running the code with more processors, you will notice slight
+differences in the number of active cells and degrees of freedom. This
+is due to the fact that solver and preconditioner depend on the
+partitioning of the problem, which might yield to slight differences of
+the solution in the last digits and ultimately yields to different
+adaptation behavior.
+
+Furthermore, the number of iterations for the solver stays about the
+same in all iterations despite hp-adaptation, which ensures that it will
+scale properly on even larger problems with a multitude of unknowns.
+
+Let us have a look at the graphical output of the program. After all
+refinement cycles in the given parameter configuration, the actual
+discretized function space looks like the following with its
+partitioning on twelve processes on the left and the polynomial degrees
+of finite elements on the right.
+
+<table width="100%">
+<tr>
+<td>
+    <img src="https://www.dealii.org/images/steps/developer/step-75-subdomains-07.svg"
+         alt="Partitioning after seven refinements.">
+</td>
+<td>
+    <img src="https://www.dealii.org/images/steps/developer/step-75-fedegrees-07.svg"
+         alt="Local approximation degrees after seven refinements.">
+</td>
+</tr>
+</table>
