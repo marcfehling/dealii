@@ -1454,12 +1454,12 @@ namespace Step75
 //
 // We will use general refine and coarsen fractions that have been elaborated in
 // the other dealii tutorials: using the fixed number strategy, we will flag
-// 30&percnt; of all cells for refinement and 3&percnt; for coarsening. For the
-// p-adaptatation fractions, we will take an educated guess. Since we only
-// expect a single singularity in our scenario, i.e., in the origin of the
-// domain, and a smooth solution anywhere else, we would like to strongly perfer
-// to use p-adaptation over h-adaptation. This reflects in our choice of a
-// fraction of 90&percnt; for both p-refinement and p-coarsening.
+// 30% of all cells for refinement and 3% for coarsening. For the p-adaptation
+// fractions, we will take an educated guess. Since we only expect a single
+// singularity in our scenario, i.e., in the origin of the domain, and a smooth
+// solution anywhere else, we would like to strongly perfer to use p-adaptation
+// over h-adaptation. This reflects in our choice of a fraction of 90% for both
+// p-refinement and p-coarsening.
 //
 // For load balancing, efficient solvers like the one we use should scale
 // linearly with the number of degrees of freedom owned. We will set the
