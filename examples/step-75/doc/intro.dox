@@ -204,7 +204,7 @@ u_\text{sol} = r^{2\3} \sin(2/3 \varphi) .
 
 The solution looks as follows:
 
-<img src="https://www.dealii.org/images/steps/developer/step-75-solution.svgz"
+<img src="https://www.dealii.org/images/steps/developer/step-75.solution.svgz"
      alt="Analytic solution.">
 
 The singularity becomes obvious by investigating the solution's gradient

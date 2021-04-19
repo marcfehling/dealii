@@ -83,11 +83,11 @@ to degree six:
 <table width="100%">
 <tr>
 <td>
-    <img src="https://www.dealii.org/images/steps/developer/step-75-subdomains-07.svgz"
+    <img src="https://www.dealii.org/images/steps/developer/step-75.subdomains-07.svgz"
          alt="Partitioning after seven refinements.">
 </td>
 <td>
-    <img src="https://www.dealii.org/images/steps/developer/step-75-fedegrees-07.svgz"
+    <img src="https://www.dealii.org/images/steps/developer/step-75.fedegrees-07.svgz"
          alt="Local approximation degrees after seven refinements.">
 </td>
 </tr>
