@@ -79,7 +79,7 @@
 #include <deal.II/lac/la_parallel_vector.h>
 
 // For the multigrid tools in the hp-adaptive context, we are left to include
-// the remaining include files.
+// the remaining multigrid files.
 #include <deal.II/multigrid/mg_coarse.h>
 #include <deal.II/multigrid/mg_constrained_dofs.h>
 #include <deal.II/multigrid/mg_matrix.h>
@@ -127,7 +127,9 @@ namespace Step75
 
   // @sect3{Matrix-free Laplace operator}
 
-  // A matrix-free implementation of the Laplace operator.
+  // This is a matrix-free implementation of the Laplace operator that will
+  // basically take over the part of the <code>assemble_system()</code> function
+  // from other tutorials.
   template <int dim, typename number>
   class LaplaceOperator : public Subscriptor
   {
@@ -458,6 +460,9 @@ namespace Step75
 
   // @sect3{Solver and preconditioner}
 
+  // The following parameter set controls the geometric multigrid mechanism and
+  // the solver specifications on the coarsest level. We populate it with
+  // default parameters.
   struct GMGParameters
   {
     struct CoarseSolverParameters
@@ -484,14 +489,17 @@ namespace Step75
 
     MGTransferGlobalCoarseningTools::PolynomialCoarseningSequenceType
       p_sequence = MGTransferGlobalCoarseningTools::
-        PolynomialCoarseningSequenceType::decrease_by_one; // TODO: move
-    bool perform_h_transfer = true;                        // TODO: move
+        PolynomialCoarseningSequenceType::decrease_by_one;
+    bool perform_h_transfer = true;
   };
 
 
 
-  // @sect4{mg solve operation}
+  // @sect4{Conjugate-gradient solver with multigrid preconditioner}
 
+  // This function solves the equation system with a seqeuence of provided
+  // multigrid objects. It is meant to be treated as general as possible, hence
+  // the multitude of template parameters.
   template <typename VectorType,
             int dim,
             typename SystemMatrixType,
@@ -585,8 +593,11 @@ namespace Step75
 
 
 
-  // @sect4{Conjugate-gradient solver preconditioned by hybrid polynomial-global-coarsening multigrid approach}
+  // @sect4{Hybrid polynomial-global-coarsening multigrid preconditioner}
 
+  // The above function deals with the actual solution for a given sequence of
+  // multigrid objects. This functions creates the actual multigrid mechanism as
+  // a MGTransferGlobalCoarsening object.
   template <typename VectorType, typename OperatorType, int dim>
   void solve_with_gmg(SolverControl &                  solver_control,
                       const OperatorType &             system_matrix,
