@@ -16,8 +16,8 @@ Laura Prieto Saavedra for many very interesting discussions.
 
 @note As a prerequisite of this program, you need to have the p4est
 library and the Trilinos library installed. The installation of deal.II
-together with these additional libraries is described in the
-<a href="../../readme.html" target="body"> README</a> file.
+together with these additional libraries is described in the <a
+href="../../readme.html" target="body">README</a> file.
 
 
 
@@ -168,7 +168,7 @@ as used in step-40 behave poorly with this restriction.
 
 We will thus rely on geometric multigrid (GMG) preconditioners. step-50
 has already demonstrated the superiority of this method when combined
-with the MatrixFree framework.The application on hp-adaptive FEM
+with the MatrixFree framework. The application on hp-adaptive FEM
 requires some additional work though.
 
 Mitchell @cite mitchell2010hpmg suggests to perform p-relaxation first,
