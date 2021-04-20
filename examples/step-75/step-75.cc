@@ -1202,27 +1202,25 @@ namespace Step75
 
   // @sect4{LaplaceProblem::solve_system}
 
-  // (...)
+  // The scaffold around the solution is similar to the one of step-40. We again
+  // prepare a container object that only consists of the locally owned solution
+  // and communicate the ghost values after we solved the equation system. The
+  // solution happens with the function introduced earlier.
   template <int dim>
   void LaplaceProblem<dim>::solve_system()
   {
     TimerOutput::Scope t(computing_timer, "solve system");
 
-    LinearAlgebra::distributed::Vector<double> locally_relevant_solution_;
-    LinearAlgebra::distributed::Vector<double> system_rhs_;
+    LinearAlgebra::distributed::Vector<double> completely_distributed_solution;
+    laplace_operator.initialize_dof_vector(completely_distributed_solution);
 
-    laplace_operator.initialize_dof_vector(locally_relevant_solution_);
-    laplace_operator.initialize_dof_vector(system_rhs_);
-
-    system_rhs_.copy_locally_owned_data_from(system_rhs);
-
-    SolverControl solver_control(system_rhs_.size(),
-                                 prm.tolerance_factor * system_rhs_.l2_norm());
+    SolverControl solver_control(system_rhs.size(),
+                                 prm.tolerance_factor * system_rhs.l2_norm());
 
     solve_with_gmg(solver_control,
                    laplace_operator,
-                   locally_relevant_solution_,
-                   system_rhs_,
+                   completely_distributed_solution,
+                   system_rhs,
                    mapping_collection,
                    dof_handler,
                    quadrature_collection);
@@ -1230,10 +1228,10 @@ namespace Step75
     pcout << "   Solved in " << solver_control.last_step() << " iterations."
           << std::endl;
 
-    constraints.distribute(locally_relevant_solution_);
+    constraints.distribute(completely_distributed_solution);
 
     locally_relevant_solution.copy_locally_owned_data_from(
-      locally_relevant_solution_);
+      completely_distributed_solution);
     locally_relevant_solution.update_ghost_values();
   }
 
