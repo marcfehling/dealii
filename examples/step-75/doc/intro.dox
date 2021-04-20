@@ -177,7 +177,9 @@ possible mesh and function space, prolongate on the grid, and then
 finally prolongate on the finite elements with the correct polynomial
 degrees.
 
-(...)
+To realise this sequence of operations, we will use the
+MGTransferGlobalCoarsening functionality and create a custom hybrid
+multigrid preconditioner.
 
 
 <h3>The testcase</h3>
