@@ -10,21 +10,23 @@ Cycle 0:
      by partition:               768 768 768 768
    Number of degrees of freedom: 12545
      by partition:               3201 3104 3136 3104
+   Number of constraints:        542
+     by partition:               165 74 138 165
    Frequencies of poly. degrees: 2:3072
    Solved in 5 iterations.
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    |      6.34s |            |
+| Total wallclock time elapsed since start    |      7.94s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| calculate transformation        |         1 |     0.679s |        11% |
-| compute indicators              |         1 |     0.404s |       6.4% |
-| initialize grid                 |         1 |      0.35s |       5.5% |
-| output results                  |         1 |     0.182s |       2.9% |
-| setup system                    |         1 |     0.521s |       8.2% |
-| solve system                    |         1 |      4.16s |        66% |
+| calculate transformation        |         1 |     0.544s |       6.8% |
+| compute indicators              |         1 |     0.373s |       4.7% |
+| initialize grid                 |         1 |     0.773s |       9.7% |
+| output results                  |         1 |     0.107s |       1.3% |
+| setup system                    |         1 |     0.988s |        12% |
+| solve system                    |         1 |      5.12s |        64% |
 +---------------------------------+-----------+------------+------------+
 
 
@@ -33,20 +35,22 @@ Cycle 1:
      by partition:               875 761 843 872
    Number of degrees of freedom: 18228
      by partition:               4535 4735 4543 4415
+   Number of constraints:        1202
+     by partition:               303 290 326 283
    Frequencies of poly. degrees: 2:2522 3:829
    Solved in 5 iterations.
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    |      9.64s |            |
+| Total wallclock time elapsed since start    |      8.47s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| adapt resolution                |         1 |     0.918s |       9.5% |
-| compute indicators              |         1 |     0.403s |       4.2% |
-| output results                  |         1 |     0.103s |       1.1% |
-| setup system                    |         1 |      1.19s |        12% |
-| solve system                    |         1 |      7.01s |        73% |
+| adapt resolution                |         1 |     0.689s |       8.1% |
+| compute indicators              |         1 |     0.454s |       5.4% |
+| output results                  |         1 |      0.11s |       1.3% |
+| setup system                    |         1 |     0.708s |       8.4% |
+| solve system                    |         1 |       6.5s |        77% |
 +---------------------------------+-----------+------------+------------+
 
 
@@ -55,6 +59,8 @@ Cycle 2:
      by partition:               958 818 933 942
    Number of degrees of freedom: 26519
      by partition:               6651 6822 6563 6483
+   Number of constraints:        3013
+     by partition:               801 701 790 721
    Frequencies of poly. degrees: 2:2385 3:758 4:508
    Solved in 6 iterations.
 ...
