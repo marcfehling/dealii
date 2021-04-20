@@ -1168,17 +1168,32 @@ namespace Step75
     }
 
     {
-      std::vector<unsigned int> fe_indices(fe_collection.size(), 0);
+      std::vector<unsigned int> n_constraints_per_subdomain =
+        Utilities::MPI::gather(mpi_communicator, constraints.n_constraints());
+
+      pcout << "   Number of constraints:        "
+            << std::accumulate(n_constraints_per_subdomain.begin(),
+                               n_constraints_per_subdomain.end(),
+                               0)
+            << std::endl
+            << "     by partition:              ";
+      for (const auto n_constraints : n_constraints_per_subdomain)
+        pcout << ' ' << n_constraints;
+      pcout << std::endl;
+    }
+
+    {
+      std::vector<unsigned int> n_fe_indices(fe_collection.size(), 0);
       for (const auto &cell : dof_handler.active_cell_iterators())
         if (cell->is_locally_owned())
-          fe_indices[cell->active_fe_index()]++;
+          n_fe_indices[cell->active_fe_index()]++;
 
-      Utilities::MPI::sum(fe_indices, mpi_communicator, fe_indices);
+      Utilities::MPI::sum(n_fe_indices, mpi_communicator, n_fe_indices);
 
       pcout << "   Frequencies of poly. degrees:";
       for (unsigned int i = 0; i < fe_collection.size(); ++i)
-        if (fe_indices[i] > 0)
-          pcout << ' ' << fe_collection[i].degree << ":" << fe_indices[i];
+        if (n_fe_indices[i] > 0)
+          pcout << ' ' << fe_collection[i].degree << ":" << n_fe_indices[i];
       pcout << std::endl;
     }
   }
