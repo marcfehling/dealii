@@ -603,12 +603,11 @@ namespace Step75
                       const OperatorType &             system_matrix,
                       VectorType &                     dst,
                       const VectorType &               src,
+                      const GMGParameters &            mg_data,
                       const hp::MappingCollection<dim> mapping_collection,
                       const DoFHandler<dim> &          dof_handler,
                       const hp::QCollection<dim> &     quadrature_collection)
   {
-    const GMGParameters mg_data; // TODO -> MF
-
     // Create a DoFHandler and operator for each multigrid level defined
     // by p-coarsening, as well as, create transfer operators.
     MGLevelObject<DoFHandler<dim>>                     dof_handlers;
@@ -797,8 +796,9 @@ namespace Step75
   // respecitve location where they are used.
   struct Parameters
   {
-    unsigned int n_cycles;
-    double       tolerance_factor;
+    unsigned int  n_cycles;
+    double        tolerance_factor;
+    GMGParameters mg_data;
 
     unsigned int min_h_level;
     unsigned int max_h_level;
@@ -1176,6 +1176,7 @@ namespace Step75
                    laplace_operator,
                    completely_distributed_solution,
                    system_rhs,
+                   prm.mg_data,
                    mapping_collection,
                    dof_handler,
                    quadrature_collection);
