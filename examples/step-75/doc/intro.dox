@@ -43,43 +43,45 @@ independent nodes (distributed memory, step-40).
 
 In the high-performance computing segment, memory access turns out to be
 the current bottleneck on supercomputers. We can avoid storing matrices
-altogether by computing matrix elements on the fly with MatrixFree
-methods (step-37). They can be used for geometric multigrid methods to
-speed solving the system of equation tremendously (step-50).
+altogether by computing the effect of matrix-vector products on the fly with MatrixFree
+methods (step-37). They can be used for geometric multigrid methods (step-50) 
+and also for polynomial multigrid methods to
+speed solving the system of equation tremendously.
 
 This tutorial combines all of these particularities and presents a
 state-of-the-art way how to solve a simple Laplace problem: utilizing
-both hp-adaptation and geometric multigrid methods on machines with
+both hp-adaptation and hybrid multigrid methods on machines with
 distributed memory.
 
 
 <h3>Load balancing</h3>
 
-For parallel applications in FEM, we partition the grid into smaller
-subdomains that each process will be assigned to. This partitioning
+For parallel applications in FEM, we partition the grid into
+subdomains (aka domain decomposition), which are assigned to processes. This partitioning
 happens on active cells in deal.II as demonstrated in step-40. There,
 each cell has the same finite element and the same number of degrees of
-freedom assigned, and ultimately represents the same workload. To
+freedom assigned, and approximately the same workload. To
 balance the workload among all processes, we have to balance the number
 of cells on all participating processes.
 
 With hp-adaptive methods, this is no longer the case: the finite element
 type may vary from cell to cell and consequently also the number of
 degrees of freedom. Matching the number of cells does not yield a
-balanced workload. The workload here is proportional the number of
-degrees of freedom.
+balanced workload. In the matrix-free context, the workload can be assumed to be
+proportional the number of degrees of freedom of each process, since in the best
+case only the source and the destination vector have to be loaded.
 
-We can balance the workload by assigning weights to every cell which are
+One could balance the workload by assigning weights to every cell which are
 proportional to the number of degrees of freedom, and balance the sum of
 all weights between all processes. Assigning individual weights to each
-cell can be realizes with the class parallel::CellWeights which we will
+cell can be realized with the class parallel::CellWeights which we will
 use later.
 
 
 <h3>hp-decision indicators</h3>
 
 With hp-adaptive methods, we not only have to decide which cells we want
-to refine or coarsen, but also how we want to do that: either by
+to refine or coarsen, but we also have the choice how we want to do that: either by
 adjusting the grid resolution or the polynomial degree of the finite
 element.
 
@@ -92,11 +94,6 @@ resolutions are favorable on irregular parts. In step-27, we presented a
 way to calculate smoothness estimates based on the decay of Fourier
 coefficients. Let us take the opportunity and present an alternative
 that follows the same idea, but with Legendre coefficients.
-
-We could also use the Fourier coefficient decay strategy from step-27
-here as well. The benefit of the Legendre method is that its base
-functions are polynomials which are easier to handle in the finite
-element context than the sinusoids of the Fourier expansion.
 
 We will briefly present the idea of this new technique, but limit its
 description to 1D for simplicity. A general function can be represented
@@ -153,36 +150,35 @@ and dimension independent description in @cite fehling2020.
 
 All of the above is already implemented in the FESeries::Legendre class
 and the SmoothnessEstimator::Legendre namespace. With the error
-estimates and smoothness indicators, we are then left to flag the flags
-for actual refinement and coarsening. Functions of the
+estimates and smoothness indicators, we are then left to flag the cells
+for actual refinement and coarsening. Some functions from the
 parallel::GridRefinement and hp::Refinement namespaces will help us with
 that later.
 
 
-<h3>Geometric Multigrid</h3>
+<h3>Hybrid geometric multigrid</h3>
 
 Matrices are typically very sparse in general, but have a varying amount
 of non-zero entries in context of hp-adaptive methods. Some
 state-of-the-art preconditioners like the algebraic multigrid (AMG) ones
 as used in step-40 behave poorly with this restriction.
 
-We will thus rely on geometric multigrid (GMG) preconditioners. step-50
-has already demonstrated the superiority of this method when combined
+We will thus rely on a matrix-free hybrid multigrid preconditioner. step-50
+has already demonstrated the superiority of geometric multigrid methods method when combined
 with the MatrixFree framework. The application on hp-adaptive FEM
-requires some additional work though.
+requires some additional work though since the children of a cell might have
+different polynomial degrees. As a remedy, we perform a p-relaxation to linear
+elements first (similar to Mitchell @cite mitchell2010hpmg) and
+then perform h-relaxation in the usual manner. On the coarsest level, we apply
+an algebraic multigrid solver. The combination of p-multigrid, h-multigrid, and
+AMG makes the solver to a hybrid multigrid solver.
 
-Mitchell @cite mitchell2010hpmg suggests to perform p-relaxation first,
-then perform h-relaxation, solve the equation system on the coarsest
-possible mesh and function space, prolongate on the grid, and then
-finally prolongate on the finite elements with the correct polynomial
-degrees.
-
-To realise this sequence of operations, we will use the
-MGTransferGlobalCoarsening functionality and create a custom hybrid
-multigrid preconditioner.
+We will create a custom hybrid multigrid preconditioner with the special level
+requirements as described above with the help of the existing global-coarsening
+infrastructure via the use of MGTransferGlobalCoarsening.
 
 
-<h3>The testcase</h3>
+<h3>The test case</h3>
 
 For elliptic equations, each reentrant corner typically invokes a
 singularity @cite brenner2008. We can use this circumstance to put our
@@ -219,6 +215,6 @@ As we know where the singularity will be located, we expect that our
 hp-decision algorithm decides for a fine grid resolution in this
 particular region, and high polynomial degree anywhere else.
 
-So let us figure out if that is actually the case, and how hp-adaptation
+So let's see if that is actually the case, and how hp-adaptation
 performs compared to pure h-adaptation. But first let us have a detailed
 look at the actual code.

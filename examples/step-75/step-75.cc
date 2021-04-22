@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------------
  *
- * Copyright (C) 2020 - 2021 by the deal.II authors
+ * Copyright (C) 2021 by the deal.II authors
  *
  * This file is part of the deal.II library.
  *
@@ -14,10 +14,10 @@
  * ---------------------------------------------------------------------
 
  *
- * Author: Marc Fehling, Colorado State University, 2020
+ * Author: Marc Fehling, Colorado State University, 2021
  *         Peter Munch, Technical University of Munich and Helmholtz-Zentrum
- *                      Geesthacht, 2020
- *         Wolfgang Bangerth, Colorado State University, 2020
+ *                      hereon, 2021
+ *         Wolfgang Bangerth, Colorado State University, 2021
  */
 
 
@@ -73,13 +73,10 @@
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include <deal.II/matrix_free/tools.h>
 
-// We will use a new type of vector for linear algebra operations
-// LinearAlgebra::distibuted::Vector. This class was designed to work with the
-// MatrixFree methods.
+// We will use  LinearAlgebra::distibuted::Vector for linear algebra operations.
 #include <deal.II/lac/la_parallel_vector.h>
 
-// For the multigrid tools in the hp-adaptive context, we are left to include
-// the remaining multigrid files.
+// We are left to include the files needed by the multigrid solver.
 #include <deal.II/multigrid/mg_coarse.h>
 #include <deal.II/multigrid/mg_constrained_dofs.h>
 #include <deal.II/multigrid/mg_matrix.h>
@@ -136,45 +133,44 @@ namespace Step75
   public:
     using VectorType = LinearAlgebra::distributed::Vector<number>;
 
-    // An alias to the FEEvaluation class. Please note that, in contrast to
+    // We will use the FEEvaluation class to evaluate the solution vector 
+    // at the quadrature points and to perform the integration.In contrast to
     // other tutorials, the template arguments `degree` is set to -1 and
     // `number of quadrature in 1D` to 0. In this case, FEEvaluation selects
-    // dynamically the correct degree and number of quadrature points. The
-    // need for dynamical decisions within FEEvaluation and possibly the
-    // lack of knowledge of matrix sizes during sum factorization might lead
-    // to a performance drop (up to 50%) compared to a templated approach,
-    // however, allows us to write here simple code without the need to
-    // explicitly deal with FEEvaluation instances with different template
-    // arguments, e.g., via jump tables.
+    // dynamically the correct polynomial degree and number of quadrature points.
+    // Here, we introduce an alias to FEEvaluation with the correct template
+    // parameters so that we do not have to worry about them later on.
     using FECellIntegrator = FEEvaluation<dim, -1, 0, 1, number>;
 
-    // Constructor
+    // The following section contains functions to initialize and reinitialize
+    // the class, in particular, these functions initialize the internal 
+    // MatrixFree instance. For sake of simplicity, we also compute the system
+    // right-hand-side vector.
     LaplaceOperator() = default;
 
-    // Constructor
     LaplaceOperator(const hp::MappingCollection<dim> &mapping,
                     const DoFHandler<dim> &           dof_handler,
                     const hp::QCollection<dim> &      quad,
                     const AffineConstraints<number> & constraints,
                     VectorType &                      system_rhs);
 
-    // Initialize the internal MatrixFree instance and compute the system
-    // right-hand-side vector
     void reinit(const hp::MappingCollection<dim> &mapping,
                 const DoFHandler<dim> &           dof_handler,
                 const hp::QCollection<dim> &      quad,
                 const AffineConstraints<number> & constraints,
                 VectorType &                      system_rhs);
 
-    // Since we do not have a matrix, query the DoFHandler for the number of
-    // degrees of freedom.
+    // The following functions are implicitly needed by the multigrid algorithm,
+    // incl., by the smoothers. Since we do not have a matrix, query the 
+    // DoFHandler for the number of degrees of freedom.
     types::global_dof_index m() const;
 
     // Access a particular element in the matrix. This function is neither
     // needed nor implemented, however, is required to compile the program.
     number el(unsigned int, unsigned int) const;
 
-    // Delegate the task to MatrixFree.
+    // Initialize the given vector. We simply delegate the task to the 
+    // MatrixFree function with the same name.
     void initialize_dof_vector(VectorType &vec) const;
 
     // Perform an operator evaluation by looping with the help of MatrixFree
@@ -183,8 +179,18 @@ namespace Step75
     void vmult(VectorType &dst, const VectorType &src) const;
 
     // Perform the transposed operator evaluation. Since we are considering
-    // symmetric matrices, this function is identical to the above function.
+    // symmetric "matrices", this function is identical to the above function.
     void Tvmult(VectorType &dst, const VectorType &src) const;
+
+    // In the matrix-free context, no system matrix is set up during initialization
+    // of this class. As a consequence, it has to be computed here if it should
+    // be requested.  Since the matrix is only computed in this tutorial for 
+    // linear element (on the coarse grid), this is acceptable.
+    //
+    // The matrix entries are obtained via sequence of operator evaluations. 
+    // For this purpose, an optimized function from the MatrixFreeTools 
+    // namespace is used.
+    const TrilinosWrappers::SparseMatrix &get_system_matrix() const;
 
     // Since we do not have a system matrix, we cannot loop over the the
     // diagonal entries of the matrix. Instead, we compute the diagonal by
@@ -192,13 +198,6 @@ namespace Step75
     // For this purpose, an optimized function from the MatrixFreeTools
     // namespace is used.
     void compute_inverse_diagonal(VectorType &diagonal) const;
-
-    // In the default case, no system matrix is set up during initialization
-    // of this class. As a consequence, it has to be computed here. Just like
-    // in the case of compute_inverse_diagonal(), the matrix entries are
-    // obtained via sequence of operator evaluations. For this purpose, an
-    // optimized function from the MatrixFreeTools namespace is used.
-    const TrilinosWrappers::SparseMatrix &get_system_matrix() const;
 
   private:
     // Perform cell integral on a cell batch without gathering and scattering
@@ -219,14 +218,15 @@ namespace Step75
       const VectorType &                           src,
       const std::pair<unsigned int, unsigned int> &range) const;
 
-    // MatrixFree object.
+    // The MatrixFree object.
     MatrixFree<dim, number> matrix_free;
 
     // Constraints potentially needed for the computation of the system matrix.
     AffineConstraints<number> constraints;
 
     // System matrix. In the default case, this matrix is empty. However, once
-    // get_system_matrix() is called, this matrix is filled.
+    // get_system_matrix() is called, this matrix is filled, requiring the
+    // "mutable" keyword.
     mutable TrilinosWrappers::SparseMatrix system_matrix;
   };
 
@@ -253,7 +253,7 @@ namespace Step75
     const AffineConstraints<number> & constraints,
     VectorType &                      system_rhs)
   {
-    // Clear internal data structures (if operator is reused).
+    // Clear internal data structures (in the case that the operator is reused).
     this->system_matrix.clear();
 
     // Copy the constrains, since they might be needed for computation of the
@@ -360,7 +360,7 @@ namespace Step75
   void LaplaceOperator<dim, number>::compute_inverse_diagonal(
     VectorType &diagonal) const
   {
-    // compute diagonal
+    // compute diagonal by calling MatrixFreeTools::compute_diagonal().
     MatrixFreeTools::compute_diagonal(matrix_free,
                                       diagonal,
                                       &LaplaceOperator::do_cell_integral_local,
@@ -377,7 +377,8 @@ namespace Step75
   const TrilinosWrappers::SparseMatrix &
   LaplaceOperator<dim, number>::get_system_matrix() const
   {
-    // Check if matrix has already been set up.
+    // Compute the system matrix only if it has not been set up (number of rows
+    // and columns equal to zero)..
     if (system_matrix.m() == 0 && system_matrix.n() == 0)
       {
         // Set up sparsity pattern of system matrix.
@@ -395,7 +396,7 @@ namespace Step75
         dsp.compress();
         system_matrix.reinit(dsp);
 
-        // Assemble system matrix.
+        // Assemble system matrix by calling MatrixFreeTools::compute_matrix().
         MatrixFreeTools::compute_matrix(
           matrix_free,
           constraints,
@@ -532,7 +533,7 @@ namespace Step75
     // Initialize level operators.
     mg::Matrix<VectorType> mg_matrix(mg_matrices);
 
-    // Initialize smoothers.
+    // Initialize smoothers. We use Chebyshev smoothers here.
     MGLevelObject<typename SmootherType::AdditionalData> smoother_data(
       min_level, max_level);
 
@@ -552,7 +553,8 @@ namespace Step75
       mg_smoother;
     mg_smoother.initialize(mg_matrices, smoother_data);
 
-    // Initialize coarse-grid solver.
+    // Initialize coarse-grid solver. We use conjugage-graident method with AMG 
+    // as preconditioner.
     ReductionControl coarse_grid_solver_control(mg_data.coarse_solver.maxiter,
                                                 mg_data.coarse_solver.abstol,
                                                 mg_data.coarse_solver.reltol,
@@ -562,7 +564,6 @@ namespace Step75
 
     std::unique_ptr<MGCoarseGridBase<VectorType>> mg_coarse;
 
-    // CG with AMG as preconditioner
     TrilinosWrappers::PreconditionAMG                 precondition_amg;
     TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
     amg_data.smoother_sweeps = mg_data.coarse_solver.smoother_sweeps;
@@ -579,25 +580,26 @@ namespace Step75
                                                    decltype(precondition_amg)>>(
         coarse_grid_solver, *mg_matrices[min_level], precondition_amg);
 
-    // Create multigrid object.
+    // Finally, we create the Multigrid object, convert it to a preconditioner,
+    // and use it insdide of a conjugate-gradient solver to solve the linear
+    // system of equations.
     Multigrid<VectorType> mg(
       mg_matrix, *mg_coarse, mg_transfer, mg_smoother, mg_smoother);
 
-    // Convert it to a preconditioner.
     PreconditionerType preconditioner(dof, mg, mg_transfer);
 
-    // Finally, solve.
     SolverCG<VectorType>(solver_control)
       .solve(fine_matrix, dst, src, preconditioner);
   }
 
 
 
-  // @sect4{Hybrid polynomial-global-coarsening multigrid preconditioner}
+  // @sect4{Hybrid polynomial/geometric-global-coarsening multigrid preconditioner}
 
   // The above function deals with the actual solution for a given sequence of
-  // multigrid objects. This functions creates the actual multigrid mechanism as
-  // a MGTransferGlobalCoarsening object.
+  // multigrid objects. This functions creates the actual multigrid levels, in
+  // particular the operators, and the transfer operator as a 
+  // MGTransferGlobalCoarsening object.
   template <typename VectorType, typename OperatorType, int dim>
   void solve_with_gmg(SolverControl &                  solver_control,
                       const OperatorType &             system_matrix,
@@ -609,7 +611,11 @@ namespace Step75
                       const hp::QCollection<dim> &     quadrature_collection)
   {
     // Create a DoFHandler and operator for each multigrid level defined
-    // by p-coarsening, as well as, create transfer operators.
+    // by p-coarsening, as well as, create transfer operators. To be able to
+    // set up the operators, we need a set of DoFHandler that we create 
+    // via global coarsening of p or h. For latter, we need also a sequence
+    // of Triangulation objects that are obtained by 
+    // Triangulation::coarsen_global().
     MGLevelObject<DoFHandler<dim>>                     dof_handlers;
     MGLevelObject<std::unique_ptr<OperatorType>>       operators;
     MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
@@ -628,9 +634,9 @@ namespace Step75
           // and its destructor is called somewhere else
         });
 
-    const unsigned int n_h_levels = coarse_grid_triangulations.size() - 1;
-
     // Determine the number of levels.
+    const unsigned int n_h_levels = coarse_grid_triangulations.size() - 1;
+    
     const auto get_max_active_fe_degree = [&](const auto &dof_handler) {
       unsigned int max = 0;
 
@@ -665,14 +671,15 @@ namespace Step75
     operators.resize(minlevel, maxlevel);
     transfers.resize(minlevel, maxlevel);
 
-    // Loop from max to min level and set up DoFHandler with coarser mesh...
+    // Loop from max to min level and set up DoFHandler with coarser meshes and
+    // linear elements...
     for (unsigned int l = 0; l < n_h_levels; ++l)
       {
         dof_handlers[l].reinit(*coarse_grid_triangulations[l]);
         dof_handlers[l].distribute_dofs(dof_handler.get_fe_collection());
       }
 
-    // ... with lower polynomial degrees
+    // ... and with lower polynomial degrees
     for (unsigned int i = 0, l = maxlevel; i < n_p_levels; ++i, --l)
       {
         dof_handlers[l].reinit(dof_handler.get_triangulation());
@@ -750,7 +757,8 @@ namespace Step75
         }
       }
 
-    // Set up intergrid operators.
+    // Set up intergrid operators and collect transfer operators within a single
+    // operator as needed by the Multigrid solver class.
     for (unsigned int level = minlevel; level < minlevel_p; ++level)
       transfers[level + 1].reinit_geometric_transfer(dof_handlers[level + 1],
                                                      dof_handlers[level],
@@ -763,8 +771,6 @@ namespace Step75
                                                       constraints[level + 1],
                                                       constraints[level]);
 
-    // Collect transfer operators within a single operator as needed by
-    // the Multigrid solver class.
     MGTransferGlobalCoarsening<dim, VectorType> transfer(
       transfers, [&](const auto l, auto &vec) {
         operators[l]->initialize_dof_vector(vec);
@@ -824,8 +830,8 @@ namespace Step75
   // - The SparseMatrix object that would hold the system matrix has been
   //   replaced by an object of the LaplaceOperator class for the MatrixFree
   //   formulation.
-  // - An object of parallel::CellWeights that will help us with load balancing
-  //   has been added.
+  // - An object of parallel::CellWeights, which will help us with load 
+  //   balancing, has been added.
   template <int dim>
   class LaplaceProblem
   {
@@ -910,7 +916,7 @@ namespace Step75
     // We need to prepare the data structures for the hp-functionality in the
     // actual body of the constructor, and create corresponding objects for
     // every degree in the specified range from the parameter struct. As we are
-    // only dealing with non-distorted rectangular cells, a generic mapping
+    // only dealing with non-distorted rectangular cells, a linear mapping
     // object is sufficient in this context. Furthermore, we initialize the
     // FESeries::Legendre object in the default configuration for smoothness
     // estimation.
@@ -1047,8 +1053,8 @@ namespace Step75
   // This function looks exactly the same to the one of step-40, but you will
   // notice the absence of the system matrix as well as the scaffold that
   // surrounds it. Instead, we will initialize the MatrixFree formulation of the
-  // <code>laplace_operator</code> here. For boundary conditions we will use the
-  // Solution function introduced earlier in this tutorial.
+  // <code>laplace_operator</code> here. For boundary conditions, we will use the
+  // Solution class introduced earlier in this tutorial.
   template <int dim>
   void LaplaceProblem<dim>::setup_system()
   {
@@ -1157,9 +1163,9 @@ namespace Step75
 
   // @sect4{LaplaceProblem::solve_system}
 
-  // The scaffold around the solution is similar to the one of step-40. We again
-  // prepare a container object that only consists of the locally owned solution
-  // and communicate the ghost values after we solved the equation system. The
+  // The scaffold around the solution is similar to the one of step-40. We 
+  // prepare a vector that matches the requirements of MatrixFree and collect
+  // the locally-relevant degrees of freedoms we solved the equation system. The
   // solution happens with the function introduced earlier.
   template <int dim>
   void LaplaceProblem<dim>::solve_system()
@@ -1245,7 +1251,7 @@ namespace Step75
 
   // With the previously calculated indicators, we will finally flag all cells
   // for adaptation and also execute refinement in this function. As in previous
-  // tutorials, we will use fixed number strategies, but now for hp-adaptation.
+  // tutorials, we will use the "fixed number" strategy, but now for hp-adaptation.
   //
   // First, we will set refine and coarsen flags based on the error estimates on
   // each cell. There is nothing new here.
@@ -1363,8 +1369,8 @@ namespace Step75
   // addition is the bracketed section that preceeds the actual cycle loop.
   // Here, we will pre-calculate the Legendre transformation matrices. In
   // general, these will be calculated on the fly via lazy allocation whenever a
-  // certain matrix is needed. For timimng puporses however, we would like to
-  // calulate them all at once before the actual time measurement begins. We
+  // certain matrix is needed. For timing purposes however, we would like to
+  // calculate them all at once before the actual time measurement begins. We
   // will thus designate their calculation to their own scope.
   template <int dim>
   void LaplaceProblem<dim>::run()
@@ -1422,7 +1428,7 @@ namespace Step75
 // so we will skip them altogether.
 //
 // We will use general refine and coarsen fractions that have been elaborated in
-// the other dealii tutorials: using the fixed number strategy, we will flag
+// the other deal.II tutorials: using the fixed number strategy, we will flag
 // 30% of all cells for refinement and 3% for coarsening. For the p-adaptation
 // fractions, we will take an educated guess. Since we only expect a single
 // singularity in our scenario, i.e., in the origin of the domain, and a smooth

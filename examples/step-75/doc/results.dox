@@ -66,7 +66,7 @@ Cycle 2:
 ...
 @endcode
 
-When running the code with more processors, you will notice slight
+When running the code with more processes, you will notice slight
 differences in the number of active cells and degrees of freedom. This
 is due to the fact that solver and preconditioner depend on the
 partitioning of the problem, which might yield to slight differences of
@@ -74,8 +74,9 @@ the solution in the last digits and ultimately yields to different
 adaptation behavior.
 
 Furthermore, the number of iterations for the solver stays about the
-same in all iterations despite hp-adaptation, which ensures that it will
-scale properly on even larger problems with a multitude of unknowns.
+same in all cycles despite hp-adaptation, indicating the robustness of the
+proposed algorithms and promising good scalability for even larger problem 
+sizes and on more processes.
 
 Let us have a look at the graphical output of the program. After all
 refinement cycles in the given parameter configuration, the actual
