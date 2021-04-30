@@ -74,9 +74,9 @@ the solution in the last digits and ultimately yields to different
 adaptation behavior.
 
 Furthermore, the number of iterations for the solver stays about the
-same in all cycles despite hp-adaptation, indicating the robustness of the
-proposed algorithms and promising good scalability for even larger problem 
-sizes and on more processes.
+same in all cycles despite hp-adaptation, indicating the robustness of
+the proposed algorithms and promising good scalability for even larger
+problem sizes and on more processes.
 
 Let us have a look at the graphical output of the program. After all
 refinement cycles in the given parameter configuration, the actual
