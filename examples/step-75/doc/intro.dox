@@ -138,16 +138,20 @@ index $k$:
 \exists C,\sigma > 0 : \quad \forall k \in \mathbb{N}_0 : \quad |c_k|
 \leq C \exp\left( - \sigma k \right) .
 @f]
-The rate of decay $sigma_K$ can be interpreted as a measure for the
-local smoothness of the finite element approximation. We can get it as
-the slope of a linear regression fit of the transformation coefficients:
+The rate of decay $\sigma$ can be interpreted as a measure for the
+smoothness of that function. We can get it as the slope of a linear
+regression fit of the transformation coefficients:
 @f[
-\ln(|c_{k,K}|) \sim C_K - \sigma_K k .
+\ln(|c_k|) \sim \ln(C) - \sigma k .
 @f]
-For a finite element on a cell $K$ with a polynomial degree $p$,
-calculating the coefficients for $k \leq (p+1)$ proved to be a
-reasonable choice to estimate smoothness. You can find a more detailed
-and dimension independent description in @cite fehling2020.
+
+We will perform this fit on each cell $K$ to get a local estimate for
+the smoothness of the finite element approximation. The decay rate
+$\sigma_K$ then acts as the decision indicator for hp-adaptation. For a
+finite element on a cell $K$ with a polynomial degree $p$, calculating
+the coefficients for $k \leq (p+1)$ proved to be a reasonable choice to
+estimate smoothness. You can find a more detailed and dimension
+independent description in @cite fehling2020.
 
 All of the above is already implemented in the FESeries::Legendre class
 and the SmoothnessEstimator::Legendre namespace. With the error
@@ -189,7 +193,7 @@ hp-decision algorithms to a test: on all cells to be adapted, we would
 prefer a fine grid near the singularity, and a high polynomial degree
 otherwise.
 
-As the simplest elliptic problem to solve with these constraints, we
+As the simplest elliptic problem to solve under these conditions, we
 chose the Laplace equation in a L-shaped domain with the reentrant
 corner in the origin of the coordinate system.
 
