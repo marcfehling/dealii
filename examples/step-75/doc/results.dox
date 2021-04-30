@@ -99,3 +99,58 @@ to degree six:
 </td>
 </tr>
 </table>
+
+
+
+<a name="extensions"></a>
+<h3>Possibilities for extensions</h3>
+
+<h4>Different hp-decision strategies</h4>
+
+The deal.II library offers multiple strategies to decide which type of
+adaptation to impose on cells: either adjust the grid resolution or
+change the polynomial degree. We only presented the <i>Legendre
+coefficient decay</i> strategy in this tutorial, while step-27
+demonstrated the <i>Fourier</i> equivalent of the same idea.
+
+See the "possibilities for extensions" section of step-27 for an
+overview over these strategies, or the corresponding documentation
+for a detailed description.
+
+There, another strategy is mentioned that has not been shown in any
+tutorial so far: the strategy based on <i>refinement history</i>. The
+usage of this method for parallel distributed applications is more
+tricky than the others, so we will highlight the cruxes that come along
+with it. We need information about the final state of refinement flags,
+and we need to transfer the solution across refined meshes. For the
+former, we need to attach the hp::Refinement::predict_error() function
+to the Triangulation::Signals::post_p4est_refinement signal in a way
+that it will be called <i>after</i> the
+hp::Refinement::p_level_difference() function. At this stage, all
+refinement flags and future FE indices are terminally set and a reliable
+prediction of the error is possible. The predicted error then needs to
+be transferred across refined meshes with the aid of
+parallel::distributed::CellDataTransfer.
+
+Try implementing one of these strategies into this tutorial and observe
+the subtle changes to the results. You will notice that all strategies
+are capable of identifying the singularities near the reentrant corners
+and will perform $h$-refinement in these regions, while preferring
+$p$-refinement in the bulk domain. A detailed comparison of these
+strategies is presented in @cite fehling2020 .
+
+
+<h4>Solve with matrix-based methods</h4>
+
+This tutorial focuses solely on matrix-free strategies. All hp-adaptive
+algorithms however also work with matrix-based approaches in the
+parallel distributed context.
+
+To create a system matrix, you can either use the
+LaplaceOperator::get_system_matrix() function, or use an
+<code>assemble_system()</code> function similar to the one of step-27.
+You can then pass the system matrix to the solver as usual.
+
+You can time the results of both matrix-based and matrix-free
+implementations, quantify the speed-up, and convice yourself which
+variant is faster.
