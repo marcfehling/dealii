@@ -924,25 +924,50 @@ namespace Step75
     // actual body of the constructor, and create corresponding objects for
     // every degree in the specified range from the parameter struct. As we are
     // only dealing with non-distorted rectangular cells, a linear mapping
-    // object is sufficient in this context. Furthermore, we initialize the
-    // FESeries::Legendre object in the default configuration for smoothness
-    // estimation.
+    // object is sufficient in this context.
     //
     // In the Parameters struct, we provide ranges for levels on which the
-    // function space is operating with a reasonable resolution. The minimal
-    // polynomial degree is set to 2 as it seems that the smoothness estimation
-    // algorithms have trouble with linear elements, so we will skip them
-    // altogether.
+    // function space is operating with a reasonable resolution. The multigrid
+    // algorithm requires linear elements on the coarsest possible level. So we
+    // start with the lowest polynomial degree and fill the collection with
+    // consecutievely higher degrees until the user-specified maximum is
+    // reached.
     mapping_collection.push_back(MappingQ1<dim>());
 
-    for (unsigned int degree = prm.min_p_degree; degree <= prm.max_p_degree;
-         ++degree)
+    for (unsigned int degree = 1; degree <= prm.max_p_degree; ++degree)
       {
         fe_collection.push_back(FE_Q<dim>(degree));
         quadrature_collection.push_back(QGauss<dim>(degree + 1));
         face_quadrature_collection.push_back(QGauss<dim - 1>(degree + 1));
       }
 
+    // As our FECollection contains more finite elements than we want to use for
+    // the finite element approximation of our solution, we would like to limit
+    // the range on which active FE indices can operate on. For this, the
+    // FECollection class allows to register a hierarchy that determines the
+    // succeeding and preceeding finite element in case of of p-refinement and
+    // p-coarsening, respectively. All functions in the hp::Refinement namespace
+    // consult this hierarchy to determine future FE indices. We will register
+    // such a hierarchy that only works on finite elements with polynomial
+    // degrees in the proposed range <code>[min_p_degree, max_p_degree]</code>.
+    const unsigned int min_fe_index = prm.min_p_degree - 1;
+    fe_collection.set_hierarchy(
+      /*next_index=*/
+      [](const typename hp::FECollection<dim> &fe_collection,
+         const unsigned int                    fe_index) -> unsigned int {
+        return ((fe_index + 1) < fe_collection.size()) ? fe_index + 1 :
+                                                         fe_index;
+      },
+      /*previous_index=*/
+      [min_fe_index](const typename hp::FECollection<dim> &,
+                     const unsigned int fe_index) -> unsigned int {
+        Assert(fe_index >= min_fe_index,
+               ExcMessage("Finite element is not part of hierarchy!"));
+        return (fe_index > min_fe_index) ? fe_index - 1 : fe_index;
+      });
+
+    // We initialize the FESeries::Legendre object in the default configuration
+    // for smoothness estimation.
     legendre = std::make_unique<FESeries::Legendre<dim>>(
       SmoothnessEstimator::Legendre::default_fe_series(fe_collection));
 
@@ -998,11 +1023,12 @@ namespace Step75
     // of the signal, to ensure that the modification is performed before any
     // other function connected to the same signal.
     triangulation.signals.post_p4est_refinement.connect(
-      [&]() {
+      [&, min_fe_index]() {
         const internal::parallel::distributed::TemporarilyMatchRefineFlags<dim>
           refine_modifier(triangulation);
         hp::Refinement::limit_p_level_difference(dof_handler,
-                                                 prm.max_p_level_difference);
+                                                 prm.max_p_level_difference,
+                                                 /*contains=*/min_fe_index);
       },
       boost::signals2::at_front);
   }
@@ -1032,7 +1058,8 @@ namespace Step75
   // from the positive x-direction.
   //
   // In the end, we supply the number of initial refinements that corresponds to
-  // the supplied minimal grid refinement level.
+  // the supplied minimal grid refinement level. Further, we set the initial
+  // active FE indices accordingly.
   template <int dim>
   void LaplaceProblem<dim>::initialize_grid()
   {
@@ -1061,6 +1088,10 @@ namespace Step75
       triangulation, repetitions, bottom_left, top_right, cells_to_remove);
 
     triangulation.refine_global(prm.min_h_level);
+
+    const unsigned int min_fe_index = prm.min_p_degree - 1;
+    for (const auto &cell : dof_handler.active_cell_iterators())
+      cell->set_active_fe_index(min_fe_index);
   }
 
 
@@ -1234,7 +1265,9 @@ namespace Step75
   //
   // For the purpose of hp-adaptation, we will calculate smoothness estimates
   // with the strategy presented in the tutorial introduction and use the
-  // implementation in SmoothnessEstimator::Legendre.
+  // implementation in SmoothnessEstimator::Legendre. In the Parameters struct,
+  // we set the minimal polynomial degree to 2 as it seems that the smoothness
+  // estimation algorithms have trouble with linear elements.
   template <int dim>
   void LaplaceProblem<dim>::compute_indicators()
   {
@@ -1320,8 +1353,9 @@ namespace Step75
     // After setting all indicators, we will remove those that exceed the
     // specified limits of the provided level ranges in the Parameters struct.
     // This limitation naturally arises for p-adaptation as the number of
-    // supplied finite elements is limited. However, we need to do this manually
-    // in the h-adaptative context like in step-31.
+    // supplied finite elements is limited. In addition, we registered a custom
+    // hierarchy for p-adaptation in the constructor. Now, we need to do this
+    // manually in the h-adaptative context like in step-31.
     //
     // We will iterate over all cells on the designated min and max levels and
     // remove the corresponding flags. As an alternative, we could also flag
