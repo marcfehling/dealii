@@ -1091,7 +1091,8 @@ namespace Step75
 
     const unsigned int min_fe_index = prm.min_p_degree - 1;
     for (const auto &cell : dof_handler.active_cell_iterators())
-      cell->set_active_fe_index(min_fe_index);
+      if (cell->is_locally_owned())
+        cell->set_active_fe_index(min_fe_index);
   }
 
 
