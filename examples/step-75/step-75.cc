@@ -1360,7 +1360,7 @@ namespace Step75
     data_out.build_patches(mapping_collection);
 
     data_out.write_vtu_with_pvtu_record(
-      "./", "solution", cycle, mpi_communicator, 2, 8);
+      "./", "solution", cycle, mpi_communicator, 2, 1);
   }
 
 
