@@ -122,6 +122,78 @@ namespace Step75
 
 
 
+  // @sect3{Parameters}
+
+  // For this tutorial, we will use a simplified set of parameters. It is also
+  // possible to use a ParameterHandler class here, but to keep this tutorial
+  // short we decided on using simple structs. The actual intention of all these
+  // parameters will be described in the upcoming classes at their respecitve
+  // location where they are used.
+  //
+  // The following parameter set controls the geometric multigrid mechanism and
+  // the solver specifications on the coarsest level. We populate it with
+  // default parameters.
+  struct GMGParameters
+  {
+    struct CoarseSolverParameters
+    {
+      std::string  type            = "cg_with_amg";
+      unsigned int maxiter         = 10000;
+      double       abstol          = 1e-20;
+      double       reltol          = 1e-4;
+      unsigned int smoother_sweeps = 1;
+      unsigned int n_cycles        = 1;
+      std::string  smoother_type   = "ILU";
+    };
+
+    struct SmootherParameters
+    {
+      std::string  type                = "chebyshev";
+      double       smoothing_range     = 20;
+      unsigned int degree              = 5;
+      unsigned int eig_cg_n_iterations = 20;
+    };
+
+    SmootherParameters     smoother;
+    CoarseSolverParameters coarse_solver;
+
+    MGTransferGlobalCoarseningTools::PolynomialCoarseningSequenceType
+      p_sequence = MGTransferGlobalCoarseningTools::
+        PolynomialCoarseningSequenceType::decrease_by_one;
+    bool perform_h_transfer = true;
+  };
+
+
+
+  // This is the general parameter struct for the problem class. You will find
+  // this struct divided into several categories, including general runtime
+  // parameters, level limits, refine and coarsen fractions, as well as
+  // parameters for cell weighting. It also contains an instance of the above
+  // struct for GMG parameters which will be passed to the multigrid algorithm.
+  struct Parameters
+  {
+    unsigned int n_cycles         = 8;
+    double       tolerance_factor = 1e-12;
+
+    GMGParameters mg_data;
+
+    unsigned int min_h_level            = 5;
+    unsigned int max_h_level            = 12;
+    unsigned int min_p_degree           = 2;
+    unsigned int max_p_degree           = 6;
+    unsigned int max_p_level_difference = 1;
+
+    double refine_fraction    = 0.3;
+    double coarsen_fraction   = 0.03;
+    double p_refine_fraction  = 0.9;
+    double p_coarsen_fraction = 0.9;
+
+    double weighting_factor   = 1e6;
+    double weighting_exponent = 1.;
+  };
+
+
+
   // @sect3{Matrix-free Laplace operator}
 
   // This is a matrix-free implementation of the Laplace operator that will
@@ -462,41 +534,6 @@ namespace Step75
 
   // @sect3{Solver and preconditioner}
 
-  // The following parameter set controls the geometric multigrid mechanism and
-  // the solver specifications on the coarsest level. We populate it with
-  // default parameters.
-  struct GMGParameters
-  {
-    struct CoarseSolverParameters
-    {
-      std::string  type            = "cg_with_amg";
-      unsigned int maxiter         = 10000;
-      double       abstol          = 1e-20;
-      double       reltol          = 1e-4;
-      unsigned int smoother_sweeps = 1;
-      unsigned int n_cycles        = 1;
-      std::string  smoother_type   = "ILU";
-    };
-
-    struct SmootherParameters
-    {
-      std::string  type                = "chebyshev";
-      double       smoothing_range     = 20;
-      unsigned int degree              = 5;
-      unsigned int eig_cg_n_iterations = 20;
-    };
-
-    SmootherParameters     smoother;
-    CoarseSolverParameters coarse_solver;
-
-    MGTransferGlobalCoarseningTools::PolynomialCoarseningSequenceType
-      p_sequence = MGTransferGlobalCoarseningTools::
-        PolynomialCoarseningSequenceType::decrease_by_one;
-    bool perform_h_transfer = true;
-  };
-
-
-
   // @sect4{Conjugate-gradient solver with multigrid preconditioner}
 
   // This function solves the equation system with a seqeuence of provided
@@ -792,38 +829,6 @@ namespace Step75
 
   // @sect3{The <code>LaplaceProblem</code> class template}
 
-  // For this tutorial, we will use a simplified set of parameters. It is also
-  // possible to use a ParameterHandler class here, but to keep this tutorial
-  // short we decided on using a simple struct.
-  //
-  // You will find this struct divided into several categories, including
-  // general runtime parameters, level limits, refine and coarsen fractions, as
-  // well as parameters for cell weighting. The actual intention of these
-  // parameters will be described in the upcoming problem class at their
-  // respecitve location where they are used.
-  struct Parameters
-  {
-    unsigned int  n_cycles;
-    double        tolerance_factor;
-    GMGParameters mg_data;
-
-    unsigned int min_h_level;
-    unsigned int max_h_level;
-    unsigned int min_p_degree;
-    unsigned int max_p_degree;
-    unsigned int max_p_level_difference;
-
-    double refine_fraction;
-    double coarsen_fraction;
-    double p_refine_fraction;
-    double p_coarsen_fraction;
-
-    double weighting_factor;
-    double weighting_exponent;
-  };
-
-
-
   // Now we will finally declare the main class of this program, which solves
   // the Laplace equation on subsequently refined function spaces. Its structure
   // will look familiar as it is similar to the main classes of step-27 and
@@ -917,6 +922,12 @@ namespace Step75
     // object is sufficient in this context. Furthermore, we initialize the
     // FESeries::Legendre object in the default configuration for smoothness
     // estimation.
+    //
+    // In the Parameters struct, we provide ranges for levels on which the
+    // function space is operating with a reasonable resolution. The minimal
+    // polynomial degree is set to 2 as it seems that the smoothness estimation
+    // algorithms have trouble with linear elements, so we will skip them
+    // altogether.
     mapping_collection.push_back(MappingQ1<dim>());
 
     for (unsigned int degree = prm.min_p_degree; degree <= prm.max_p_degree;
@@ -948,10 +959,19 @@ namespace Step75
     // the form that $a n_\text{dofs}^b$ with a provided pair of parameters
     // $(a,b)$. We register such a function in the following. Every cell will be
     // charged with a constant weight at creation, which is a value of 1000 (see
-    // Triangulation::Signals::cell_weight). To increase the impact of the
-    // weights we would like to attach, make sure that the individual weight
-    // will exceed this base weight by orders of magnitude.
+    // Triangulation::Signals::cell_weight).
     //
+    // For load balancing, efficient solvers like the one we use should scale
+    // linearly with the number of degrees of freedom owned. Further, to
+    // increase the impact of the weights we would like to attach, make sure
+    // that the individual weight will exceed this base weight by orders of
+    // magnitude. We set the parameters for cell weighting correspondigly: A
+    // large weighting factor of $10^6$ and an exponent of $1$.
+    cell_weights = std::make_unique<parallel::CellWeights<dim>>(
+      dof_handler,
+      parallel::CellWeights<dim>::ndofs_weighting(
+        {prm.weighting_factor, prm.weighting_exponent}));
+
     // In h-adaptive applications, we ensure a 2:1 mesh balance by limiting the
     // difference of refinement levels of neighboring cells to one. With the
     // second call in the follwoing code snippet, we will ensure the same for
@@ -972,11 +992,6 @@ namespace Step75
     // Furthermore, we specify that this function will be connected to the front
     // of the signal, to ensure that the modification is performed before any
     // other function connected to the same signal.
-    cell_weights = std::make_unique<parallel::CellWeights<dim>>(
-      dof_handler,
-      parallel::CellWeights<dim>::ndofs_weighting(
-        {prm.weighting_factor, prm.weighting_exponent}));
-
     triangulation.signals.post_p4est_refinement.connect(
       [&]() {
         const internal::parallel::distributed::TemporarilyMatchRefineFlags<dim>
@@ -1250,14 +1265,18 @@ namespace Step75
   // for adaptation and also execute refinement in this function. As in previous
   // tutorials, we will use the "fixed number" strategy, but now for
   // hp-adaptation.
-  //
-  // First, we will set refine and coarsen flags based on the error estimates on
-  // each cell. There is nothing new here.
   template <int dim>
   void LaplaceProblem<dim>::adapt_resolution()
   {
     TimerOutput::Scope t(computing_timer, "adapt resolution");
 
+    // First, we will set refine and coarsen flags based on the error estimates
+    // on each cell. There is nothing new here.
+    //
+    // We will use general refine and coarsen fractions that have been
+    // elaborated in the other deal.II tutorials: using the fixed number
+    // strategy, we will flag 30% of all cells for refinement and 3% for
+    // coarsening, as provided in the Parameters struct.
     parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(
       triangulation,
       estimated_error_per_cell,
@@ -1274,24 +1293,30 @@ namespace Step75
     // indices will only be set on those cells that have refine or coarsen flags
     // assigned.
     //
-    // At this stage, we have both the future FE indices and the classic refine
-    // and coarsen flags set, from which the latter will be interpreted by
-    // Triangulation::execute_coarsening_and_refinement() for h-adaptation.
-    // We would like to only impose one type of adaptation on cells, which is
-    // what the second function will sort out for us. In short, on cells which
-    // have both types of indicators assigned, we will favor the p-adaptation
-    // one and remove the h-adaptation one.
+    // For the p-adaptation fractions, we will take an educated guess. Since we
+    // only expect a single singularity in our scenario, i.e., in the origin of
+    // the domain, and a smooth solution anywhere else, we would like to
+    // strongly perfer to use p-adaptation over h-adaptation. This reflects in
+    // our choice of a fraction of 90% for both p-refinement and p-coarsening.
     hp::Refinement::p_adaptivity_fixed_number(dof_handler,
                                               hp_decision_indicators,
                                               prm.p_refine_fraction,
                                               prm.p_coarsen_fraction);
+
+    // At this stage, we have both the future FE indices and the classic refine
+    // and coarsen flags set, from which the latter will be interpreted by
+    // Triangulation::execute_coarsening_and_refinement() for h-adaptation.
+    // We would like to only impose one type of adaptation on cells, which is
+    // what the next function will sort out for us. In short, on cells which
+    // have both types of indicators assigned, we will favor the p-adaptation
+    // one and remove the h-adaptation one.
     hp::Refinement::choose_p_over_h(dof_handler);
 
     // After setting all indicators, we will remove those that exceed the
-    // specified limits of the provided level ranges. This limitation naturally
-    // arises for p-adaptation as the number of supplied finite elements is
-    // limited. However, we need to do this manually in the h-adaptative context
-    // like in step-31.
+    // specified limits of the provided level ranges in the Parameters struct.
+    // This limitation naturally arises for p-adaptation as the number of
+    // supplied finite elements is limited. However, we need to do this manually
+    // in the h-adaptative context like in step-31.
     //
     // We will iterate over all cells on the designated min and max levels and
     // remove the corresponding flags. As an alternative, we could also flag
@@ -1417,26 +1442,7 @@ namespace Step75
 
 // The final function is the <code>main</code> function that will ultimately
 // create and run a LaplceOperator instantiation. Its structure is similar to
-// most other tutorial programs. We define all parameters used in the tutorial
-// here, so this is a good opportunity to justify how we picked them.
-//
-// We provide ranges for levels on which the function space is operating with a
-// reasonable resolution. The minimal polynomial degree is set to 2 as it seems
-// that the smoothness estimation algorithms have trouble with linear elements,
-// so we will skip them altogether.
-//
-// We will use general refine and coarsen fractions that have been elaborated in
-// the other deal.II tutorials: using the fixed number strategy, we will flag
-// 30% of all cells for refinement and 3% for coarsening. For the p-adaptation
-// fractions, we will take an educated guess. Since we only expect a single
-// singularity in our scenario, i.e., in the origin of the domain, and a smooth
-// solution anywhere else, we would like to strongly perfer to use p-adaptation
-// over h-adaptation. This reflects in our choice of a fraction of 90% for both
-// p-refinement and p-coarsening.
-//
-// For load balancing, efficient solvers like the one we use should scale
-// linearly with the number of degrees of freedom owned. We will set the
-// parameters for cell weighting correspondigly.
+// most other tutorial programs.
 int main(int argc, char *argv[])
 {
   try
@@ -1446,26 +1452,7 @@ int main(int argc, char *argv[])
 
       Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
-      Parameters prm;
-      {
-        prm.n_cycles         = 8;
-        prm.tolerance_factor = 1e-12;
-
-        prm.min_h_level            = 5;
-        prm.max_h_level            = 12;
-        prm.min_p_degree           = 2;
-        prm.max_p_degree           = 6;
-        prm.max_p_level_difference = 1;
-
-        prm.refine_fraction    = 0.3;
-        prm.coarsen_fraction   = 0.03;
-        prm.p_refine_fraction  = 0.9;
-        prm.p_coarsen_fraction = 0.9;
-
-        prm.weighting_factor   = 1e6;
-        prm.weighting_exponent = 1.;
-      }
-
+      Parameters        prm;
       LaplaceProblem<2> laplace_problem(prm);
       laplace_problem.run();
     }
