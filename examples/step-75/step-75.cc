@@ -888,18 +888,14 @@ namespace Step75
   // @sect4{Constructor}
 
   // The constructor starts with an initializer list that looks similar to the
-  // one of step-40. We again ensure that the Triangulation remains smooth,
-  // prepare the ConditionalOStream object to allow only the first process to
-  // output anything over the console, and initialize the computing timer
-  // properly.
+  // one of step-40. We again prepare the ConditionalOStream object to allow
+  // only the first process to output anything over the console, and initialize
+  // the computing timer properly.
   template <int dim>
   LaplaceProblem<dim>::LaplaceProblem(const Parameters &parameters)
     : mpi_communicator(MPI_COMM_WORLD)
     , prm(parameters)
-    , triangulation(mpi_communicator,
-                    typename Triangulation<dim>::MeshSmoothing(
-                      Triangulation<dim>::smoothing_on_refinement |
-                      Triangulation<dim>::smoothing_on_coarsening))
+    , triangulation(mpi_communicator)
     , dof_handler(triangulation)
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_communicator) == 0))
