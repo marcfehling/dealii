@@ -58,6 +58,10 @@
 #include <deal.II/numerics/smoothness_estimator.h>
 #include <deal.II/numerics/vector_tools.h>
 
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+
 // For load balancing we will assign individual weights on cells, and for that
 // we will use the class parallel::CellWeights.
 #include <deal.II/distributed/cell_weights.h>
@@ -84,9 +88,6 @@
 #include <deal.II/multigrid/mg_tools.h>
 #include <deal.II/multigrid/mg_transfer_global_coarsening.h>
 #include <deal.II/multigrid/multigrid.h>
-
-#include <fstream>
-#include <iostream>
 
 namespace Step75
 {
@@ -1142,7 +1143,8 @@ namespace Step75
   // active cells and degrees of freedom, we also output their local
   // equivalents. For a regulated output, we will communicate the local
   // quantities with a Utilities::MPI::gather operation to the first process
-  // which will then output all information.
+  // which will then output all information. Output of local quantities is
+  // limited to the first 8 processes to avoid cluttering the terminal.
   //
   // Furthermore, we would like to print the frequencies of the polynomial
   // degrees in the numerical discretization. Since this information is only
@@ -1151,6 +1153,12 @@ namespace Step75
   template <int dim>
   void LaplaceProblem<dim>::print_diagnostics()
   {
+    const unsigned int first_n_processes =
+      std::min<unsigned int>(8,
+                             Utilities::MPI::n_mpi_processes(mpi_communicator));
+    const bool output_cropped =
+      first_n_processes < Utilities::MPI::n_mpi_processes(mpi_communicator);
+
     {
       pcout << "   Number of active cells:       "
             << triangulation.n_global_active_cells() << std::endl
@@ -1159,8 +1167,10 @@ namespace Step75
       std::vector<unsigned int> n_active_cells_per_subdomain =
         Utilities::MPI::gather(mpi_communicator,
                                triangulation.n_locally_owned_active_cells());
-      for (const auto n_cells : n_active_cells_per_subdomain)
-        pcout << ' ' << n_cells;
+      for (unsigned int i = 0; i < first_n_processes; ++i)
+        pcout << ' ' << n_active_cells_per_subdomain[i];
+      if (output_cropped)
+        pcout << " ...";
       pcout << std::endl;
     }
 
@@ -1172,8 +1182,10 @@ namespace Step75
       std::vector<unsigned int> n_dofs_per_subdomain =
         Utilities::MPI::gather(mpi_communicator,
                                dof_handler.n_locally_owned_dofs());
-      for (const auto n_dofs : n_dofs_per_subdomain)
-        pcout << ' ' << n_dofs;
+      for (unsigned int i = 0; i < first_n_processes; ++i)
+        pcout << ' ' << n_dofs_per_subdomain[i];
+      if (output_cropped)
+        pcout << " ...";
       pcout << std::endl;
     }
 
@@ -1187,8 +1199,10 @@ namespace Step75
                                0)
             << std::endl
             << "     by partition:              ";
-      for (const auto n_constraints : n_constraints_per_subdomain)
-        pcout << ' ' << n_constraints;
+      for (unsigned int i = 0; i < first_n_processes; ++i)
+        pcout << ' ' << n_constraints_per_subdomain[i];
+      if (output_cropped)
+        pcout << " ...";
       pcout << std::endl;
     }
 
