@@ -102,18 +102,16 @@ represents a unique subdomain. In the right picture, the lightest color
 corresponds to the polynomial degree two and the darkest one corresponds
 to degree six:
 
-<table width="100%">
-<tr>
-<td>
+<div class="twocolumn" style="width: 80%; text-align: center;">
+  <div>
     <img src="https://www.dealii.org/images/steps/developer/step-75.subdomains-07.svg"
          alt="Partitioning after seven refinements.">
-</td>
-<td>
+  </div>
+  <div>
     <img src="https://www.dealii.org/images/steps/developer/step-75.fedegrees-07.svg"
          alt="Local approximation degrees after seven refinements.">
-</td>
-</tr>
-</table>
+  </div>
+</div>
 
 
 

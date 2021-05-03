@@ -109,19 +109,19 @@ c_k = \frac{2k+1}{2} \int u(x) P_k(x) dx .
 The first factor in the brackets is a normalization constant. With a
 sufficient mapping $F_K$ from an actual cell $K$ to the reference cell
 $\hat{K}$, we can get the coefficients for our finite element
-approximation $u_{hp}$ while performing all calculations on the
+approximation $u_\text{hp}$ while performing all calculations on the
 reference cell:
 @f[
-c_{k,K} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{u}_{hp}(\hat{x})
-\hat{P}_k(\hat{x}) \left|\det \tensorsym{J}(\hat{x})\right|
+c_{k,K} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{u}_\text{hp}(\hat{x})
+\hat{P}_k(\hat{x}) \left|\det \mathbf{J}(\hat{x})\right|
 \mathrm{d}\hat{x} ,
 @f]
 where $\varphi(x) = \varphi(F_K(\hat{x})) = \hat{\varphi}(\hat{x})$ for
 a general function $\varphi$. A non-degenerate mapping, i.e.,
-$\left|\det \tensorsym{J}(\hat{x})\right| \approx 1$, allows us to
-perform the transformation on any cell $K$ exclusively on the reference
-cell $\hat{K}$ and pre-calculate the necessary transformation matrices
-only once:
+$\left|\det \mathbf{J}(\hat{x})\right| \approx 1$, allows us to perform
+the transformation on any cell $K$ exclusively on the reference cell
+$\hat{K}$ and pre-calculate the necessary transformation matrices only
+once:
 @f[
 c_{k,K} = \sum_{j} L_{kj} u_{j,K} , \quad
 L_{kj} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{\varphi}_j(\hat{x})
@@ -202,13 +202,15 @@ value problem with a known solution. On the above mentioned domain, one
 solution to the Laplace equation looks as follows in polar coordinates
 $(r, \varphi)$. See also @cite brenner2008 or @cite mitchell2014hp :
 @f[
-u_\text{sol} = r^{2\3} \sin(2/3 \varphi) .
+u_\text{sol} = r^{2/3} \sin(2/3 \varphi) .
 @f]
 
 The solution looks as follows:
 
-<img src="https://www.dealii.org/images/steps/developer/step-75.solution.svg"
-     alt="Analytic solution.">
+<div style="text-align:center;">
+  <img src="https://www.dealii.org/images/steps/developer/step-75.solution.svg"
+       alt="Analytic solution.">
+</div>
 
 The singularity becomes obvious by investigating the solution's gradient
 in the vicinity of the reentrant corner, i.e., the origin
