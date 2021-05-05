@@ -32,11 +32,13 @@ SET(_unity_include_src
   function.cc
   function_cspline.cc
   function_derivative.cc
+  function_level_set.cc
   function_lib.cc
   function_lib_cutoff.cc
   function_parser.cc
   function_spherical.cc
   function_time.cc
+  function_tools.cc
   geometry_info.cc
   geometric_utilities.cc
   graph_coloring.cc
@@ -128,7 +130,9 @@ SET(_inst
   bounding_box.inst.in
   data_out_base.inst.in
   function.inst.in
+  function_level_set.inst.in
   function_time.inst.in
+  function_tools.inst.in
   incremental_function.inst.in
   geometric_utilities.inst.in
   mpi.inst.in

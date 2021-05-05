@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2010 - 2020 by the deal.II authors
+// Copyright (C) 2019 - 2020 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -13,18 +13,8 @@
 //
 // ---------------------------------------------------------------------
 
-
-
-for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS)
+for (deal_II_dimension : SPACE_DIMENSIONS)
   {
-    namespace parallel
-    \{
-      namespace distributed
-      \{
-#if deal_II_dimension <= deal_II_space_dimension
-        template class ErrorPredictor<deal_II_dimension,
-                                      deal_II_space_dimension>;
-#endif
-      \}
-    \}
+    template class Functions::LevelSet::Sphere<deal_II_dimension>;
+    template class Functions::LevelSet::Plane<deal_II_dimension>;
   }

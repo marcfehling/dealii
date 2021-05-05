@@ -3,7 +3,7 @@
 
 The output of the program looks as follows:
 @code
-Mesh refinement step
+Mesh refinement step 0
   Initial residual: 1.53143
   Residual: 1.08746
   Residual: 0.966748
@@ -11,7 +11,7 @@ Mesh refinement step
   Residual: 0.766462
   Residual: 0.685475
 
-Mesh refinement step
+Mesh refinement step 1
   Initial residual: 0.868959
   Residual: 0.762125
   Residual: 0.677792
@@ -19,7 +19,7 @@ Mesh refinement step
   Residual: 0.542748
   Residual: 0.48704
 
-Mesh refinement step
+Mesh refinement step 2
   Initial residual: 0.426445
   Residual: 0.382731
   Residual: 0.343865
@@ -27,7 +27,7 @@ Mesh refinement step
   Residual: 0.278147
   Residual: 0.250327
 
-Mesh refinement step
+Mesh refinement step 3
   Initial residual: 0.282026
   Residual: 0.253146
   Residual: 0.227414
@@ -35,7 +35,7 @@ Mesh refinement step
   Residual: 0.183803
   Residual: 0.165319
 
-Mesh refinement step
+Mesh refinement step 4
   Initial residual: 0.154404
   Residual: 0.138723
   Residual: 0.124694
@@ -174,12 +174,15 @@ A separate point, very much worthwhile making, however, is that in practice
 the implementation of efficient nonlinear solvers is about as complicated as
 the implementation of efficient finite element methods. One should not
 attempt to reinvent the wheel by implementing all of the necessary steps
-oneself. Rather, just like building finite element solvers on libraries
+oneself. Substantial pieces of the puzzle are already available in
+the LineMinimization::line_search() function and could be used to this end.
+But, instead, just like building finite element solvers on libraries
 such as deal.II, one should be building nonlinear solvers on libraries such
 as [SUNDIALS](https://computing.llnl.gov/projects/sundials). In fact,
 deal.II has interfaces to SUNDIALS and in particular to its nonlinear solver
 sub-package KINSOL through the SUNDIALS::KINSOL class. It would not be
-very difficult to base the current problem on that interface.
+very difficult to base the current problem on that interface --
+indeed, that is what step-77 does.
 
 
 

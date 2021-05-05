@@ -1860,9 +1860,7 @@ namespace GridGenerator
     cells[n_cells - 1].vertices[GeometryInfo<3>::ucd_to_deal[7]] =
       (1 + n_rotations) % 4;
 
-    GridReordering<dim>::invert_all_cells_of_negative_grid(vertices,
-                                                           cells,
-                                                           true);
+    GridTools::invert_all_negative_measure_cells(vertices, cells);
     tria.create_triangulation(vertices, cells, SubCellData());
   }
 
@@ -1999,10 +1997,7 @@ namespace GridGenerator
     cells[15].vertices[3] = 2;
     cells[15].material_id = 0;
 
-    // Must call this to be able to create a
-    // correct triangulation in dealii, read
-    // GridReordering<> doc
-    GridReordering<dim, spacedim>::reorder_cells(cells, true);
+    GridTools::consistently_order_cells(cells);
     tria.create_triangulation(vertices, cells, SubCellData());
 
     tria.set_all_manifold_ids(0);
@@ -2263,11 +2258,6 @@ namespace GridGenerator
   // Parallelepiped implementation in 1d, 2d, and 3d. @note The
   // implementation in 1d is similar to hyper_rectangle(), and in 2d is
   // similar to parallelogram().
-  //
-  // The GridReordering::reorder_grid is made use of towards the end of
-  // this function. Thus the triangulation is explicitly constructed for
-  // all dim here since it is slightly different in that respect
-  // (cf. hyper_rectangle(), parallelogram()).
   template <int dim, int spacedim>
   void
   subdivided_parallelepiped(Triangulation<dim, spacedim> &              tria,
@@ -2486,7 +2476,7 @@ namespace GridGenerator
     // Create triangulation
     // reorder the cells to ensure that they satisfy the convention for
     // edge and face directions
-    GridReordering<dim>::reorder_cells(cells, true);
+    GridTools::consistently_order_cells(cells);
     tria.create_triangulation(points, cells, SubCellData());
 
     // Finally assign boundary indicators according to hyper_rectangle
@@ -6440,7 +6430,7 @@ namespace GridGenerator
 
     // reorder the cells to ensure that they satisfy the convention for
     // edge and face directions
-    GridReordering<dim, spacedim>::reorder_cells(cells, true);
+    GridTools::consistently_order_cells(cells);
     result.clear();
     result.create_triangulation(vertices, cells, subcell_data);
   }
@@ -6673,7 +6663,7 @@ namespace GridGenerator
           1e-6 * input.begin_active()->diameter());
         // delete_duplicated_vertices also deletes any unused vertices
         // deal with any reordering issues created by delete_duplicated_vertices
-        GridReordering<dim>::reorder_cells(output_cell_data, true);
+        GridTools::consistently_order_cells(output_cell_data);
         // clean up the boundary ids of the boundary objects: note that we
         // have to do this after delete_duplicated_vertices so that boundary
         // objects are actually duplicated at this point
@@ -7071,12 +7061,12 @@ namespace GridGenerator
 
     // use all of this to finally create the extruded 3d
     // triangulation.  it is not necessary to call
-    // GridReordering<3,3>::reorder_cells because the cells we have
+    // GridTools::consistently_order_cells() because the cells we have
     // constructed above are automatically correctly oriented. this is
     // because the 2d base mesh is always correctly oriented, and
     // extruding it automatically yields a correctly oriented 3d mesh,
     // as discussed in the edge orientation paper mentioned in the
-    // introduction to the GridReordering class.
+    // introduction to the @ref reordering "reordering module".
     result.create_triangulation(points, cells, subcell_data);
 
     for (auto manifold_id_it = priorities.rbegin();
@@ -8273,9 +8263,6 @@ namespace GridGenerator
     const Point<dim> &               p2,
     const bool                       colorize)
   {
-#  ifndef DEAL_II_WITH_SIMPLEX_SUPPORT
-    Assert(false, ExcNeedsSimplexSupport());
-#  endif
     AssertDimension(dim, spacedim);
 
     AssertThrow(colorize == false, ExcNotImplemented());

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (C) 2020 by the deal.II authors
+// Copyright (C) 2015 - 2018 by the deal.II authors
 //
 // This file is part of the deal.II library.
 //
@@ -13,20 +13,13 @@
 //
 // ---------------------------------------------------------------------
 
-
-
-// Dummy simplex test.
-
-#include "../tests.h"
-
-int
-main()
-{
-  initlog();
-
-#ifdef DEAL_II_WITH_SIMPLEX_SUPPORT
-  deallog << "deal.II is configured with simplex support." << std::endl;
-#else
-  deallog << "deal.II is configured without simplex support." << std::endl;
-#endif
-}
+for (deal_II_dimension : DIMENSIONS)
+  {
+    template void
+    FunctionTools::taylor_estimate_function_bounds<deal_II_dimension>(
+      const Function<deal_II_dimension> &,
+      const BoundingBox<deal_II_dimension> &,
+      std::pair<double, double> &,
+      std::array<std::pair<double, double>, deal_II_dimension> &,
+      const unsigned int);
+  }
