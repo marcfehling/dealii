@@ -89,7 +89,7 @@ of the finite element.
 We will again base the decision on which cells to adapt on (a
 posteriori) computed error estimates of the current solution, e.g.,
 using the KellyErrorEstimator. We will similarly decide how to adapt
-with (a posterirori) computed smoothness estimates: large polynomial
+with (a posteriori) computed smoothness estimates: large polynomial
 degrees work best on smooth parts of the solution while fine grid
 resolutions are favorable on irregular parts. In step-27, we presented a
 way to calculate smoothness estimates based on the decay of Fourier
@@ -106,8 +106,8 @@ and the Legendre expansion coefficients can be calculated as follows:
 @f[
 c_k = \frac{2k+1}{2} \int u(x) P_k(x) dx .
 @f]
-The first factor in the brackets is a normalization constant. With a
-sufficient mapping $F_K$ from an actual cell $K$ to the reference cell
+The first factor is a normalization constant. With a
+mapping $F_K$ from an actual cell $K$ to the reference cell
 $\hat{K}$, we can get the coefficients for our finite element
 approximation $u_\text{hp}$ while performing all calculations on the
 reference cell:
@@ -157,16 +157,17 @@ All of the above is already implemented in the FESeries::Legendre class
 and the SmoothnessEstimator::Legendre namespace. With the error
 estimates and smoothness indicators, we are then left to flag the cells
 for actual refinement and coarsening. Some functions from the
-parallel::GridRefinement and hp::Refinement namespaces will help us with
-that later.
+parallel::distributed::GridRefinement and hp::Refinement namespaces will help
+us with that later.
 
 
 <h3>Hybrid geometric multigrid</h3>
 
-Matrices are typically very sparse in general, but have a varying amount
-of non-zero entries in context of hp-adaptive methods. Some
-state-of-the-art preconditioners like the algebraic multigrid (AMG) ones
-as used in step-40 behave poorly with this restriction.
+Finite element matrices are typically very sparse. Additionally,
+hp-adaptive methods correspond to matrices with highly variable numbers of
+nonzero entries per row. Some
+state-of-the-art preconditioners, like the algebraic multigrid (AMG) ones
+as used in step-40, behave poorly in these circumstances.
 
 We will thus rely on a matrix-free hybrid multigrid preconditioner.
 step-50 has already demonstrated the superiority of geometric multigrid
@@ -199,10 +200,10 @@ corner in the origin of the coordinate system.
 
 To be able to determine the actual error, we manufacture a boundary
 value problem with a known solution. On the above mentioned domain, one
-solution to the Laplace equation looks as follows in polar coordinates
+solution to the Laplace equation is, in polar coordinates,
 $(r, \varphi)$. See also @cite brenner2008 or @cite mitchell2014hp :
 @f[
-u_\text{sol} = r^{2/3} \sin(2/3 \varphi) .
+u_\text{sol} = r^{2/3} \sin(2/3 \varphi).
 @f]
 
 The solution looks as follows:

@@ -77,7 +77,7 @@
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include <deal.II/matrix_free/tools.h>
 
-// We will use  LinearAlgebra::distibuted::Vector for linear algebra operations.
+// We will use LinearAlgebra::distributed::Vector for linear algebra operations.
 #include <deal.II/lac/la_parallel_vector.h>
 
 // We are left to include the files needed by the multigrid solver.
@@ -128,7 +128,7 @@ namespace Step75
   // For this tutorial, we will use a simplified set of parameters. It is also
   // possible to use a ParameterHandler class here, but to keep this tutorial
   // short we decided on using simple structs. The actual intention of all these
-  // parameters will be described in the upcoming classes at their respecitve
+  // parameters will be described in the upcoming classes at their respective
   // location where they are used.
   //
   // The following parameter set controls the geometric multigrid mechanism and
@@ -343,7 +343,7 @@ namespace Step75
     matrix_free.reinit(mapping, dof_handler, constraints, quad, data);
 
     // Compute the right-hand side vector. For this purpose, we set up a second
-    // MatrixFree instance that uses a modified ConstraintMatrix not containing
+    // MatrixFree instance that uses a modified AffineConstraints not containing
     // the constraints due to Dirichlet-boundary conditions. This modified
     // operator is applied to a vector with only the Dirichlet values set. The
     // result is the negative right-hand-side vector.
@@ -452,7 +452,7 @@ namespace Step75
   LaplaceOperator<dim, number>::get_system_matrix() const
   {
     // Compute the system matrix only if it has not been set up (number of rows
-    // and columns equal to zero)..
+    // and columns equal to zero).
     if (system_matrix.m() == 0 && system_matrix.n() == 0)
       {
         // Set up sparsity pattern of system matrix.
@@ -537,7 +537,7 @@ namespace Step75
 
   // @sect4{Conjugate-gradient solver with multigrid preconditioner}
 
-  // This function solves the equation system with a seqeuence of provided
+  // This function solves the equation system with a sequence of provided
   // multigrid objects. It is meant to be treated as general as possible, hence
   // the multitude of template parameters.
   template <typename VectorType,
@@ -592,7 +592,7 @@ namespace Step75
       mg_smoother;
     mg_smoother.initialize(mg_matrices, smoother_data);
 
-    // Initialize coarse-grid solver. We use conjugage-graident method with AMG
+    // Initialize coarse-grid solver. We use conjugate-gradient method with AMG
     // as preconditioner.
     ReductionControl coarse_grid_solver_control(mg_data.coarse_solver.maxiter,
                                                 mg_data.coarse_solver.abstol,
@@ -620,7 +620,7 @@ namespace Step75
         coarse_grid_solver, *mg_matrices[min_level], precondition_amg);
 
     // Finally, we create the Multigrid object, convert it to a preconditioner,
-    // and use it insdide of a conjugate-gradient solver to solve the linear
+    // and use it inside of a conjugate-gradient solver to solve the linear
     // system of equations.
     Multigrid<VectorType> mg(
       mg_matrix, *mg_coarse, mg_transfer, mg_smoother, mg_smoother);
@@ -770,7 +770,7 @@ namespace Step75
         const auto &dof_handler = dof_handlers[level];
         auto &      constraint  = constraints[level];
 
-        // ... constraints (with homogenous Dirichlet BC)
+        // ... constraints (with homogeneous Dirichlet BC)
         {
           IndexSet locally_relevant_dofs;
           DoFTools::extract_locally_relevant_dofs(dof_handler,
@@ -931,7 +931,7 @@ namespace Step75
     // function space is operating with a reasonable resolution. The multigrid
     // algorithm requires linear elements on the coarsest possible level. So we
     // start with the lowest polynomial degree and fill the collection with
-    // consecutievely higher degrees until the user-specified maximum is
+    // consecutively higher degrees until the user-specified maximum is
     // reached.
     mapping_collection.push_back(MappingQ1<dim>());
 
@@ -946,7 +946,7 @@ namespace Step75
     // the finite element approximation of our solution, we would like to limit
     // the range on which active FE indices can operate on. For this, the
     // FECollection class allows to register a hierarchy that determines the
-    // succeeding and preceeding finite element in case of of p-refinement and
+    // succeeding and preceding finite element in case of of p-refinement and
     // p-coarsening, respectively. All functions in the hp::Refinement namespace
     // consult this hierarchy to determine future FE indices. We will register
     // such a hierarchy that only works on finite elements with polynomial
@@ -996,7 +996,7 @@ namespace Step75
     // linearly with the number of degrees of freedom owned. Further, to
     // increase the impact of the weights we would like to attach, make sure
     // that the individual weight will exceed this base weight by orders of
-    // magnitude. We set the parameters for cell weighting correspondigly: A
+    // magnitude. We set the parameters for cell weighting correspondingly: A
     // large weighting factor of $10^6$ and an exponent of $1$.
     cell_weights = std::make_unique<parallel::CellWeights<dim>>(
       dof_handler,
@@ -1005,7 +1005,7 @@ namespace Step75
 
     // In h-adaptive applications, we ensure a 2:1 mesh balance by limiting the
     // difference of refinement levels of neighboring cells to one. With the
-    // second call in the follwoing code snippet, we will ensure the same for
+    // second call in the following code snippet, we will ensure the same for
     // p-levels on neighboring cells: levels of future finite elements are not
     // allowed to differ by more than a specified difference. The function
     // hp::Refinement::limit_p_level_difference takes care of this, but needs to
@@ -1051,7 +1051,7 @@ namespace Step75
   // The parameters that we need to provide are Point objects for the lower left
   // and top right corners, as well as the number of repetitions that the base
   // mesh will have in each direction. We provide them for the first two
-  // dimensions and treat the higher thrid dimension separately.
+  // dimensions and treat the higher third dimension separately.
   //
   // To create a L-shaped domain, we need to remove the excess cells. For this,
   // we specify the <code>cells_to_remove</code> accordingly. We would like to
@@ -1149,7 +1149,7 @@ namespace Step75
   // Furthermore, we would like to print the frequencies of the polynomial
   // degrees in the numerical discretization. Since this information is only
   // stored locally, we will count the finite elements on locally owned cells
-  // and later communicate them via Utilties::MPI::sum.
+  // and later communicate them via Utilities::MPI::sum.
   template <int dim>
   void LaplaceProblem<dim>::print_diagnostics()
   {
@@ -1349,7 +1349,7 @@ namespace Step75
     // For the p-adaptation fractions, we will take an educated guess. Since we
     // only expect a single singularity in our scenario, i.e., in the origin of
     // the domain, and a smooth solution anywhere else, we would like to
-    // strongly perfer to use p-adaptation over h-adaptation. This reflects in
+    // strongly prefer to use p-adaptation over h-adaptation. This reflects in
     // our choice of a fraction of 90% for both p-refinement and p-coarsening.
     hp::Refinement::p_adaptivity_fixed_number(dof_handler,
                                               hp_decision_indicators,
@@ -1370,7 +1370,7 @@ namespace Step75
     // This limitation naturally arises for p-adaptation as the number of
     // supplied finite elements is limited. In addition, we registered a custom
     // hierarchy for p-adaptation in the constructor. Now, we need to do this
-    // manually in the h-adaptative context like in step-31.
+    // manually in the h-adaptive context like in step-31.
     //
     // We will iterate over all cells on the designated min and max levels and
     // remove the corresponding flags. As an alternative, we could also flag
@@ -1443,7 +1443,7 @@ namespace Step75
   // @sect4{LaplaceProblem::run}
 
   // The actual run function again looks very familiar to step-40. The only
-  // addition is the bracketed section that preceeds the actual cycle loop.
+  // addition is the bracketed section that precedes the actual cycle loop.
   // Here, we will pre-calculate the Legendre transformation matrices. In
   // general, these will be calculated on the fly via lazy allocation whenever a
   // certain matrix is needed. For timing purposes however, we would like to
@@ -1495,7 +1495,7 @@ namespace Step75
 // @sect4{main()}
 
 // The final function is the <code>main</code> function that will ultimately
-// create and run a LaplceOperator instantiation. Its structure is similar to
+// create and run a LaplaceOperator instantiation. Its structure is similar to
 // most other tutorial programs.
 int main(int argc, char *argv[])
 {
