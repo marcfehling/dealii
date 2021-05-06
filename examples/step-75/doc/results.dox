@@ -133,7 +133,7 @@ for a detailed description.
 There, another strategy is mentioned that has not been shown in any
 tutorial so far: the strategy based on <i>refinement history</i>. The
 usage of this method for parallel distributed applications is more
-tricky than the others, so we will highlight the cruxes that come along
+tricky than the others, so we will highlight the challenges that come along
 with it. We need information about the final state of refinement flags,
 and we need to transfer the solution across refined meshes. For the
 former, we need to attach the hp::Refinement::predict_error() function
