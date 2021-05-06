@@ -89,7 +89,7 @@ of the finite element.
 We will again base the decision on which cells to adapt on (a
 posteriori) computed error estimates of the current solution, e.g.,
 using the KellyErrorEstimator. We will similarly decide how to adapt
-with (a posterirori) computed smoothness estimates: large polynomial
+with (a posteriori) computed smoothness estimates: large polynomial
 degrees work best on smooth parts of the solution while fine grid
 resolutions are favorable on irregular parts. In step-27, we presented a
 way to calculate smoothness estimates based on the decay of Fourier
@@ -157,8 +157,8 @@ All of the above is already implemented in the FESeries::Legendre class
 and the SmoothnessEstimator::Legendre namespace. With the error
 estimates and smoothness indicators, we are then left to flag the cells
 for actual refinement and coarsening. Some functions from the
-parallel::GridRefinement and hp::Refinement namespaces will help us with
-that later.
+parallel::distributed::GridRefinement and hp::Refinement namespaces will help
+us with that later.
 
 
 <h3>Hybrid geometric multigrid</h3>
