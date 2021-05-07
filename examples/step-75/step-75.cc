@@ -1014,7 +1014,7 @@ namespace Step75
     // future FE indices accordingly. As we ask the p4est oracle to perform
     // refinement, we need to ensure that the Triangulation has been updated
     // with the adaptation flags of the oracle first. An instantiation of
-    // internal::parallel::distributed::TemporarilyMatchRefineFlags does exactly
+    // parallel::distributed::TemporarilyMatchRefineFlags does exactly
     // that for the duration of its life. Thus, we will create an object of this
     // class right before limiting the p-level difference, and connect the
     // corresponding lambda function to the signal
@@ -1025,7 +1025,7 @@ namespace Step75
     // other function connected to the same signal.
     triangulation.signals.post_p4est_refinement.connect(
       [&, min_fe_index]() {
-        const internal::parallel::distributed::TemporarilyMatchRefineFlags<dim>
+        const parallel::distributed::TemporarilyMatchRefineFlags<dim>
           refine_modifier(triangulation);
         hp::Refinement::limit_p_level_difference(dof_handler,
                                                  prm.max_p_level_difference,
