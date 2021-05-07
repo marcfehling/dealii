@@ -130,6 +130,18 @@ L_{kj} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{\varphi}_j(\hat{x})
 with degrees of freedom $u_{j,K}$ on cell $K$ and its corresponding
 shape function $\varphi_j$.
 
+At this point, we need to emphasize that most finite element
+applications use unstructured meshes for which mapping is almost always
+degenerate and varies cell by cell. For accurate coefficients, we would
+need to calculate the corresponding transformation matrix for every
+single cell, which is expensive. The current implementation of the
+FESeries transformation classes rely on the above simplification to
+increase performance. The transformation is only used for the purpose
+of smoothness estimation to decide on the type of adaptation to apply
+which is not a critical component of a finite element program. Apart
+from that, this circumstance does not pose a problem for this tutorial
+as we only use square-shaped cells.
+
 Eibner and Melenk @cite eibner2007hp argued that a function is analytic,
 i.e., representable by a power series, if and only if the absolute
 values of the expansion coefficients decay exponentially with increasing
