@@ -97,65 +97,90 @@ coefficients. Let us take here the opportunity and present an alternative
 that follows the same idea, but with Legendre coefficients.
 
 We will briefly present the idea of this new technique, but limit its
-description to 1D for simplicity. A general function can be represented
-with Legendre polynomials as basis functions:
+description to 1D for simplicity. Suppose $u^h(x)$ is a finite element
+function defined on a cell $K$ as
 @f[
-u(x) = \sum\limits_{k \geq 0} c_k P_k(x) ,
+u^h(x) = \sum c_i \varphi_i(x)
 @f]
-and the Legendre expansion coefficients can be calculated as follows:
+where each $\varphi_i(x)$ is a shape function.
+We can equivalently represent $u^h(x)$ in the Legendre basis, defined as
 @f[
-c_k = \frac{2k+1}{2} \int u(x) P_k(x) dx .
+u^h(x) = \sum l_i P_i(x).
 @f]
-The first factor is a normalization constant. With a
-mapping $F_K$ from an actual cell $K$ to the reference cell
-$\hat{K}$, we can get the coefficients for our finite element
-approximation $u_\text{hp}$ while performing all calculations on the
-reference cell:
+Our goal is to obtain a mapping between the finite element coefficients $c_i$
+and the Legendre coefficients $l_i$. We will accomplish this by
+writing the problem as an $L^2$ projection of $u^h(x)$ onto the Legendre basis.
+Each $l_i$ can be calculated via
 @f[
-c_{k,K} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{u}_\text{hp}(\hat{x})
-\hat{P}_k(\hat{x}) \left|\det \mathbf{J}(\hat{x})\right|
-\mathrm{d}\hat{x} ,
+l_i = \int_K u^h(x) P_i(x) dx.
 @f]
-where $\varphi(x) = \varphi(F_K(\hat{x})) = \hat{\varphi}(\hat{x})$ for
-a general function $\varphi$. A non-degenerate mapping, i.e.,
-$\left|\det \mathbf{J}(\hat{x})\right| \approx 1$, allows us to perform
-the transformation on any cell $K$ exclusively on the reference cell
-$\hat{K}$ and pre-calculate the necessary transformation matrices only
-once:
+By construction, the Legendre polynomials are orthogonal under the $L^2$ inner
+product on $K$. Additionally, we assume that they have been normalized, so
+their inner products can be written as
 @f[
-c_{k,K} = \sum_{j} L_{kj} u_{j,K} , \quad
-L_{kj} = \frac{2k+1}{2} \int\limits_{\hat K} \hat{\varphi}_j(\hat{x})
-\hat{P}_k(\hat{x}) \mathrm{d}\hat{x} ,
+\int_K P_i(x) P_j(x) dx = J_K \delta_{i,j}
 @f]
-with degrees of freedom $u_{j,K}$ on cell $K$ and its corresponding
-shape function $\varphi_j$.
+where $J_K$ is the Jacobian of the mapping from $\hat{K}$ to $K$, which (in this
+tutorial) is assumed to be constant (i.e., the mapping must be affine), and
+$\delta_{i,j}$ is the Kronnecker delta.
+Hence, combining all these assumptions, the projection matrix for expressing
+$u^h(x)$ in the Legendre basis is just $J_K I$ - that is, $J_K$ times the
+identity matrix.
+Let $F_K$ be the mapping from $K$ to its reference cell $\hat{K}$.
+The entries in the right-hand side in the projection system are, therefore,
+@f[
+\int_K u(x) P_k(x) dx
+= J_K \int_\hat{K} u(F_K(\hat{x})) P_k(F_K(\hat{x})) d\hat{x}.
+@f]
+Recalling the shape function representation of $u^h(x)$, we can write this as
+$J_K C \vec{c}$, where $C$ is the change-of-basis matrix with entries
+@f[
+J_K C_{i, j}
+=      \int_K P_i(x) \varphi_j(x) dx
+= J_K \int_{\hat{K}} P_i(F_K(\hat{x})) \varphi_j(F_K(\hat{x})) d\hat{x}
+= J_K \int_{\hat{K}} \hat{P}_i(\hat{x}) \hat{\varphi}_j(\hat{x}) d\hat{x}
+@f]
+so the values of $C$ can be written <em>independently</em> of $K$ by factoring
+the $J_K$ out front after transforming to reference coordinates.
+
+Hence, putting it all together, the projection problem can be written as
+@f[
+J_K I \vec{l} = J_K C \vec{c}
+@f]
+which can be rewritten as simply
+@f[
+\vec{l} = C \vec{c}.
+@f]
 
 At this point, we need to emphasize that most finite element
 applications use unstructured meshes for which mapping is almost always
-degenerate and varies cell by cell. For accurate coefficients, we would
-need to calculate the corresponding transformation matrix for every
-single cell which is expensive. The current implementation of the
-FESeries transformation classes relies on the above simplification to
-increase performance and thus only yields correct results for affine
-mapping. The transformation is only used for the purpose of smoothness
-estimation to decide on the type of adaptation, which is not a critical
-component of a finite element program. Apart from that, this
-circumstance does not pose a problem for this tutorial as we only use
-square-shaped cells.
+non-affine. Put another way: the assumption that $J_K$ is constant across the
+cell is not true for general meshes. Hence, a correct calculation of $l_i$
+requires not only that we calculate the corresponding transformation matrix
+$C$ for every single cell, but that we also define a set of Legendre-like
+functions that are orthogonal on a cell $K$ which may have an arbitrary and
+very complex geometry. The second part, in particular, is very computationally
+expensive. The current implementation of the FESeries transformation classes
+relies on the simplification resulting from having a constant Jacobian to
+increase performance and thus only yields correct results for affine mappings.
+The transformation is only used for the purpose of smoothness estimation to
+decide on the type of adaptation, which is not a critical component of a
+finite element program. Apart from that, this circumstance does not pose a
+problem for this tutorial as we only use square-shaped cells.
 
 Eibner and Melenk @cite eibner2007hp argued that a function is analytic,
 i.e., representable by a power series, if and only if the absolute
-values of the expansion coefficients decay exponentially with increasing
-index $k$:
+values of the series (in this case, Legendre) coefficients decay exponentially
+with increasing index $k$:
 @f[
-\exists C,\sigma > 0 : \quad \forall k \in \mathbb{N}_0 : \quad |c_k|
+\exists C,\sigma > 0 : \quad \forall k \in \mathbb{N}_0 : \quad |l_k|
 \leq C \exp\left( - \sigma k \right) .
 @f]
 The rate of decay $\sigma$ can be interpreted as a measure for the
 smoothness of that function. We can get it as the slope of a linear
 regression fit of the transformation coefficients:
 @f[
-\ln(|c_k|) \sim \ln(C) - \sigma k .
+\ln(|l_k|) \sim \ln(C) - \sigma k .
 @f]
 
 We will perform this fit on each cell $K$ to get a local estimate for
