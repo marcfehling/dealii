@@ -360,8 +360,8 @@ namespace Step75
 
 
   // The following functions are implicitly needed by the multigrid algorithm,
-  // incl., by the smoothers.
-  //
+  // including the smoothers.
+
   // Since we do not have a matrix, query the DoFHandler for the number of
   // degrees of freedom.
   template <int dim, typename number>
@@ -443,7 +443,6 @@ namespace Step75
   // here if it should be requested. Since the matrix is only computed in
   // this tutorial for linear elements (on the coarse grid), this is
   // acceptable.
-  //
   // The matrix entries are obtained via sequence of operator evaluations.
   // For this purpose, the optimized function MatrixFreeTools::compute_matrix()
   // is used. The matrix will only be computed if it has not been set up yet
