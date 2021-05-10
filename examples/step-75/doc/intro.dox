@@ -50,7 +50,7 @@ speed solving the system of equation tremendously.
 
 This tutorial combines all of these particularities and presents a
 state-of-the-art way how to solve a simple Laplace problem: utilizing
-both hp-adaptation and hybrid multigrid methods on machines with
+both hp-adaptation and matrix-free hybrid multigrid methods on machines with
 distributed memory.
 
 
@@ -93,7 +93,7 @@ with (a posteriori) computed smoothness estimates: large polynomial
 degrees work best on smooth parts of the solution while fine grid
 resolutions are favorable on irregular parts. In step-27, we presented a
 way to calculate smoothness estimates based on the decay of Fourier
-coefficients. Let us take the opportunity and present an alternative
+coefficients. Let us take here the opportunity and present an alternative
 that follows the same idea, but with Legendre coefficients.
 
 We will briefly present the idea of this new technique, but limit its

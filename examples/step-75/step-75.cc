@@ -131,12 +131,12 @@ namespace Step75
   // parameters will be described in the upcoming classes at their respective
   // location where they are used.
   //
-  // The following parameter set controls the geometric multigrid mechanism and
-  // the solver specifications on the coarsest level. We populate it with
-  // default parameters.
-  struct GMGParameters
+  // The following parameter set controls the coarse-grid solver, the smoothers,
+  // and the inter-grid transfer scheme of the multigrid mechanism.
+  // We populate it with default parameters.
+  struct MultigridParameters
   {
-    struct CoarseSolverParameters
+    struct
     {
       std::string  type            = "cg_with_amg";
       unsigned int maxiter         = 10000;
@@ -145,23 +145,23 @@ namespace Step75
       unsigned int smoother_sweeps = 1;
       unsigned int n_cycles        = 1;
       std::string  smoother_type   = "ILU";
-    };
+    } coarse_solver;
 
-    struct SmootherParameters
+    struct
     {
       std::string  type                = "chebyshev";
       double       smoothing_range     = 20;
       unsigned int degree              = 5;
       unsigned int eig_cg_n_iterations = 20;
-    };
+    } smoother;
 
-    SmootherParameters     smoother;
-    CoarseSolverParameters coarse_solver;
-
-    MGTransferGlobalCoarseningTools::PolynomialCoarseningSequenceType
-      p_sequence = MGTransferGlobalCoarseningTools::
-        PolynomialCoarseningSequenceType::decrease_by_one;
-    bool perform_h_transfer = true;
+    struct
+    {
+      MGTransferGlobalCoarseningTools::PolynomialCoarseningSequenceType
+        p_sequence = MGTransferGlobalCoarseningTools::
+          PolynomialCoarseningSequenceType::decrease_by_one;
+      bool perform_h_transfer = true;
+    } transfer;
   };
 
 
@@ -170,13 +170,14 @@ namespace Step75
   // this struct divided into several categories, including general runtime
   // parameters, level limits, refine and coarsen fractions, as well as
   // parameters for cell weighting. It also contains an instance of the above
-  // struct for GMG parameters which will be passed to the multigrid algorithm.
+  // struct for multigrid parameters which will be passed to the multigrid
+  // algorithm.
   struct Parameters
   {
     unsigned int n_cycles         = 8;
     double       tolerance_factor = 1e-12;
 
-    GMGParameters mg_data;
+    MultigridParameters mg_data;
 
     unsigned int min_h_level            = 5;
     unsigned int max_h_level            = 12;
@@ -263,12 +264,12 @@ namespace Step75
 
     // To solve the equation system on the coarsest level with an AMG
     // preconditioner, we need an actual system matrix on the coarsest level.
-    // For this, we provide a mechanism that actually computes a matrix from the
-    // matrix-free formulation later, for which we introduce a dedicated
-    // SparseMatrix object. In the default case, this matrix stays empty. Once
-    // `get_system_matrix()` is called, this matrix is filled (lazy allocation).
-    // Since this is a `const` function, we need the "mutable" keyword here. We
-    // also need a the constraints object to build the matrix.
+    // For this purpose, we provide a mechanism that optionally computes a
+    // matrix from the matrix-free formulation, for which we introduce a
+    // dedicated SparseMatrix object. In the default case, this matrix stays
+    // empty. Once `get_system_matrix()` is called, this matrix is filled (lazy
+    // allocation). Since this is a `const` function, we need the "mutable"
+    // keyword here. We also need a the constraints object to build the matrix.
     AffineConstraints<number>              constraints;
     mutable TrilinosWrappers::SparseMatrix system_matrix;
   };
@@ -407,7 +408,7 @@ namespace Step75
 
 
   // Perform the transposed operator evaluation. Since we are considering
-  // symmetric "matrices", this function is identical to the above function.
+  // symmetric "matrices", this function can simply delegate it task to vmult().
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::Tvmult(VectorType &      dst,
                                             const VectorType &src) const
@@ -545,12 +546,12 @@ namespace Step75
             typename LevelMatrixType,
             typename MGTransferType>
   static void
-  mg_solve(SolverControl &         solver_control,
-           VectorType &            dst,
-           const VectorType &      src,
-           const GMGParameters &   mg_data,
-           const DoFHandler<dim> & dof,
-           const SystemMatrixType &fine_matrix,
+  mg_solve(SolverControl &            solver_control,
+           VectorType &               dst,
+           const VectorType &         src,
+           const MultigridParameters &mg_data,
+           const DoFHandler<dim> &    dof,
+           const SystemMatrixType &   fine_matrix,
            const MGLevelObject<std::unique_ptr<LevelMatrixType>> &mg_matrices,
            const MGTransferType &                                 mg_transfer)
   {
@@ -641,13 +642,13 @@ namespace Step75
                       const OperatorType &             system_matrix,
                       VectorType &                     dst,
                       const VectorType &               src,
-                      const GMGParameters &            mg_data,
+                      const MultigridParameters &      mg_data,
                       const hp::MappingCollection<dim> mapping_collection,
                       const DoFHandler<dim> &          dof_handler,
                       const hp::QCollection<dim> &     quadrature_collection)
   {
-    // Create a DoFHandler and operator for each multigrid level defined
-    // by p-coarsening, as well as, create transfer operators. To be able to
+    // Create a DoFHandler and operator for each multigrid level,
+    // as well as, create transfer operators. To be able to
     // set up the operators, we need a set of DoFHandler that we create
     // via global coarsening of p or h. For latter, we need also a sequence
     // of Triangulation objects that are obtained by
@@ -662,7 +663,7 @@ namespace Step75
 
     std::vector<std::shared_ptr<const Triangulation<dim>>>
       coarse_grid_triangulations;
-    if (mg_data.perform_h_transfer)
+    if (mg_data.transfer.perform_h_transfer)
       coarse_grid_triangulations =
         MGTransferGlobalCoarseningTools::create_geometric_coarsening_sequence(
           dof_handler.get_triangulation());
@@ -688,7 +689,7 @@ namespace Step75
 
     const unsigned int n_p_levels =
       MGTransferGlobalCoarseningTools::create_polynomial_coarsening_sequence(
-        get_max_active_fe_degree(dof_handler), mg_data.p_sequence)
+        get_max_active_fe_degree(dof_handler), mg_data.transfer.p_sequence)
         .size();
 
     std::map<unsigned int, unsigned int> fe_index_for_degree;
@@ -708,10 +709,9 @@ namespace Step75
     operators.resize(minlevel, maxlevel);
     transfers.resize(minlevel, maxlevel);
 
-    // Loop from the maximum (finest) to the minimum (coarsest) level and set up
-    // DoFHandler accordingly. In the data structures, we start with the
-    // coarsest mesh and linear elements and continue with increasingly finer
-    // meshes.
+    // Loop from the minimum (coarsest) to the maximum (finest) level and set up
+    // DoFHandler accordingly. We start with the h-levels, where we distribute
+    // on increasingly finer meshes linear elements.
     for (unsigned int l = 0; l < n_h_levels; ++l)
       {
         dof_handlers[l].reinit(*coarse_grid_triangulations[l]);
@@ -749,7 +749,7 @@ namespace Step75
                 const unsigned int next_degree =
                   MGTransferGlobalCoarseningTools::
                     create_next_polynomial_coarsening_degree(
-                      cell_other->get_fe().degree, mg_data.p_sequence);
+                      cell_other->get_fe().degree, mg_data.transfer.p_sequence);
                 Assert(fe_index_for_degree.find(next_degree) !=
                          fe_index_for_degree.end(),
                        ExcMessage("Next polynomial degree in sequence "
@@ -764,10 +764,10 @@ namespace Step75
         dof_handlers[l].distribute_dofs(dof_handler.get_fe_collection());
       }
 
-    // Next, we will create all necessary data structures on each multigrid
-    // level. This involves determining constraints with homogeneous Dirichlet
-    // boundary conditions, and building the operator just like on the finest
-    // level.
+    // Next, we will create all data structures additionally needed on each
+    // multigrid level. This involves determining constraints with homogeneous
+    // Dirichlet boundary conditions, and building the operator just like on the
+    // active level.
     MGLevelObject<AffineConstraints<typename VectorType::value_type>>
       constraints(minlevel, maxlevel);
 
@@ -776,33 +776,26 @@ namespace Step75
         const auto &dof_handler = dof_handlers[level];
         auto &      constraint  = constraints[level];
 
-        {
-          IndexSet locally_relevant_dofs;
-          DoFTools::extract_locally_relevant_dofs(dof_handler,
-                                                  locally_relevant_dofs);
-          constraint.reinit(locally_relevant_dofs);
+        IndexSet locally_relevant_dofs;
+        DoFTools::extract_locally_relevant_dofs(dof_handler,
+                                                locally_relevant_dofs);
+        constraint.reinit(locally_relevant_dofs);
 
+        DoFTools::make_hanging_node_constraints(dof_handler, constraint);
+        VectorTools::interpolate_boundary_values(mapping_collection,
+                                                 dof_handler,
+                                                 0,
+                                                 Functions::ZeroFunction<dim>(),
+                                                 constraint);
+        constraint.close();
 
-          DoFTools::make_hanging_node_constraints(dof_handler, constraint);
-          VectorTools::interpolate_boundary_values(
-            mapping_collection,
-            dof_handler,
-            0,
-            Functions::ZeroFunction<dim>(),
-            constraint);
-          constraint.close();
-        }
+        VectorType dummy;
 
-        {
-          VectorType dummy;
-
-          operators[level] =
-            std::make_unique<OperatorType>(mapping_collection,
-                                           dof_handler,
-                                           quadrature_collection,
-                                           constraint,
-                                           dummy);
-        }
+        operators[level] = std::make_unique<OperatorType>(mapping_collection,
+                                                          dof_handler,
+                                                          quadrature_collection,
+                                                          constraint,
+                                                          dummy);
       }
 
     // Set up intergrid operators and collect transfer operators within a single
