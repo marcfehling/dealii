@@ -169,7 +169,7 @@ implementations, quantify the speed-up, and convince yourself which
 variant is faster.
 
 
-<h4>Solve with matrix-based methods</h4>
+<h4>Multigrid variants</h4>
 
 For sake of simplicity, we have restricted ourselves to a single type of
 coarse-grid solver (CG with AMG), smoother (Chebyshev smoother with point
