@@ -971,7 +971,7 @@ namespace Step75
     // The next part is going to be tricky. During execution of refinement, a
     // few hp-algorithms need to interfere with the actual refinement process on
     // the Triangulation object. We do this by connecting several functions to
-    // Triangulation::Signals::signals will be called at different stages during
+    // Triangulation::Signals: signals will be called at different stages during
     // the actual refinement process and trigger all connected functions. We
     // require this functionality for load balancing and to limit the polynomial
     // degrees of neighboring cells.
