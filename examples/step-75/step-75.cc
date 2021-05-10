@@ -304,7 +304,7 @@ namespace Step75
     // Clear internal data structures (in the case that the operator is reused).
     this->system_matrix.clear();
 
-    // Copy the constrains, since they might be needed for computation of the
+    // Copy the constraints, since they might be needed for computation of the
     // system matrix later on.
     this->constraints.copy_from(constraints);
 
@@ -972,7 +972,7 @@ namespace Step75
     // The next part is going to be tricky. During execution of refinement, a
     // few hp-algorithms need to interfere with the actual refinement process on
     // the Triangulation object. We do this by connecting several functions to
-    // Triangulation::Signals: signals will be called at different stages during
+    // Triangulation::Signals::signals will be called at different stages during
     // the actual refinement process and trigger all connected functions. We
     // require this functionality for load balancing and to limit the polynomial
     // degrees of neighboring cells.
@@ -984,7 +984,7 @@ namespace Step75
     // process, i.e., after all refine and coarsen flags have been set correctly
     // for hp-adaptation and right before repartitioning for load balancing is
     // about to happen. Functions can be registered that will attach weights in
-    // the form that $a n_\text{dofs}^b$ with a provided pair of parameters
+    // the form that $a (n_\text{dofs})^b$ with a provided pair of parameters
     // $(a,b)$. We register such a function in the following. Every cell will be
     // charged with a constant weight at creation, which is a value of 1000 (see
     // Triangulation::Signals::cell_weight).
