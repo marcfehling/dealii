@@ -198,27 +198,25 @@ namespace Step75
   // @sect3{Matrix-free Laplace operator}
 
   // This is a matrix-free implementation of the Laplace operator that will
-  // basically take over the part of the <code>assemble_system()</code> function
-  // from other tutorials.
+  // basically take over the part of the `assemble_system()` function from other
+  // tutorials. The meaning of all member functions will be explained at their
+  // definition later.
+  //
+  // We will use the FEEvaluation class to evaluate the solution vector
+  // at the quadrature points and to perform the integration. In contrast to
+  // other tutorials, the template arguments `degree` is set to $-1$ and
+  // `number of quadrature in 1D` to $0$. In this case, FEEvaluation selects
+  // dynamically the correct polynomial degree and number of quadrature
+  // points. Here, we introduce an alias to FEEvaluation with the correct
+  // template parameters so that we do not have to worry about them later on.
   template <int dim, typename number>
   class LaplaceOperator : public Subscriptor
   {
   public:
     using VectorType = LinearAlgebra::distributed::Vector<number>;
 
-    // We will use the FEEvaluation class to evaluate the solution vector
-    // at the quadrature points and to perform the integration.In contrast to
-    // other tutorials, the template arguments `degree` is set to -1 and
-    // `number of quadrature in 1D` to 0. In this case, FEEvaluation selects
-    // dynamically the correct polynomial degree and number of quadrature
-    // points. Here, we introduce an alias to FEEvaluation with the correct
-    // template parameters so that we do not have to worry about them later on.
     using FECellIntegrator = FEEvaluation<dim, -1, 0, 1, number>;
 
-    // The following section contains functions to initialize and reinitialize
-    // the class, in particular, these functions initialize the internal
-    // MatrixFree instance. For sake of simplicity, we also compute the system
-    // right-hand-side vector.
     LaplaceOperator() = default;
 
     LaplaceOperator(const hp::MappingCollection<dim> &mapping,
@@ -233,79 +231,54 @@ namespace Step75
                 const AffineConstraints<number> & constraints,
                 VectorType &                      system_rhs);
 
-    // The following functions are implicitly needed by the multigrid algorithm,
-    // incl., by the smoothers. Since we do not have a matrix, query the
-    // DoFHandler for the number of degrees of freedom.
     types::global_dof_index m() const;
 
-    // Access a particular element in the matrix. This function is neither
-    // needed nor implemented, however, is required to compile the program.
     number el(unsigned int, unsigned int) const;
 
-    // Initialize the given vector. We simply delegate the task to the
-    // MatrixFree function with the same name.
     void initialize_dof_vector(VectorType &vec) const;
 
-    // Perform an operator evaluation by looping with the help of MatrixFree
-    // over all cells and evaluating the effect of the cell integrals (see also:
-    // do_cell_integral_local() and do_cell_integral_global()).
     void vmult(VectorType &dst, const VectorType &src) const;
 
-    // Perform the transposed operator evaluation. Since we are considering
-    // symmetric "matrices", this function is identical to the above function.
     void Tvmult(VectorType &dst, const VectorType &src) const;
 
-    // In the matrix-free context, no system matrix is set up during
-    // initialization of this class. As a consequence, it has to be computed
-    // here if it should be requested.  Since the matrix is only computed in
-    // this tutorial for linear element (on the coarse grid), this is
-    // acceptable.
-    //
-    // The matrix entries are obtained via sequence of operator evaluations.
-    // For this purpose, an optimized function from the MatrixFreeTools
-    // namespace is used.
     const TrilinosWrappers::SparseMatrix &get_system_matrix() const;
 
-    // Since we do not have a system matrix, we cannot loop over the the
-    // diagonal entries of the matrix. Instead, we compute the diagonal by
-    // performing a sequence of operator evaluations to unit basis vectors.
-    // For this purpose, an optimized function from the MatrixFreeTools
-    // namespace is used.
     void compute_inverse_diagonal(VectorType &diagonal) const;
 
   private:
-    // Perform cell integral on a cell batch without gathering and scattering
-    // the values. This function is needed for the MatrixFreeTools functions
-    // since these functions operate directly on the buffers of FEEvaluation.
     void do_cell_integral_local(FECellIntegrator &integrator) const;
 
-    // Same as above but with access to the global vectors.
     void do_cell_integral_global(FECellIntegrator &integrator,
                                  VectorType &      dst,
                                  const VectorType &src) const;
 
-    // This function loops over all cell batches within a cell-batch range and
-    // calls the above function.
+
     void do_cell_integral_range(
       const MatrixFree<dim, number> &              matrix_free,
       VectorType &                                 dst,
       const VectorType &                           src,
       const std::pair<unsigned int, unsigned int> &range) const;
 
-    // The MatrixFree object.
     MatrixFree<dim, number> matrix_free;
 
-    // Constraints potentially needed for the computation of the system matrix.
-    AffineConstraints<number> constraints;
-
-    // System matrix. In the default case, this matrix is empty. However, once
-    // get_system_matrix() is called, this matrix is filled, requiring the
-    // "mutable" keyword.
+    // To solve the equation system on the coarsest level with an AMG
+    // preconditioner, we need an actual system matrix on the coarsest level.
+    // For this, we provide a mechanism that actually computes a matrix from the
+    // matrix-free formulation later, for which we introduce a dedicated
+    // SparseMatrix object. In the default case, this matrix stays empty. Once
+    // `get_system_matrix()` is called, this matrix is filled (lazy allocation).
+    // Since this is a `const` function, we need the "mutable" keyword here. We
+    // also need a the constraints object to build the matrix.
+    AffineConstraints<number>              constraints;
     mutable TrilinosWrappers::SparseMatrix system_matrix;
   };
 
 
 
+  // The following section contains functions to initialize and reinitialize
+  // the class. In particular, these functions initialize the internal
+  // MatrixFree instance. For sake of simplicity, we also compute the system
+  // right-hand-side vector.
   template <int dim, typename number>
   LaplaceOperator<dim, number>::LaplaceOperator(
     const hp::MappingCollection<dim> &mapping,
@@ -385,6 +358,11 @@ namespace Step75
 
 
 
+  // The following functions are implicitly needed by the multigrid algorithm,
+  // incl., by the smoothers.
+  //
+  // Since we do not have a matrix, query the DoFHandler for the number of
+  // degrees of freedom.
   template <int dim, typename number>
   types::global_dof_index LaplaceOperator<dim, number>::m() const
   {
@@ -393,6 +371,8 @@ namespace Step75
 
 
 
+  // Access a particular element in the matrix. This function is neither
+  // needed nor implemented, however, is required to compile the program.
   template <int dim, typename number>
   number LaplaceOperator<dim, number>::el(unsigned int, unsigned int) const
   {
@@ -402,6 +382,8 @@ namespace Step75
 
 
 
+  // Initialize the given vector. We simply delegate the task to the
+  // MatrixFree function with the same name.
   template <int dim, typename number>
   void
   LaplaceOperator<dim, number>::initialize_dof_vector(VectorType &vec) const
@@ -411,6 +393,9 @@ namespace Step75
 
 
 
+  // Perform an operator evaluation by looping with the help of MatrixFree
+  // over all cells and evaluating the effect of the cell integrals (see also:
+  // `do_cell_integral_local()` and `do_cell_integral_global()`).
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::vmult(VectorType &      dst,
                                            const VectorType &src) const
@@ -421,6 +406,8 @@ namespace Step75
 
 
 
+  // Perform the transposed operator evaluation. Since we are considering
+  // symmetric "matrices", this function is identical to the above function.
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::Tvmult(VectorType &      dst,
                                             const VectorType &src) const
@@ -430,47 +417,53 @@ namespace Step75
 
 
 
+  // Since we do not have a system matrix, we cannot loop over the the
+  // diagonal entries of the matrix. Instead, we compute the diagonal by
+  // performing a sequence of operator evaluations to unit basis vectors.
+  // For this purpose, an optimized function from the MatrixFreeTools
+  // namespace is used. The inversion is performed manually afterwards.
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::compute_inverse_diagonal(
     VectorType &diagonal) const
   {
-    // compute diagonal by calling MatrixFreeTools::compute_diagonal().
     MatrixFreeTools::compute_diagonal(matrix_free,
                                       diagonal,
                                       &LaplaceOperator::do_cell_integral_local,
                                       this);
 
-    // and invert it
     for (auto &i : diagonal)
       i = (std::abs(i) > 1.0e-10) ? (1.0 / i) : 1.0;
   }
 
 
 
+  // In the matrix-free context, no system matrix is set up during
+  // initialization of this class. As a consequence, it has to be computed
+  // here if it should be requested. Since the matrix is only computed in
+  // this tutorial for linear elements (on the coarse grid), this is
+  // acceptable.
+  //
+  // The matrix entries are obtained via sequence of operator evaluations.
+  // For this purpose, the optimized function MatrixFreeTools::compute_matrix()
+  // is used. The matrix will only be computed if it has not been set up yet
+  // (lazy allocation).
   template <int dim, typename number>
   const TrilinosWrappers::SparseMatrix &
   LaplaceOperator<dim, number>::get_system_matrix() const
   {
-    // Compute the system matrix only if it has not been set up (number of rows
-    // and columns equal to zero).
     if (system_matrix.m() == 0 && system_matrix.n() == 0)
       {
-        // Set up sparsity pattern of system matrix.
         const auto &dof_handler = this->matrix_free.get_dof_handler();
 
-        const auto *tria_parallel =
-          dynamic_cast<const parallel::TriangulationBase<dim> *>(
-            &(dof_handler.get_triangulation()));
-
         TrilinosWrappers::SparsityPattern dsp(
-          dof_handler.locally_owned_dofs(), tria_parallel->get_communicator());
+          dof_handler.locally_owned_dofs(),
+          dof_handler.get_triangulation().get_communicator());
 
         DoFTools::make_sparsity_pattern(dof_handler, dsp, this->constraints);
 
         dsp.compress();
         system_matrix.reinit(dsp);
 
-        // Assemble system matrix by calling MatrixFreeTools::compute_matrix().
         MatrixFreeTools::compute_matrix(
           matrix_free,
           constraints,
@@ -484,6 +477,9 @@ namespace Step75
 
 
 
+  // Perform cell integral on a cell batch without gathering and scattering
+  // the values. This function is needed for the MatrixFreeTools functions
+  // since these functions operate directly on the buffers of FEEvaluation.
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::do_cell_integral_local(
     FECellIntegrator &integrator) const
@@ -498,6 +494,7 @@ namespace Step75
 
 
 
+  // Same as above but with access to the global vectors.
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::do_cell_integral_global(
     FECellIntegrator &integrator,
@@ -514,6 +511,8 @@ namespace Step75
 
 
 
+  // This function loops over all cell batches within a cell-batch range and
+  // calls the above function.
   template <int dim, typename number>
   void LaplaceOperator<dim, number>::do_cell_integral_range(
     const MatrixFree<dim, number> &              matrix_free,
@@ -562,17 +561,15 @@ namespace Step75
     const unsigned int min_level = mg_matrices.min_level();
     const unsigned int max_level = mg_matrices.max_level();
 
-    using Number                     = typename VectorType::value_type;
     using SmootherPreconditionerType = DiagonalMatrix<VectorType>;
     using SmootherType               = PreconditionChebyshev<LevelMatrixType,
                                                VectorType,
                                                SmootherPreconditionerType>;
     using PreconditionerType = PreconditionMG<dim, VectorType, MGTransferType>;
 
-    // Initialize level operators.
+    // We initialize level operators and Chebyshev smoothers here.
     mg::Matrix<VectorType> mg_matrix(mg_matrices);
 
-    // Initialize smoothers. We use Chebyshev smoothers here.
     MGLevelObject<typename SmootherType::AdditionalData> smoother_data(
       min_level, max_level);
 
@@ -592,8 +589,8 @@ namespace Step75
       mg_smoother;
     mg_smoother.initialize(mg_matrices, smoother_data);
 
-    // Initialize coarse-grid solver. We use conjugate-gradient method with AMG
-    // as preconditioner.
+    // Next, we initialize the coarse-grid solver. We use conjugate-gradient
+    // method with AMG as preconditioner.
     ReductionControl coarse_grid_solver_control(mg_data.coarse_solver.maxiter,
                                                 mg_data.coarse_solver.abstol,
                                                 mg_data.coarse_solver.reltol,
@@ -655,6 +652,10 @@ namespace Step75
     // via global coarsening of p or h. For latter, we need also a sequence
     // of Triangulation objects that are obtained by
     // Triangulation::coarsen_global().
+    //
+    // In case no h-transfer is requested, we provide an empty deleter for the
+    // `emplace_back()` function, since the Triangulation of our DoFHandler is
+    // an external field and its destructor is called somewhere else.
     MGLevelObject<DoFHandler<dim>>                     dof_handlers;
     MGLevelObject<std::unique_ptr<OperatorType>>       operators;
     MGLevelObject<MGTwoLevelTransfer<dim, VectorType>> transfers;
@@ -668,12 +669,10 @@ namespace Step75
     else
       coarse_grid_triangulations.emplace_back(
         const_cast<Triangulation<dim> *>(&(dof_handler.get_triangulation())),
-        [](auto &) {
-          // empty deleter, since fine_triangulation_in is an external field
-          // and its destructor is called somewhere else
-        });
+        [](auto &) {});
 
-    // Determine the number of levels.
+    // Determine the total number of levels for the multigrid operation and
+    // allocate sufficient memory for all levels.
     const unsigned int n_h_levels = coarse_grid_triangulations.size() - 1;
 
     const auto get_max_active_fe_degree = [&](const auto &dof_handler) {
@@ -705,20 +704,24 @@ namespace Step75
     unsigned int minlevel_p = n_h_levels;
     unsigned int maxlevel   = n_h_levels + n_p_levels - 1;
 
-    // Allocate memory for all levels.
     dof_handlers.resize(minlevel, maxlevel);
     operators.resize(minlevel, maxlevel);
     transfers.resize(minlevel, maxlevel);
 
-    // Loop from max to min level and set up DoFHandler with coarser meshes and
-    // linear elements...
+    // Loop from the maximum (finest) to the minimum (coarsest) level and set up
+    // DoFHandler accordingly. In the data structures, we start with the
+    // coarsest mesh and linear elements and continue with increasingly finer
+    // meshes.
     for (unsigned int l = 0; l < n_h_levels; ++l)
       {
         dof_handlers[l].reinit(*coarse_grid_triangulations[l]);
         dof_handlers[l].distribute_dofs(dof_handler.get_fe_collection());
       }
 
-    // ... and with lower polynomial degrees
+    // After we reached the finest mesh, we will adjust the polynomial degrees
+    // on each level. We reverse iterate over our data structure and start at
+    // the finest mesh that contains all information about the active FE
+    // indices. We then lower the polynomial degree of each cell level by level.
     for (unsigned int i = 0, l = maxlevel; i < n_p_levels; ++i, --l)
       {
         dof_handlers[l].reinit(dof_handler.get_triangulation());
@@ -761,16 +764,18 @@ namespace Step75
         dof_handlers[l].distribute_dofs(dof_handler.get_fe_collection());
       }
 
-    // Create data structures on each multigrid level.
+    // Next, we will create all necessary data structures on each multigrid
+    // level. This involves determining constraints with homogeneous Dirichlet
+    // boundary conditions, and building the operator just like on the finest
+    // level.
     MGLevelObject<AffineConstraints<typename VectorType::value_type>>
       constraints(minlevel, maxlevel);
 
-    for (unsigned int level = minlevel; level <= maxlevel; level++)
+    for (unsigned int level = minlevel; level <= maxlevel; ++level)
       {
         const auto &dof_handler = dof_handlers[level];
         auto &      constraint  = constraints[level];
 
-        // ... constraints (with homogeneous Dirichlet BC)
         {
           IndexSet locally_relevant_dofs;
           DoFTools::extract_locally_relevant_dofs(dof_handler,
@@ -788,7 +793,6 @@ namespace Step75
           constraint.close();
         }
 
-        // ... operator (just like on the finest level)
         {
           VectorType dummy;
 
@@ -820,7 +824,7 @@ namespace Step75
         operators[l]->initialize_dof_vector(vec);
       });
 
-    // Proceed to solve the problem with multigrid.
+    // Finally, proceed to solve the problem with multigrid.
     mg_solve(solver_control,
              dst,
              src,
