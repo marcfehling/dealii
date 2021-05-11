@@ -118,34 +118,35 @@ By construction, the Legendre polynomials are orthogonal under the $L^2$ inner
 product on $K$. Additionally, we assume that they have been normalized, so
 their inner products can be written as
 @f[
-\int_K P_i(x) P_j(x) dx = J_K \delta_{i,j}
+\int_K P_i(x) P_j(x) dx = \mathrm{det}(J_K) \delta_{i,j}
 @f]
 where $J_K$ is the Jacobian of the mapping from $\hat{K}$ to $K$, which (in this
 tutorial) is assumed to be constant (i.e., the mapping must be affine), and
 $\delta_{i,j}$ is the Kronnecker delta.
 Hence, combining all these assumptions, the projection matrix for expressing
-$u^h(x)$ in the Legendre basis is just $J_K I$ - that is, $J_K$ times the
-identity matrix.
+$u^h(x)$ in the Legendre basis is just $\mathrm{det}(J_K) I$ - that is,
+$\mathrm{det}(J_K)$ times the identity matrix.
 Let $F_K$ be the mapping from $K$ to its reference cell $\hat{K}$.
 The entries in the right-hand side in the projection system are, therefore,
 @f[
 \int_K u(x) P_k(x) dx
-= J_K \int_\hat{K} u(F_K(\hat{x})) P_k(F_K(\hat{x})) d\hat{x}.
+= \mathrm{det}(J_K) \int_\hat{K} u(F_K(\hat{x})) P_k(F_K(\hat{x})) d\hat{x}.
 @f]
 Recalling the shape function representation of $u^h(x)$, we can write this as
-$J_K C \vec{c}$, where $C$ is the change-of-basis matrix with entries
+$\mathrm{det}(J_K) C \vec{c}$, where $C$ is the change-of-basis matrix with
+entries
 @f[
-J_K C_{i, j}
+\mathrm{det}(J_K) C_{i, j}
 =      \int_K P_i(x) \varphi_j(x) dx
-= J_K \int_{\hat{K}} P_i(F_K(\hat{x})) \varphi_j(F_K(\hat{x})) d\hat{x}
-= J_K \int_{\hat{K}} \hat{P}_i(\hat{x}) \hat{\varphi}_j(\hat{x}) d\hat{x}
+= \mathrm{det}(J_K) \int_{\hat{K}} P_i(F_K(\hat{x})) \varphi_j(F_K(\hat{x})) d\hat{x}
+= \mathrm{det}(J_K) \int_{\hat{K}} \hat{P}_i(\hat{x}) \hat{\varphi}_j(\hat{x}) d\hat{x}
 @f]
 so the values of $C$ can be written <em>independently</em> of $K$ by factoring
-the $J_K$ out front after transforming to reference coordinates.
+$\mathrm{det}(J_K)$ out front after transforming to reference coordinates.
 
 Hence, putting it all together, the projection problem can be written as
 @f[
-J_K I \vec{l} = J_K C \vec{c}
+\mathrm{det}(J_K) I \vec{l} = \mathrm{det}(J_K) C \vec{c}
 @f]
 which can be rewritten as simply
 @f[
@@ -158,7 +159,7 @@ non-affine. Put another way: the assumption that $J_K$ is constant across the
 cell is not true for general meshes. Hence, a correct calculation of $l_i$
 requires not only that we calculate the corresponding transformation matrix
 $C$ for every single cell, but that we also define a set of Legendre-like
-functions that are orthogonal on a cell $K$ which may have an arbitrary and
+orthogonal functions on a cell $K$ which may have an arbitrary and
 very complex geometry. The second part, in particular, is very computationally
 expensive. The current implementation of the FESeries transformation classes
 relies on the simplification resulting from having a constant Jacobian to
