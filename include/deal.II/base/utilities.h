@@ -1281,38 +1281,9 @@ namespace Utilities
          const std::vector<char>::const_iterator &cend,
          const bool                               allow_compression)
   {
-    T object;
-
-    // see if the object is small and copyable via memcpy. if so, use
-    // this fast path. otherwise, we have to go through the BOOST
-    // serialization machinery
-#ifdef DEAL_II_HAVE_CXX17
-    if constexpr (std::is_trivially_copyable<T>() && sizeof(T) < 256)
-#else
-    if (std::is_trivially_copyable<T>() && sizeof(T) < 256)
-#endif
-      {
-        (void)allow_compression;
-        Assert(std::distance(cbegin, cend) == sizeof(T), ExcInternalError());
-        std::memcpy(&object, &*cbegin, sizeof(T));
-      }
-    else
-      {
-        // decompress the buffer section into the object
-        boost::iostreams::filtering_istreambuf fisb;
-#ifdef DEAL_II_WITH_ZLIB
-        if (allow_compression)
-          fisb.push(boost::iostreams::gzip_decompressor());
-#else
-        (void)allow_compression;
-#endif
-        fisb.push(boost::iostreams::array_source(&*cbegin, &*cend));
-
-        boost::archive::binary_iarchive bia(fisb);
-        bia >> object;
-      }
-
-    return object;
+    T unpacked_object[1];
+    unpack<T, 1>(cbegin, cend, unpacked_object, allow_compression);
+    return unpacked_object[0];
   }
 
 
