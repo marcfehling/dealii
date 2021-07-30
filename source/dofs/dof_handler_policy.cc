@@ -225,7 +225,7 @@ namespace internal
 
           // Note: we may wish to have something here similar to what
           // we do for lines and quads, namely that we only identify
-          // dofs for any FE towards the most dominating one. however,
+          // dofs for any FE towards the most dominated one. however,
           // it is not clear whether this is actually necessary for
           // vertices at all, I can't think of a finite element that
           // would make that necessary...
@@ -257,18 +257,18 @@ namespace internal
                           vertex_index,
                           std::integral_constant<int, 0>());
 
-                    // find out which is the most dominating finite
+                    // find out which is the most dominated finite
                     // element of the ones that are used on this vertex
-                    unsigned int most_dominating_fe_index =
-                      dof_handler.get_fe_collection().find_dominating_fe(
+                    unsigned int most_dominated_fe_index =
+                      dof_handler.get_fe_collection().find_dominated_fe(
                         fe_indices,
                         /*codim*/ dim);
 
-                    // if we haven't found a dominating finite element,
+                    // if we haven't found a dominated finite element,
                     // choose the very first one to be dominant
-                    if (most_dominating_fe_index ==
+                    if (most_dominated_fe_index ==
                         numbers::invalid_unsigned_int)
-                      most_dominating_fe_index =
+                      most_dominated_fe_index =
                         dealii::internal::DoFAccessorImplementation::
                           Implementation::nth_active_fe_index(
                             dof_handler,
@@ -278,19 +278,19 @@ namespace internal
                             std::integral_constant<int, 0>());
 
                     // loop over the indices of all the finite
-                    // elements that are not dominating, and
-                    // identify their dofs to the most dominating
+                    // elements that are not dominated, and
+                    // identify their dofs to the most dominated
                     // one
                     for (const auto &other_fe_index : fe_indices)
-                      if (other_fe_index != most_dominating_fe_index)
+                      if (other_fe_index != most_dominated_fe_index)
                         {
                           // make sure the entry in the equivalence
                           // table exists
                           const auto &identities =
                             *ensure_existence_and_return_dof_identities<0>(
-                              dof_handler.get_fe(most_dominating_fe_index),
+                              dof_handler.get_fe(most_dominated_fe_index),
                               dof_handler.get_fe(other_fe_index),
-                              vertex_dof_identities[most_dominating_fe_index]
+                              vertex_dof_identities[most_dominated_fe_index]
                                                    [other_fe_index]);
 
                           // then loop through the identities we
@@ -309,7 +309,7 @@ namespace internal
                                     dof_handler,
                                     0,
                                     vertex_index,
-                                    most_dominating_fe_index,
+                                    most_dominated_fe_index,
                                     identity.first,
                                     std::integral_constant<int, 0>());
                               const types::global_dof_index
@@ -327,7 +327,7 @@ namespace internal
                               // encounter invalid DoFs on ghost cells,
                               // for which we have not yet distributed
                               // valid indices. depending on which finte
-                              // element is dominating the other on this
+                              // element is dominated by the other on this
                               // interface, we either have to constrain
                               // the valid to the invalid indices, or vice
                               // versa.
@@ -502,38 +502,39 @@ namespace internal
                                     --unique_sets_of_dofs;
 
                                     // determine which one of both finite
-                                    // elements is the dominating one.
+                                    // elements is the dominated one.
                                     const std::set<unsigned int> fe_indices{
                                       fe_index_1, fe_index_2};
 
-                                    unsigned int dominating_fe_index =
+                                    unsigned int dominated_fe_index =
                                       dof_handler.get_fe_collection()
-                                        .find_dominating_fe(fe_indices,
-                                                            /*codim=*/dim - 1);
+                                        .find_dominated_fe(fe_indices,
+                                                           /*codim=*/dim - 1);
                                     unsigned int other_fe_index =
                                       numbers::invalid_unsigned_int;
 
-                                    if (dominating_fe_index !=
+                                    if (dominated_fe_index !=
                                         numbers::invalid_unsigned_int)
                                       other_fe_index =
-                                        (dominating_fe_index == fe_index_1) ?
+                                        (dominated_fe_index == fe_index_1) ?
                                           fe_index_2 :
                                           fe_index_1;
                                     else
                                       {
-                                        // if we haven't found a dominating
+                                        // if we haven't found a dominated
                                         // finite element, choose the one with
-                                        // the lower index to be dominating
-                                        dominating_fe_index = fe_index_1;
-                                        other_fe_index      = fe_index_2;
+                                        // the lower index to be dominated
+                                        dominated_fe_index = fe_index_1;
+                                        other_fe_index     = fe_index_2;
                                       }
 
                                     for (unsigned int j = 0; j < dofs_per_line;
                                          ++j)
                                       {
                                         const types::global_dof_index
-                                          primary_dof_index = line->dof_index(
-                                            j, dominating_fe_index);
+                                          primary_dof_index =
+                                            line->dof_index(j,
+                                                            dominated_fe_index);
                                         const types::global_dof_index
                                           dependent_dof_index =
                                             line->dof_index(j, other_fe_index);
@@ -542,8 +543,8 @@ namespace internal
                                         // encounter invalid DoFs on ghost
                                         // cells, for which we have not yet
                                         // distributed valid indices. depending
-                                        // on which finte element is dominating
-                                        // the other on this interface, we
+                                        // on which finte element is dominated
+                                        // by the other on this interface, we
                                         // either have to constrain the valid to
                                         // the invalid indices, or vice versa.
                                         //
@@ -639,42 +640,41 @@ namespace internal
                       const std::set<unsigned int> fe_indices =
                         line->get_active_fe_indices();
 
-                      // find out which is the most dominating finite element of
+                      // find out which is the most dominated finite element of
                       // the ones that are used on this line
-                      const unsigned int most_dominating_fe_index =
-                        dof_handler.get_fe_collection().find_dominating_fe(
+                      const unsigned int most_dominated_fe_index =
+                        dof_handler.get_fe_collection().find_dominated_fe(
                           fe_indices,
                           /*codim=*/dim - 1);
 
-                      // if we found the most dominating element, then use this
+                      // if we found the most dominated element, then use this
                       // to eliminate some of the degrees of freedom by
                       // identification. otherwise, the code that computes
                       // hanging node constraints will have to deal with it by
                       // computing appropriate constraints along this face/edge
-                      if (most_dominating_fe_index !=
+                      if (most_dominated_fe_index !=
                           numbers::invalid_unsigned_int)
                         {
                           // loop over the indices of all the finite elements
-                          // that are not dominating, and identify their dofs to
-                          // the most dominating one
+                          // that are not dominated, and identify their dofs to
+                          // the most dominated one
                           for (const auto &other_fe_index : fe_indices)
-                            if (other_fe_index != most_dominating_fe_index)
+                            if (other_fe_index != most_dominated_fe_index)
                               {
                                 const auto &identities =
                                   *ensure_existence_and_return_dof_identities<
-                                    1>(dof_handler.get_fe(
-                                         most_dominating_fe_index),
-                                       dof_handler.get_fe(other_fe_index),
-                                       line_dof_identities
-                                         [most_dominating_fe_index]
-                                         [other_fe_index]);
+                                    1>(
+                                    dof_handler.get_fe(most_dominated_fe_index),
+                                    dof_handler.get_fe(other_fe_index),
+                                    line_dof_identities[most_dominated_fe_index]
+                                                       [other_fe_index]);
 
                                 for (const auto &identity : identities)
                                   {
                                     const types::global_dof_index
                                       primary_dof_index = line->dof_index(
                                         identity.first,
-                                        most_dominating_fe_index);
+                                        most_dominated_fe_index);
                                     const types::global_dof_index
                                       dependent_dof_index =
                                         line->dof_index(identity.second,
@@ -684,7 +684,7 @@ namespace internal
                                     // encounter invalid DoFs on ghost cells,
                                     // for which we have not yet distributed
                                     // valid indices. depending on which finte
-                                    // element is dominating the other on this
+                                    // element is dominated by the other on this
                                     // interface, we either have to constrain
                                     // the valid to the invalid indices, or vice
                                     // versa.
@@ -804,49 +804,49 @@ namespace internal
                   const std::set<unsigned int> fe_indices =
                     quad->get_active_fe_indices();
 
-                  // find out which is the most dominating finite
+                  // find out which is the most dominated finite
                   // element of the ones that are used on this quad
-                  const unsigned int most_dominating_fe_index =
-                    dof_handler.get_fe_collection().find_dominating_fe(
+                  const unsigned int most_dominated_fe_index =
+                    dof_handler.get_fe_collection().find_dominated_fe(
                       fe_indices,
                       /*codim=*/dim - 2);
 
-                  const unsigned int most_dominating_fe_index_face_no =
-                    cell->active_fe_index() == most_dominating_fe_index ?
+                  const unsigned int most_dominated_fe_index_face_no =
+                    cell->active_fe_index() == most_dominated_fe_index ?
                       q :
                       cell->neighbor_face_no(q);
 
-                  // if we found the most dominating element, then use
+                  // if we found the most dominated element, then use
                   // this to eliminate some of the degrees of freedom
                   // by identification. otherwise, the code that
                   // computes hanging node constraints will have to
                   // deal with it by computing appropriate constraints
                   // along this face/edge
-                  if (most_dominating_fe_index != numbers::invalid_unsigned_int)
+                  if (most_dominated_fe_index != numbers::invalid_unsigned_int)
                     {
                       // loop over the indices of all the finite
-                      // elements that are not dominating, and
-                      // identify their dofs to the most dominating
+                      // elements that are not dominated, and
+                      // identify their dofs to the most dominated
                       // one
                       for (const auto &other_fe_index : fe_indices)
-                        if (other_fe_index != most_dominating_fe_index)
+                        if (other_fe_index != most_dominated_fe_index)
                           {
                             const auto &identities =
                               *ensure_existence_and_return_dof_identities<2>(
-                                dof_handler.get_fe(most_dominating_fe_index),
+                                dof_handler.get_fe(most_dominated_fe_index),
                                 dof_handler.get_fe(other_fe_index),
                                 quad_dof_identities
-                                  [most_dominating_fe_index][other_fe_index]
+                                  [most_dominated_fe_index][other_fe_index]
                                   [cell->quad(q)->reference_cell() ==
                                    dealii::ReferenceCells::Quadrilateral],
-                                most_dominating_fe_index_face_no);
+                                most_dominated_fe_index_face_no);
 
                             for (const auto &identity : identities)
                               {
                                 const types::global_dof_index
                                   primary_dof_index =
                                     quad->dof_index(identity.first,
-                                                    most_dominating_fe_index);
+                                                    most_dominated_fe_index);
                                 const types::global_dof_index
                                   dependent_dof_index =
                                     quad->dof_index(identity.second,
@@ -1055,7 +1055,7 @@ namespace internal
 
         /**
          * Merge invalid DoF indices on vertices located on ghost interfaces
-         * by a dominating valid one.
+         * by a dominated valid one.
          */
         template <int dim, int spacedim>
         static void
@@ -1068,7 +1068,7 @@ namespace internal
 
           // Note: we may wish to have something here similar to what
           // we do for lines and quads, namely that we only identify
-          // dofs for any FE towards the most dominating one. however,
+          // dofs for any FE towards the most dominated one. however,
           // it is not clear whether this is actually necessary for
           // vertices at all, I can't think of a finite element that
           // would make that necessary...
@@ -1112,19 +1112,19 @@ namespace internal
                           vertex_index,
                           std::integral_constant<int, 0>());
 
-                    // find out which is the most dominating finite
+                    // find out which is the most dominated finite
                     // element of the ones that are used on this vertex
-                    unsigned int most_dominating_fe_index =
-                      dof_handler.get_fe_collection().find_dominating_fe(
+                    unsigned int most_dominated_fe_index =
+                      dof_handler.get_fe_collection().find_dominated_fe(
                         fe_indices,
                         /*codim=*/dim);
 
-                    // if we haven't found a dominating finite element,
+                    // if we haven't found a dominated finite element,
                     // choose the very first one to be dominant similar
                     // to compute_vertex_dof_identities()
-                    if (most_dominating_fe_index ==
+                    if (most_dominated_fe_index ==
                         numbers::invalid_unsigned_int)
-                      most_dominating_fe_index =
+                      most_dominated_fe_index =
                         dealii::internal::DoFAccessorImplementation::
                           Implementation::nth_active_fe_index(
                             dof_handler,
@@ -1134,19 +1134,19 @@ namespace internal
                             std::integral_constant<int, 0>());
 
                     // loop over the indices of all the finite
-                    // elements that are not dominating, and
-                    // identify their dofs to the most dominating
+                    // elements that are not dominated, and
+                    // identify their dofs to the most dominated
                     // one
                     for (const auto &other_fe_index : fe_indices)
-                      if (other_fe_index != most_dominating_fe_index)
+                      if (other_fe_index != most_dominated_fe_index)
                         {
                           // make sure the entry in the equivalence
                           // table exists
                           const auto &identities =
                             *ensure_existence_and_return_dof_identities<0>(
-                              dof_handler.get_fe(most_dominating_fe_index),
+                              dof_handler.get_fe(most_dominated_fe_index),
                               dof_handler.get_fe(other_fe_index),
-                              vertex_dof_identities[most_dominating_fe_index]
+                              vertex_dof_identities[most_dominated_fe_index]
                                                    [other_fe_index]);
 
                           // then loop through the identities we
@@ -1165,7 +1165,7 @@ namespace internal
                                     dof_handler,
                                     0,
                                     vertex_index,
-                                    most_dominating_fe_index,
+                                    most_dominated_fe_index,
                                     identity.first,
                                     std::integral_constant<int, 0>());
                               const types::global_dof_index
@@ -1184,7 +1184,7 @@ namespace internal
                               // we need to work on.
                               //
                               // all degrees of freedom belonging to
-                              // dominating FE indices or to a processor
+                              // dominated FE indices or to a processor
                               // with a higher rank have been set at this
                               // point (either in Phase 2, or after the
                               // first ghost exchange in Phase 5). thus,
@@ -1214,7 +1214,7 @@ namespace internal
 
         /**
          * Merge invalid DoF indices on lines located on ghost interfaces
-         * by a dominating valid one.
+         * by a dominated valid one.
          */
         template <int spacedim>
         static void
@@ -1334,38 +1334,39 @@ namespace internal
                                     --unique_sets_of_dofs;
 
                                     // determine which one of both finite
-                                    // elements is the dominating one.
+                                    // elements is the dominated one.
                                     const std::set<unsigned int> fe_indices{
                                       fe_index_1, fe_index_2};
 
-                                    unsigned int dominating_fe_index =
+                                    unsigned int dominated_fe_index =
                                       dof_handler.get_fe_collection()
-                                        .find_dominating_fe(fe_indices,
-                                                            /*codim*/ dim - 1);
+                                        .find_dominated_fe(fe_indices,
+                                                           /*codim*/ dim - 1);
                                     unsigned int other_fe_index =
                                       numbers::invalid_unsigned_int;
 
-                                    if (dominating_fe_index !=
+                                    if (dominated_fe_index !=
                                         numbers::invalid_unsigned_int)
                                       other_fe_index =
-                                        (dominating_fe_index == fe_index_1) ?
+                                        (dominated_fe_index == fe_index_1) ?
                                           fe_index_2 :
                                           fe_index_1;
                                     else
                                       {
-                                        // if we haven't found a dominating
+                                        // if we haven't found a dominated
                                         // finite element, choose the one with
-                                        // the lower index to be dominating
-                                        dominating_fe_index = fe_index_1;
-                                        other_fe_index      = fe_index_2;
+                                        // the lower index to be dominated
+                                        dominated_fe_index = fe_index_1;
+                                        other_fe_index     = fe_index_2;
                                       }
 
                                     for (unsigned int j = 0; j < dofs_per_line;
                                          ++j)
                                       {
                                         const types::global_dof_index
-                                          primary_dof_index = line->dof_index(
-                                            j, dominating_fe_index);
+                                          primary_dof_index =
+                                            line->dof_index(j,
+                                                            dominated_fe_index);
                                         const types::global_dof_index
                                           dependent_dof_index =
                                             line->dof_index(j, other_fe_index);
@@ -1375,7 +1376,7 @@ namespace internal
                                         // cell on which we need to work on.
                                         //
                                         // all degrees of freedom belonging to
-                                        // dominating fe_indices or to a
+                                        // dominated fe_indices or to a
                                         // processor with a higher rank have
                                         // been set at this point (either in
                                         // Phase 2, or after the first ghost
@@ -1411,42 +1412,41 @@ namespace internal
                       const std::set<unsigned int> fe_indices =
                         line->get_active_fe_indices();
 
-                      // find out which is the most dominating finite element of
+                      // find out which is the most dominated finite element of
                       // the ones that are used on this line
-                      const unsigned int most_dominating_fe_index =
-                        dof_handler.get_fe_collection().find_dominating_fe(
+                      const unsigned int most_dominated_fe_index =
+                        dof_handler.get_fe_collection().find_dominated_fe(
                           fe_indices,
                           /*codim=*/dim - 1);
 
-                      // if we found the most dominating element, then use this
+                      // if we found the most dominated element, then use this
                       // to eliminate some of the degrees of freedom by
                       // identification. otherwise, the code that computes
                       // hanging node constraints will have to deal with it by
                       // computing appropriate constraints along this face/edge
-                      if (most_dominating_fe_index !=
+                      if (most_dominated_fe_index !=
                           numbers::invalid_unsigned_int)
                         {
                           // loop over the indices of all the finite elements
-                          // that are not dominating, and identify their dofs to
-                          // the most dominating one
+                          // that are not dominated, and identify their dofs to
+                          // the most dominated one
                           for (const auto &other_fe_index : fe_indices)
-                            if (other_fe_index != most_dominating_fe_index)
+                            if (other_fe_index != most_dominated_fe_index)
                               {
                                 const auto &identities =
                                   *ensure_existence_and_return_dof_identities<
-                                    1>(dof_handler.get_fe(
-                                         most_dominating_fe_index),
-                                       dof_handler.get_fe(other_fe_index),
-                                       line_dof_identities
-                                         [most_dominating_fe_index]
-                                         [other_fe_index]);
+                                    1>(
+                                    dof_handler.get_fe(most_dominated_fe_index),
+                                    dof_handler.get_fe(other_fe_index),
+                                    line_dof_identities[most_dominated_fe_index]
+                                                       [other_fe_index]);
 
                                 for (const auto &identity : identities)
                                   {
                                     const types::global_dof_index
                                       primary_dof_index = line->dof_index(
                                         identity.first,
-                                        most_dominating_fe_index);
+                                        most_dominated_fe_index);
                                     const types::global_dof_index
                                       dependent_dof_index =
                                         line->dof_index(identity.second,
@@ -1457,7 +1457,7 @@ namespace internal
                                     // we need to work on.
                                     //
                                     // all degrees of freedom belonging to
-                                    // dominating FE indices or to a processor
+                                    // dominated FE indices or to a processor
                                     // with a higher rank have been set at this
                                     // point (either in Phase 2, or after the
                                     // first ghost exchange in Phase 5). thus,
@@ -1487,7 +1487,7 @@ namespace internal
 
         /**
          * Merge invalid DoF indices on quads located on ghost interfaces
-         * by a dominating valid one.
+         * by a dominated valid one.
          */
         template <int dim, int spacedim>
         static void
@@ -1559,49 +1559,49 @@ namespace internal
                   const std::set<unsigned int> fe_indices =
                     quad->get_active_fe_indices();
 
-                  // find out which is the most dominating finite
+                  // find out which is the most dominated finite
                   // element of the ones that are used on this quad
-                  const unsigned int most_dominating_fe_index =
-                    dof_handler.get_fe_collection().find_dominating_fe(
+                  const unsigned int most_dominated_fe_index =
+                    dof_handler.get_fe_collection().find_dominated_fe(
                       fe_indices,
                       /*codim=*/dim - 2);
 
-                  const unsigned int most_dominating_fe_index_face_no =
-                    cell->active_fe_index() == most_dominating_fe_index ?
+                  const unsigned int most_dominated_fe_index_face_no =
+                    cell->active_fe_index() == most_dominated_fe_index ?
                       q :
                       cell->neighbor_face_no(q);
 
-                  // if we found the most dominating element, then use
+                  // if we found the most dominated element, then use
                   // this to eliminate some of the degrees of freedom
                   // by identification. otherwise, the code that
                   // computes hanging node constraints will have to
                   // deal with it by computing appropriate constraints
                   // along this face/edge
-                  if (most_dominating_fe_index != numbers::invalid_unsigned_int)
+                  if (most_dominated_fe_index != numbers::invalid_unsigned_int)
                     {
                       // loop over the indices of all the finite
-                      // elements that are not dominating, and
-                      // identify their dofs to the most dominating
+                      // elements that are not dominated, and
+                      // identify their dofs to the most dominated
                       // one
                       for (const auto &other_fe_index : fe_indices)
-                        if (other_fe_index != most_dominating_fe_index)
+                        if (other_fe_index != most_dominated_fe_index)
                           {
                             const auto &identities =
                               *ensure_existence_and_return_dof_identities<2>(
-                                dof_handler.get_fe(most_dominating_fe_index),
+                                dof_handler.get_fe(most_dominated_fe_index),
                                 dof_handler.get_fe(other_fe_index),
                                 quad_dof_identities
-                                  [most_dominating_fe_index][other_fe_index]
+                                  [most_dominated_fe_index][other_fe_index]
                                   [cell->quad(q)->reference_cell() ==
                                    dealii::ReferenceCells::Quadrilateral],
-                                most_dominating_fe_index_face_no);
+                                most_dominated_fe_index_face_no);
 
                             for (const auto &identity : identities)
                               {
                                 const types::global_dof_index
                                   primary_dof_index =
                                     quad->dof_index(identity.first,
-                                                    most_dominating_fe_index);
+                                                    most_dominated_fe_index);
                                 const types::global_dof_index
                                   dependent_dof_index =
                                     quad->dof_index(identity.second,
@@ -1612,7 +1612,7 @@ namespace internal
                                 // we need to work on.
                                 //
                                 // all degrees of freedom belonging to
-                                // dominating FE indices or to a processor with
+                                // dominated FE indices or to a processor with
                                 // a higher rank have been set at this point
                                 // (either in Phase 2, or after the first ghost
                                 // exchange in Phase 5). thus, we only have to
@@ -1644,7 +1644,7 @@ namespace internal
          * FiniteElement object of an adjacent cell, which could be either a
          * ghost cell or locally owned, whose DoF indices we did not know at the
          * moment of unification. After the first ghost exchange in Phase 5, we
-         * know the indices of all dominating DoFs, and we have to assign those
+         * know the indices of all dominated DoFs, and we have to assign those
          * invalid entries to their corresponding global value.
          *
          * This function does nothing unless the DoFHandler has hp-
