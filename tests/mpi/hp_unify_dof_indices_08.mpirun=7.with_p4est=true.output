@@ -1,55 +1,55 @@
 
 DEAL:0:2d::n_globally_active_cells: 29035
-DEAL:0:2d::n_locally_owned_dofs: 68397
+DEAL:0:2d::n_locally_owned_dofs: 68395
 DEAL:0:2d::n_global_dofs: 485573
 DEAL:0:3d::n_globally_active_cells: 13824
-DEAL:0:3d::n_locally_owned_dofs: 162762
+DEAL:0:3d::n_locally_owned_dofs: 162722
 DEAL:0:3d::n_global_dofs: 1125219
 
 DEAL:1:2d::n_globally_active_cells: 29035
-DEAL:1:2d::n_locally_owned_dofs: 72246
+DEAL:1:2d::n_locally_owned_dofs: 72313
 DEAL:1:2d::n_global_dofs: 485573
 DEAL:1:3d::n_globally_active_cells: 13824
-DEAL:1:3d::n_locally_owned_dofs: 162413
+DEAL:1:3d::n_locally_owned_dofs: 162466
 DEAL:1:3d::n_global_dofs: 1125219
 
 
 DEAL:2:2d::n_globally_active_cells: 29035
-DEAL:2:2d::n_locally_owned_dofs: 67840
+DEAL:2:2d::n_locally_owned_dofs: 67813
 DEAL:2:2d::n_global_dofs: 485573
 DEAL:2:3d::n_globally_active_cells: 13824
-DEAL:2:3d::n_locally_owned_dofs: 161549
+DEAL:2:3d::n_locally_owned_dofs: 161516
 DEAL:2:3d::n_global_dofs: 1125219
 
 
 DEAL:3:2d::n_globally_active_cells: 29035
-DEAL:3:2d::n_locally_owned_dofs: 69235
+DEAL:3:2d::n_locally_owned_dofs: 69241
 DEAL:3:2d::n_global_dofs: 485573
 DEAL:3:3d::n_globally_active_cells: 13824
-DEAL:3:3d::n_locally_owned_dofs: 160833
+DEAL:3:3d::n_locally_owned_dofs: 160855
 DEAL:3:3d::n_global_dofs: 1125219
 
 
 DEAL:4:2d::n_globally_active_cells: 29035
-DEAL:4:2d::n_locally_owned_dofs: 69494
+DEAL:4:2d::n_locally_owned_dofs: 69479
 DEAL:4:2d::n_global_dofs: 485573
 DEAL:4:3d::n_globally_active_cells: 13824
-DEAL:4:3d::n_locally_owned_dofs: 161477
+DEAL:4:3d::n_locally_owned_dofs: 161454
 DEAL:4:3d::n_global_dofs: 1125219
 
 
 DEAL:5:2d::n_globally_active_cells: 29035
-DEAL:5:2d::n_locally_owned_dofs: 70925
+DEAL:5:2d::n_locally_owned_dofs: 70923
 DEAL:5:2d::n_global_dofs: 485573
 DEAL:5:3d::n_globally_active_cells: 13824
-DEAL:5:3d::n_locally_owned_dofs: 159501
+DEAL:5:3d::n_locally_owned_dofs: 159514
 DEAL:5:3d::n_global_dofs: 1125219
 
 
 DEAL:6:2d::n_globally_active_cells: 29035
-DEAL:6:2d::n_locally_owned_dofs: 67436
+DEAL:6:2d::n_locally_owned_dofs: 67409
 DEAL:6:2d::n_global_dofs: 485573
 DEAL:6:3d::n_globally_active_cells: 13824
-DEAL:6:3d::n_locally_owned_dofs: 156684
+DEAL:6:3d::n_locally_owned_dofs: 156692
 DEAL:6:3d::n_global_dofs: 1125219
 
