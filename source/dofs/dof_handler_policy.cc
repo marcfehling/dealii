@@ -644,6 +644,10 @@ namespace internal
                       if (most_dominating_fe_index !=
                           numbers::invalid_unsigned_int)
                         {
+                          // check if neighboring cell is ghost
+                          // if yes, check lowest subdomain id of line
+                          // if loweer than this cell
+
                           // loop over the indices of all the finite elements
                           // that are not dominating, and identify their dofs to
                           // the most dominating one
@@ -916,6 +920,186 @@ namespace internal
             }
 
           tasks.join_all();
+        }
+
+
+
+        /**
+         * TODO: Doc
+         */
+        template <int dim, int spacedim>
+        static void
+        invalidate_weaker_ghost_dofs(
+          std::vector<types::global_dof_index> &renumbering,
+          const types::subdomain_id             subdomain_id,
+          const DoFHandler<dim, spacedim> &     dof_handler)
+        {
+          // TODO: leave simpler version for non-hp case
+          //       or have one for both
+          Assert(
+            dof_handler.hp_capability_enabled == true,
+            (typename DoFHandler<dim, spacedim>::ExcOnlyAvailableWithHP()));
+
+          //
+          // temporary objects
+          //
+          std::vector<types::global_dof_index> local_dof_indices;
+
+          dealii::Table<2, std::unique_ptr<DoFIdentities>>
+            vertex_dof_identities(dof_handler.fe_collection.size(),
+                                  dof_handler.fe_collection.size());
+
+          dealii::Table<2, std::unique_ptr<DoFIdentities>> line_dof_identities(
+            dof_handler.fe_collection.size(), dof_handler.fe_collection.size());
+
+          dealii::Table<3, std::unique_ptr<DoFIdentities>> quad_dof_identities(
+            dof_handler.fe_collection.size(),
+            dof_handler.fe_collection.size(),
+            2 /*triangle (0) or quadrilateral (1)*/);
+
+          //
+          // find faces between locally owned and ghost cells
+          //
+          for (const auto &cell : dof_handler.active_cell_iterators())
+            if (cell->is_locally_owned())
+              for (const auto face_no : cell->face_indices())
+                if (cell->neighbor(face_no)->is_ghost())
+                  {
+                    const auto &ghost = cell->neighbor(face_no);
+
+                    // tie_break criterion
+                    if (ghost->subdomain_id() > subdomain_id)
+                      continue;
+
+                    // invalidate all other degrees of freedom
+                    const auto &face = cell->face(face_no);
+
+                    const auto cell_fe_index  = cell->active_fe_index();
+                    const auto ghost_fe_index = ghost->active_fe_index();
+
+
+                    if (cell_fe_index == ghost_fe_index)
+                      {
+                        // non-hp case
+                        local_dof_indices.resize(face->get_fe().n_dofs_per_face());
+                        internal::DoFAccessorImplementation::Implementation::
+                          get_dof_indices(*face,
+                                          local_dof_indices,
+                                          cell_fe_index);
+                        for (const auto &local_dof_index : local_dof_indices)
+                          {
+                            Assert(local_dof_index != numbers::invalid_dof_index, ExcInternalError());
+                            renumbering[local_dof_index] = numbers::invalid_dof_index;
+                          }
+                      }
+                    else
+                      {
+                        // hp case
+                        // vertices
+                        {
+                          const auto &identities =
+                            *ensure_existence_and_return_dof_identities<0>(
+                              dof_handler.get_fe(cell_fe_index),
+                              dof_handler.get_fe(ghost_fe_index),
+                              vertex_dof_identities[cell_fe_index]
+                                                   [ghost_fe_index]);
+
+                          for (const auto identity : identities)
+                            for (const auto vertex_no : face->vertex_indices())
+                              {
+                                const types::global_dof_index cell_dof_index =
+                                  dealii::internal::DoFAccessorImplementation::
+                                    Implementation::get_dof_index(
+                                      dof_handler,
+                                      0,
+                                      face->vertex_index(vertex_no),
+                                      cell_fe_index,
+                                      identity.first,
+                                      std::integral_constant<int, 0>());
+                                renumbering[cell_dof_index] =
+                                  numbers::invalid_dof_index;
+#ifdef DEBUG
+                                const types::global_dof_index ghost_dof_index =
+                                  dealii::internal::DoFAccessorImplementation::
+                                    Implementation::get_dof_index(
+                                      dof_handler,
+                                      0,
+                                      face->vertex_index(vertex_no),
+                                      ghost_fe_index,
+                                      identity.second,
+                                      std::integral_constant<int, 0>());
+                                Assert(ghost_fe_index == ghost_dof_index ==
+                                         numbers::invalid_dof_index,
+                                       ExcInternalError());
+#endif
+                              }
+                        }
+
+                        if constexpr (dim > 1)
+                          {
+                            // lines
+                            const auto &identities =
+                              *ensure_existence_and_return_dof_identities<1>(
+                                dof_handler.get_fe(cell_fe_index),
+                                dof_handler.get_fe(ghost_fe_index),
+                                line_dof_identities[cell_fe_index]
+                                                   [ghost_fe_index]);
+
+                            for (const auto identity : identities)
+                              for (const auto line_no :
+                                   face->line_indices()) // vertex_indices()
+                                {
+                                  const auto &line = face->line(line_no);
+
+                                  const types::global_dof_index cell_dof_index =
+                                    line->dof_index(identity.first,
+                                                    cell_fe_index);
+                                  renumbering[cell_dof_index] =
+                                    numbers::invalid_dof_index;
+#ifdef DEBUG
+                                  const types::global_dof_index
+                                    ghost_dof_index =
+                                      line->dof_index(identity.second,
+                                                      ghost_fe_index);
+                                  Assert(ghost_dof_index ==
+                                           numbers::invalid_dof_index,
+                                         ExcInternalError());
+#endif
+                                }
+                          }
+
+                        // quads <2>
+                        if constexpr (dim > 2)
+                          {
+                            const auto &identities =
+                              *ensure_existence_and_return_dof_identities<2>(
+                                dof_handler.get_fe(cell_fe_index),
+                                dof_handler.get_fe(ghost_fe_index),
+                                quad_dof_identities
+                                  [cell_fe_index][ghost_fe_index]
+                                  [face->reference_cell() ==
+                                   dealii::ReferenceCells::Quadrilateral],
+                                face_no);
+
+                            for (const auto identity : identities)
+                              {
+                                const types::global_dof_index cell_dof_index =
+                                  face->dof_index(identity.first,
+                                                  cell_fe_index);
+                                renumbering[cell_dof_index] =
+                                  numbers::invalid_dof_index;
+#ifdef DEBUG
+                                const types::global_dof_index ghost_dof_index =
+                                  face->dof_index(identity.second,
+                                                  ghost_fe_index);
+                                Assert(ghost_dof_index ==
+                                         numbers::invalid_dof_index,
+                                       ExcInternalError());
+#endif
+                              }
+                          }
+                      }
+                  }
         }
 
 
