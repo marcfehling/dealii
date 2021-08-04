@@ -233,13 +233,42 @@ namespace internal
             vertex_dof_identities(dof_handler.get_fe_collection().size(),
                                   dof_handler.get_fe_collection().size());
 
+          // first identify vertices we want to exclude from working on.
+          // specifically, these are the vertices of artificial and ghost cells
+          // because at the time when we get here, we do not yet know DoF
+          // indices on ghost cells (and we will never know them for artificial
+          // cells). this is, at least the case for
+          // parallel::distributed::Triangulations.
+          //
+          // this means that we will not unify DoF indices between locally owned
+          // cells and ghost cells, and this is different from what we would do
+          // if the triangulation were not split into subdomains. on the other
+          // hand, DoF unification is only an optimization: we will still record
+          // these identities when we compute hanging node constraints; we just
+          // end up with more DoFs than we would if we unified DoF indices also
+          // between locally owned and ghost cells, but we end up with a simpler
+          // algorithm in return.
+          std::vector<bool> include_vertex =
+            dof_handler.get_triangulation().get_used_vertices();
+          if (dynamic_cast<const dealii::parallel::
+                             DistributedTriangulationBase<dim, spacedim> *>(
+                &dof_handler.get_triangulation()) != nullptr)
+            for (const auto &cell : dof_handler.active_cell_iterators())
+              if (!cell->is_locally_owned())
+                for (const auto v : cell->vertex_indices())
+                  include_vertex[v] = false;
+
+
           // loop over all vertices and see which one we need to work on
           for (unsigned int vertex_index = 0;
                vertex_index < dof_handler.get_triangulation().n_vertices();
                ++vertex_index)
-            if (dof_handler.get_triangulation()
-                  .get_used_vertices()[vertex_index] == true)
+            if (include_vertex[vertex_index] == true)
               {
+                Assert(dof_handler.get_triangulation()
+                           .get_used_vertices()[vertex_index] == true,
+                       ExcInternalError());
+
                 const unsigned int n_active_fe_indices =
                   dealii::internal::DoFAccessorImplementation::Implementation::
                     n_active_fe_indices(dof_handler,
@@ -257,15 +286,15 @@ namespace internal
                           vertex_index,
                           std::integral_constant<int, 0>());
 
-                    // find out which is the most dominating finite
-                    // element of the ones that are used on this vertex
+                    // find out which is the most dominating finite element of
+                    // the ones that are used on this vertex
                     unsigned int most_dominating_fe_index =
                       dof_handler.get_fe_collection().find_dominating_fe(
                         fe_indices,
                         /*codim*/ dim);
 
-                    // if we haven't found a dominating finite element,
-                    // choose the very first one to be dominant
+                    // if we haven't found a dominating finite element, choose
+                    // the very first one to be dominant
                     if (most_dominating_fe_index ==
                         numbers::invalid_unsigned_int)
                       most_dominating_fe_index =
@@ -277,15 +306,13 @@ namespace internal
                             0,
                             std::integral_constant<int, 0>());
 
-                    // loop over the indices of all the finite
-                    // elements that are not dominating, and
-                    // identify their dofs to the most dominating
-                    // one
+                    // loop over the indices of all the finite elements that are
+                    // not dominating, and identify their dofs to the most
+                    // dominating one
                     for (const auto &other_fe_index : fe_indices)
                       if (other_fe_index != most_dominating_fe_index)
                         {
-                          // make sure the entry in the equivalence
-                          // table exists
+                          // make sure the entry in the equivalence table exists
                           const auto &identities =
                             *ensure_existence_and_return_dof_identities<0>(
                               dof_handler.get_fe(most_dominating_fe_index),
@@ -293,12 +320,11 @@ namespace internal
                               vertex_dof_identities[most_dominating_fe_index]
                                                    [other_fe_index]);
 
-                          // then loop through the identities we
-                          // have. first get the global numbers of the
-                          // dofs we want to identify and make sure they
-                          // are not yet constrained to anything else,
-                          // except for to each other. use the rule that
-                          // we will always constrain the dof with the
+                          // then loop through the identities we have. first get
+                          // the global numbers of the dofs we want to identify
+                          // and make sure they are not yet constrained to
+                          // anything else, except for to each other. use the
+                          // rule that we will always constrain the dof with the
                           // higher FE index to the one with the lower,
                           // to avoid circular reasoning.
                           for (const auto &identity : identities)
@@ -323,41 +349,20 @@ namespace internal
                                       identity.second,
                                       std::integral_constant<int, 0>());
 
-                              // on subdomain boundaries, we will
-                              // encounter invalid DoFs on ghost cells,
-                              // for which we have not yet distributed
-                              // valid indices. depending on which finte
-                              // element is dominating the other on this
-                              // interface, we either have to constrain
-                              // the valid to the invalid indices, or vice
-                              // versa.
-                              //
-                              // we only store an identity if we are about
-                              // to overwrite a valid DoF. we will skip
-                              // constraining invalid DoFs for now, and
-                              // consider them later in Phase 5.
-                              if (dependent_dof_index !=
-                                  numbers::invalid_dof_index)
-                                {
-                                  // if the DoF indices of both elements
-                                  // are already distributed, i.e., both
-                                  // of these 'fe_indices' are associated
-                                  // with a locally owned cell, then we
-                                  // should either not have a dof_identity
-                                  // yet, or it must come out here to be
-                                  // exactly as we had computed before
-                                  if (primary_dof_index !=
-                                      numbers::invalid_dof_index)
-                                    Assert(
-                                      (dof_identities.find(primary_dof_index) ==
-                                       dof_identities.end()) ||
-                                        (dof_identities[dependent_dof_index] ==
-                                         primary_dof_index),
-                                      ExcInternalError());
+                              // if the DoF indices of both elements are already
+                              // distributed, i.e., both of these 'fe_indices'
+                              // are associated with a locally owned cell, then
+                              // we should either not have a dof_identity yet,
+                              // or it must come out here to be exactly as we
+                              // had computed before
+                              Assert((dof_identities.find(primary_dof_index) ==
+                                      dof_identities.end()) ||
+                                       (dof_identities[dependent_dof_index] ==
+                                        primary_dof_index),
+                                     ExcInternalError());
 
-                                  dof_identities[dependent_dof_index] =
-                                    primary_dof_index;
-                                }
+                              dof_identities[dependent_dof_index] =
+                                primary_dof_index;
                             }
                         }
                   }
@@ -402,6 +407,27 @@ namespace internal
           const_cast<dealii::Triangulation<dim, spacedim> &>(
             dof_handler.get_triangulation())
             .clear_user_flags_line();
+
+          // exclude lines that bound cells we don't locally own, because we do
+          // not have information about their dofs at this point. this is, at
+          // least the case for parallel::distributed::Triangulations.
+          //
+          // this means that we will not unify DoF indices between locally owned
+          // cells and ghost cells, and this is different from what we would do
+          // if the triangulation were not split into subdomains. on the other
+          // hand, DoF unification is only an optimization: we will still record
+          // these identities when we compute hanging node constraints; we just
+          // end up with more DoFs than we would if we unified DoF indices also
+          // between locally owned and ghost cells, but we end up with a simpler
+          // algorithm in return.
+          if (dynamic_cast<const dealii::parallel::
+                             DistributedTriangulationBase<dim, spacedim> *>(
+                &dof_handler.get_triangulation()) != nullptr)
+            for (const auto &cell : dof_handler.active_cell_iterators())
+              if (!cell->is_locally_owned())
+                for (const auto l : cell->line_indices())
+                  cell->line(l)->set_user_flag();
+
 
           // An implementation of the algorithm described in the hp-paper,
           // including the modification mentioned later in the "complications in
@@ -538,85 +564,50 @@ namespace internal
                                           dependent_dof_index =
                                             line->dof_index(j, other_fe_index);
 
-                                        // on subdomain boundaries, we will
-                                        // encounter invalid DoFs on ghost
-                                        // cells, for which we have not yet
-                                        // distributed valid indices. depending
-                                        // on which finte element is dominating
-                                        // the other on this interface, we
-                                        // either have to constrain the valid to
-                                        // the invalid indices, or vice versa.
-                                        //
-                                        // we only store an identity if we are
-                                        // about to overwrite a valid DoF. we
-                                        // will skip constraining invalid DoFs
-                                        // for now, and consider them later in
-                                        // Phase 5.
-                                        if (dependent_dof_index !=
-                                            numbers::invalid_dof_index)
+                                        // if primary dof was already
+                                        // constrained, constrain to that one,
+                                        // otherwise constrain dependent to
+                                        // primary
+                                        if (dof_identities.find(
+                                              primary_dof_index) !=
+                                            dof_identities.end())
                                           {
-                                            if (primary_dof_index !=
-                                                numbers::invalid_dof_index)
-                                              {
-                                                // if primary dof was already
-                                                // constrained, constrain to
-                                                // that one, otherwise constrain
-                                                // dependent to primary
-                                                if (dof_identities.find(
-                                                      primary_dof_index) !=
-                                                    dof_identities.end())
-                                                  {
-                                                    // if the DoF indices of
-                                                    // both elements are already
-                                                    // distributed, i.e., both
-                                                    // of these 'fe_indices' are
-                                                    // associated with a locally
-                                                    // owned cell, then we
-                                                    // should either not have a
-                                                    // dof_identity yet, or it
-                                                    // must come out here to be
-                                                    // exactly as we had
-                                                    // computed before
-                                                    Assert(
-                                                      dof_identities.find(
-                                                        dof_identities
-                                                          [primary_dof_index]) ==
-                                                        dof_identities.end(),
-                                                      ExcInternalError());
+                                            // if the DoF indices of both
+                                            // elements are already distributed,
+                                            // i.e., both of these 'fe_indices'
+                                            // are associated with a locally
+                                            // owned cell, then we
+                                            // should either not have a
+                                            // dof_identity yet, or it
+                                            // must come out here to be
+                                            // exactly as we had
+                                            // computed before
+                                            Assert(dof_identities.find(
+                                                     dof_identities
+                                                       [primary_dof_index]) ==
+                                                     dof_identities.end(),
+                                                   ExcInternalError());
 
-                                                    dof_identities
-                                                      [dependent_dof_index] =
-                                                        dof_identities
-                                                          [primary_dof_index];
-                                                  }
-                                                else
-                                                  {
-                                                    // see comment above for an
-                                                    // explanation of this
-                                                    // assertion
-                                                    Assert(
-                                                      (dof_identities.find(
-                                                         primary_dof_index) ==
-                                                       dof_identities.end()) ||
-                                                        (dof_identities
-                                                           [dependent_dof_index] ==
-                                                         primary_dof_index),
-                                                      ExcInternalError());
-
-                                                    dof_identities
-                                                      [dependent_dof_index] =
-                                                        primary_dof_index;
-                                                  }
-                                              }
-                                            else
-                                              {
-                                                // set dependent_dof to
-                                                // primary_dof_index, which is
-                                                // invalid
+                                            dof_identities
+                                              [dependent_dof_index] =
                                                 dof_identities
-                                                  [dependent_dof_index] =
-                                                    numbers::invalid_dof_index;
-                                              }
+                                                  [primary_dof_index];
+                                          }
+                                        else
+                                          {
+                                            // see comment above for an
+                                            // explanation of this assertion
+                                            Assert((dof_identities.find(
+                                                      primary_dof_index) ==
+                                                    dof_identities.end()) ||
+                                                     (dof_identities
+                                                        [dependent_dof_index] ==
+                                                      primary_dof_index),
+                                                   ExcInternalError());
+
+                                            dof_identities
+                                              [dependent_dof_index] =
+                                                primary_dof_index;
                                           }
                                       }
                                   }
@@ -628,12 +619,11 @@ namespace internal
                   // left, then we have taken care of everything above. if there
                   // are two, then we need to deal with them here. if there are
                   // more, then we punt, as described in the paper (and
-                  // mentioned above)
+                  // mentioned above).
                   // TODO: The check for 'dim==2' was inserted by intuition. It
-                  // fixes
-                  // the previous problems with step-27 in 3D. But an
+                  // fixes the previous problems with step-27 in 3D. But an
                   // explanation for this is still required, and what we do here
-                  // is not what we describe in the paper!.
+                  // is not what we describe in the paper!
                   if ((unique_sets_of_dofs == 2) && (dim == 2))
                     {
                       const std::set<unsigned int> fe_indices =
@@ -680,42 +670,22 @@ namespace internal
                                         line->dof_index(identity.second,
                                                         other_fe_index);
 
-                                    // on subdomain boundaries, we will
-                                    // encounter invalid DoFs on ghost cells,
-                                    // for which we have not yet distributed
-                                    // valid indices. depending on which finte
-                                    // element is dominating the other on this
-                                    // interface, we either have to constrain
-                                    // the valid to the invalid indices, or vice
-                                    // versa.
-                                    //
-                                    // we only store an identity if we are about
-                                    // to overwrite a valid DoF. we will skip
-                                    // constraining invalid DoFs for now, and
-                                    // consider them later in Phase 5.
-                                    if (dependent_dof_index !=
-                                        numbers::invalid_dof_index)
-                                      {
-                                        // if the DoF indices of both elements
-                                        // are already distributed, i.e., both
-                                        // of these 'fe_indices' are associated
-                                        // with a locally owned cell, then we
-                                        // should either not have a dof_identity
-                                        // yet, or it must come out here to be
-                                        // exactly as we had computed before
-                                        if (primary_dof_index !=
-                                            numbers::invalid_dof_index)
-                                          Assert((dof_identities.find(
-                                                    primary_dof_index) ==
-                                                  dof_identities.end()) ||
-                                                   (dof_identities
-                                                      [dependent_dof_index] ==
-                                                    primary_dof_index),
-                                                 ExcInternalError());
+                                    // if the DoF indices of both elements
+                                    // are already distributed, i.e., both
+                                    // of these 'fe_indices' are associated
+                                    // with a locally owned cell, then we
+                                    // should either not have a dof_identity
+                                    // yet, or it must come out here to be
+                                    // exactly as we had computed before
+                                    Assert(
+                                      (dof_identities.find(primary_dof_index) ==
+                                       dof_identities.end()) ||
+                                        (dof_identities[dependent_dof_index] ==
+                                         primary_dof_index),
+                                      ExcInternalError());
 
-                                        dof_identities[dependent_dof_index] =
-                                          primary_dof_index;
-                                      }
+                                    dof_identities[dependent_dof_index] =
+                                      primary_dof_index;
                                   }
                               }
                         }
@@ -777,16 +747,36 @@ namespace internal
             dof_handler.get_triangulation())
             .clear_user_flags_quad();
 
-          // An implementation of the algorithm described in the hp-
-          // paper, including the modification mentioned later in the
-          // "complications in 3-d" subsections
+          // exclude quads that bound cells we don't locally own, because we do
+          // not have information about their dofs at this point. this is, at
+          // least the case for parallel::distributed::Triangulations.
           //
-          // as explained there, we do something only if there are
-          // exactly 2 finite elements associated with an object. if
-          // there is only one, then there is nothing to do anyway,
-          // and if there are 3 or more, then we can get into
-          // trouble. note that this only happens for lines in 3d and
-          // higher, and for quads only in 4d and higher, so this
+          // this means that we will not unify DoF indices between locally owned
+          // cells and ghost cells, and this is different from what we would do
+          // if the triangulation were not split into subdomains. on the other
+          // hand, DoF unification is only an optimization: we will still record
+          // these identities when we compute hanging node constraints; we just
+          // end up with more DoFs than we would if we unified DoF indices also
+          // between locally owned and ghost cells, but we end up with a simpler
+          // algorithm in return.
+          if (dynamic_cast<const dealii::parallel::
+                             DistributedTriangulationBase<dim, spacedim> *>(
+                &dof_handler.get_triangulation()) != nullptr)
+            for (const auto &cell : dof_handler.active_cell_iterators())
+              if (!cell->is_locally_owned())
+                for (const auto q : cell->face_indices())
+                  cell->quad(q)->set_user_flag();
+
+
+          // An implementation of the algorithm described in the hp-paper,
+          // including the modification mentioned later in the "complications in
+          // 3-d" subsections
+          //
+          // as explained there, we do something only if there are exactly 2
+          // finite elements associated with an object. if there is only one,
+          // then there is nothing to do anyway, and if there are 3 or more,
+          // then we can get into trouble. note that this only happens for lines
+          // in 3d and higher, and for quads only in 4d and higher, so this
           // isn't a particularly frequent case
           dealii::Table<3, std::unique_ptr<DoFIdentities>> quad_dof_identities(
             dof_handler.fe_collection.size(),
@@ -852,34 +842,22 @@ namespace internal
                                     quad->dof_index(identity.second,
                                                     other_fe_index);
 
-                                // we only store an identity if we are about to
-                                // overwrite a valid degree of freedom. we will
-                                // skip invalid degrees of freedom (that are
-                                // associated with ghost cells) for now, and
-                                // consider them later in phase 5.
-                                if (dependent_dof_index !=
-                                    numbers::invalid_dof_index)
-                                  {
-                                    // if the DoF indices of both elements are
-                                    // already distributed, i.e., both of these
-                                    // 'fe_indices' are associated with a
-                                    // locally owned cell, then we should either
-                                    // not have a dof_identity yet, or it must
-                                    // come out here to be exactly as we had
-                                    // computed before
-                                    if (primary_dof_index !=
-                                        numbers::invalid_dof_index)
-                                      Assert((dof_identities.find(
-                                                primary_dof_index) ==
-                                              dof_identities.end()) ||
-                                               (dof_identities
-                                                  [dependent_dof_index] ==
-                                                primary_dof_index),
-                                             ExcInternalError());
+                                // if the DoF indices of both elements are
+                                // already distributed, i.e., both of these
+                                // 'fe_indices' are associated with a
+                                // locally owned cell, then we should either
+                                // not have a dof_identity yet, or it must
+                                // come out here to be exactly as we had
+                                // computed before
+                                Assert((dof_identities.find(
+                                          primary_dof_index) ==
+                                        dof_identities.end()) ||
+                                         (dof_identities[dependent_dof_index] ==
+                                          primary_dof_index),
+                                       ExcInternalError());
 
-                                    dof_identities[dependent_dof_index] =
-                                      primary_dof_index;
-                                  }
+                                dof_identities[dependent_dof_index] =
+                                  primary_dof_index;
                               }
                           }
                     }
