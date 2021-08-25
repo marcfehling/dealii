@@ -10,7 +10,6 @@ DEAL::  FESystem<2>[FE_Q<2>(2)^2]: line dof index 1
 DEAL::  FESystem<2>[FE_Q<2>(4)^2]: line dof index 4
 DEAL::  FESystem<2>[FE_Q<2>(6)^2]: line dof index 7
 DEAL::  FESystem<2>[FE_Q<2>(8)^2]: line dof index 10
-DEAL::
 DEAL::dim=3
 DEAL::Identity set #0
 DEAL::  FESystem<3>[FE_Q<3>(2)^2]: line dof index 0
@@ -22,5 +21,4 @@ DEAL::  FESystem<3>[FE_Q<3>(2)^2]: line dof index 1
 DEAL::  FESystem<3>[FE_Q<3>(4)^2]: line dof index 4
 DEAL::  FESystem<3>[FE_Q<3>(6)^2]: line dof index 7
 DEAL::  FESystem<3>[FE_Q<3>(8)^2]: line dof index 10
-DEAL::
 DEAL::OK

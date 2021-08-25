@@ -9,7 +9,6 @@ DEAL::  FE_Q<1>(5): vertex dof index 0
 DEAL::  FE_Q<1>(6): vertex dof index 0
 DEAL::  FE_Q<1>(7): vertex dof index 0
 DEAL::  FE_Q<1>(8): vertex dof index 0
-DEAL::
 DEAL::dim=2
 DEAL::Identity set #0
 DEAL::  FE_Q<2>(1): vertex dof index 0
@@ -20,7 +19,6 @@ DEAL::  FE_Q<2>(5): vertex dof index 0
 DEAL::  FE_Q<2>(6): vertex dof index 0
 DEAL::  FE_Q<2>(7): vertex dof index 0
 DEAL::  FE_Q<2>(8): vertex dof index 0
-DEAL::
 DEAL::dim=3
 DEAL::Identity set #0
 DEAL::  FE_Q<3>(1): vertex dof index 0
@@ -31,5 +29,4 @@ DEAL::  FE_Q<3>(5): vertex dof index 0
 DEAL::  FE_Q<3>(6): vertex dof index 0
 DEAL::  FE_Q<3>(7): vertex dof index 0
 DEAL::  FE_Q<3>(8): vertex dof index 0
-DEAL::
 DEAL::OK

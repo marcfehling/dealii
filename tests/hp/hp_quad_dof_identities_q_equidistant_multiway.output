@@ -41,7 +41,6 @@ DEAL::  FE_Q<2>(QIterated(QTrapezoid(),8)): quad dof index 38
 DEAL::Identity set #12
 DEAL::  FE_Q<2>(QIterated(QTrapezoid(),4)): quad dof index 8
 DEAL::  FE_Q<2>(QIterated(QTrapezoid(),8)): quad dof index 40
-DEAL::
 DEAL::dim=3
 DEAL::Identity set #0
 DEAL::  FE_Q<3>(2): quad dof index 0
@@ -84,5 +83,4 @@ DEAL::  FE_Q<3>(QIterated(QTrapezoid(),8)): quad dof index 38
 DEAL::Identity set #12
 DEAL::  FE_Q<3>(QIterated(QTrapezoid(),4)): quad dof index 8
 DEAL::  FE_Q<3>(QIterated(QTrapezoid(),8)): quad dof index 40
-DEAL::
 DEAL::OK

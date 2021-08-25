@@ -53,8 +53,6 @@ test()
                   << ": vertex dof index " << p.second << std::endl;
         }
     }
-
-  deallog << std::endl;
 }
 
 

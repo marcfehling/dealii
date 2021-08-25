@@ -18,7 +18,6 @@ DEAL::  FESystem<1>[FE_Q<1>(5)^2]: vertex dof index 1
 DEAL::  FESystem<1>[FE_Q<1>(6)^2]: vertex dof index 1
 DEAL::  FESystem<1>[FE_Q<1>(7)^2]: vertex dof index 1
 DEAL::  FESystem<1>[FE_Q<1>(8)^2]: vertex dof index 1
-DEAL::
 DEAL::dim=2
 DEAL::Identity set #0
 DEAL::  FESystem<2>[FE_Q<2>(1)^2]: vertex dof index 0
@@ -38,7 +37,6 @@ DEAL::  FESystem<2>[FE_Q<2>(5)^2]: vertex dof index 1
 DEAL::  FESystem<2>[FE_Q<2>(6)^2]: vertex dof index 1
 DEAL::  FESystem<2>[FE_Q<2>(7)^2]: vertex dof index 1
 DEAL::  FESystem<2>[FE_Q<2>(8)^2]: vertex dof index 1
-DEAL::
 DEAL::dim=3
 DEAL::Identity set #0
 DEAL::  FESystem<3>[FE_Q<3>(1)^2]: vertex dof index 0
@@ -58,5 +56,4 @@ DEAL::  FESystem<3>[FE_Q<3>(5)^2]: vertex dof index 1
 DEAL::  FESystem<3>[FE_Q<3>(6)^2]: vertex dof index 1
 DEAL::  FESystem<3>[FE_Q<3>(7)^2]: vertex dof index 1
 DEAL::  FESystem<3>[FE_Q<3>(8)^2]: vertex dof index 1
-DEAL::
 DEAL::OK

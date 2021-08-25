@@ -55,8 +55,6 @@ test()
                   << ": quad dof index " << p.second << std::endl;
         }
     }
-
-  deallog << std::endl;
 }
 
 
