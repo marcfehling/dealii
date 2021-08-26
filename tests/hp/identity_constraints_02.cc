@@ -102,6 +102,32 @@ test(std::array<unsigned int, 4> fe_degrees)
           << std::endl
           << "  Identity constraints:     " << constraints.n_identities()
           << std::endl;
+
+
+  std::vector<types::global_dof_index> dof_indices;
+  for (const auto &cell : dh.active_cell_iterators())
+    for (const auto &face : cell->face_iterators())
+      if (face->at_boundary() == false)
+        {
+          // name of fe on this cell
+          std::cout << cell->get_fe().get_name() << std::endl;
+
+          // name of all fes on this face
+          for (const auto &fe_index : face->get_active_fe_indices())
+              std::cout << " " << dh.get_fe(fe_index).get_name();
+          std::cout << std::endl;
+
+          // all dofs on this face that belong to this cell
+          dof_indices.resize(cell->get_fe().n_dofs_per_face());
+          face->get_dof_indices(dof_indices, cell->active_fe_index());
+
+          for (const auto& dof_index : dof_indices)
+            std::cout << " " << dof_index;
+          std::cout << std::endl;
+          for (const auto& dof_index : dof_indices)
+            std::cout << " " << constraints.is_constrained(dof_index);
+          std::cout << std::endl;
+        }
 }
 
 
@@ -110,19 +136,19 @@ main()
 {
   initlog();
 
-  deallog << "FE degrees: 1 - 4" << std::endl;
-  deallog.push("2d");
-  test<2>({{1, 2, 3, 4}});
-  deallog.pop();
+//  deallog << "FE degrees: 1 - 4" << std::endl;
+//  deallog.push("2d");
+//  test<2>({{1, 2, 3, 4}});
+//  deallog.pop();
   deallog.push("3d");
   test<3>({{1, 2, 3, 4}});
   deallog.pop();
 
-  deallog << "FE degrees: 2 - 5" << std::endl;
-  deallog.push("2d");
-  test<2>({{2, 3, 4, 5}});
-  deallog.pop();
-  deallog.push("3d");
-  test<3>({{2, 3, 4, 5}});
-  deallog.pop();
+//  deallog << "FE degrees: 2 - 5" << std::endl;
+//  deallog.push("2d");
+//  test<2>({{2, 3, 4, 5}});
+//  deallog.pop();
+//  deallog.push("3d");
+//  test<3>({{2, 3, 4, 5}});
+//  deallog.pop();
 }
