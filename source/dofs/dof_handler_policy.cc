@@ -233,175 +233,139 @@ namespace internal
             vertex_dof_identities(dof_handler.get_fe_collection().size(),
                                   dof_handler.get_fe_collection().size());
 
-          // on all ghost cells, predetermine the minimal subdomain id that each
-          // vertex borders. all vertices that are only part of locally owned
-          // cells or artificial cells will get an invalid value assigned.
-          std::vector<types::subdomain_id> min_subdomain_id(
-            dof_handler.get_triangulation().n_vertices(),
-            numbers::invalid_subdomain_id);
+          // TODO: Might be inefficient: Rather use user_pointers?
+          //       We just need vertices on the ghost boundary.
+          std::map<unsigned int,
+                   std::multimap<types::subdomain_id, unsigned int>>
+            ghost_vertices_subdomain_fe;
           for (const auto &cell : dof_handler.active_cell_iterators())
-            if (cell->is_ghost())
-              for (const auto v : cell->vertex_indices())
+            if (cell->is_locally_owned() || cell->is_ghost())
+              for (unsigned int v = 0; v < cell->n_vertices(); ++v)
                 {
                   const auto global_vertex_index = cell->vertex_index(v);
-                  if (cell->subdomain_id() <
-                      min_subdomain_id[global_vertex_index])
-                    min_subdomain_id[global_vertex_index] =
-                      cell->subdomain_id();
+                  auto &     subdomain_fe =
+                    ghost_vertices_subdomain_fe[global_vertex_index];
+                  subdomain_fe.insert(
+                    {cell->subdomain_id(), cell->active_fe_index()});
                 }
 
           std::vector<bool> used_vertices =
             dof_handler.get_triangulation().get_used_vertices();
 
           // loop over all vertices and see which one we need to work on
-          for (const auto &cell : dof_handler.active_cell_iterators())
-            if (cell->is_locally_owned())
-              for (const auto v : cell->vertex_indices())
-                if (used_vertices[cell->vertex_index(v)] == true)
+          for (unsigned int global_vertex_index = 0;
+               global_vertex_index <
+               dof_handler.get_triangulation().n_vertices();
+               ++global_vertex_index)
+            if (dof_handler.get_triangulation()
+                  .get_used_vertices()[global_vertex_index] == true)
+              {
+                const unsigned int n_active_fe_indices =
+                  dealii::internal::DoFAccessorImplementation::Implementation::
+                    n_active_fe_indices(dof_handler,
+                                        0,
+                                        global_vertex_index,
+                                        std::integral_constant<int, 0>());
+
+                if (n_active_fe_indices > 1)
                   {
-                    const auto global_vertex_index = cell->vertex_index(v);
+                    std::set<unsigned int> fe_indices;
+                    auto &                 subdomain_fe =
+                      ghost_vertices_subdomain_fe[global_vertex_index];
+                    const auto &range =
+                      subdomain_fe.equal_range(subdomain_fe.begin()->first);
+                    for (auto it = range.first; it != range.second; ++it)
+                      fe_indices.insert(it->second);
 
-                    Assert(dof_handler.get_triangulation()
-                               .get_used_vertices()[global_vertex_index] ==
-                             true,
-                           ExcInternalError());
+                    // find out which is the most dominating finite element
+                    // of the ones that are used on this vertex
+                    unsigned int most_dominating_fe_index =
+                      dof_handler.get_fe_collection().find_dominating_fe(
+                        fe_indices,
+                        /*codim*/ dim);
 
-                    // mark that we already visited this vertex
-                    used_vertices[global_vertex_index] = false;
+                    // if we haven't found a dominating finite element,
+                    // choose the very first one to be dominant
+                    if (most_dominating_fe_index ==
+                        numbers::invalid_unsigned_int)
+                      most_dominating_fe_index =
+                        dealii::internal::DoFAccessorImplementation::
+                          Implementation::nth_active_fe_index(
+                            dof_handler,
+                            0,
+                            global_vertex_index,
+                            0,
+                            std::integral_constant<int, 0>());
 
-                    const unsigned int n_active_fe_indices =
-                      dealii::internal::DoFAccessorImplementation::
-                        Implementation::n_active_fe_indices(
-                          dof_handler,
-                          0,
-                          global_vertex_index,
-                          std::integral_constant<int, 0>());
+                    // loop over the indices of all the finite elements that
+                    // are not dominating, and identify their dofs to the
+                    // most dominating one
+                    for (const auto &other_fe_index : fe_indices)
+                      if (other_fe_index != most_dominating_fe_index)
+                        {
+                          // make sure the entry in the equivalence table
+                          // exists
+                          const auto &identities =
+                            *ensure_existence_and_return_dof_identities<0>(
+                              dof_handler.get_fe(most_dominating_fe_index),
+                              dof_handler.get_fe(other_fe_index),
+                              vertex_dof_identities[most_dominating_fe_index]
+                                                   [other_fe_index]);
 
-                    if (n_active_fe_indices > 1)
-                      {
-                        const std::set<unsigned int> fe_indices =
-                          dealii::internal::DoFAccessorImplementation::
-                            Implementation::get_active_fe_indices(
-                              dof_handler,
-                              0,
-                              global_vertex_index,
-                              std::integral_constant<int, 0>());
-
-                        // find out which is the most dominating finite element
-                        // of the ones that are used on this vertex
-                        unsigned int most_dominating_fe_index =
-                          dof_handler.get_fe_collection().find_dominating_fe(
-                            fe_indices,
-                            /*codim*/ dim);
-
-                        // if we haven't found a dominating finite element,
-                        // choose the very first one to be dominant
-                        if (most_dominating_fe_index ==
-                            numbers::invalid_unsigned_int)
-                          most_dominating_fe_index =
-                            dealii::internal::DoFAccessorImplementation::
-                              Implementation::nth_active_fe_index(
-                                dof_handler,
-                                0,
-                                global_vertex_index,
-                                0,
-                                std::integral_constant<int, 0>());
-
-                        // loop over the indices of all the finite elements that
-                        // are not dominating, and identify their dofs to the
-                        // most dominating one
-                        for (const auto &other_fe_index : fe_indices)
-                          if (other_fe_index != most_dominating_fe_index)
+                          // then loop through the identities we have. first
+                          // get the global numbers of the dofs we want to
+                          // identify and make sure they are not yet
+                          // constrained to anything else, except for to
+                          // each other. use the rule that we will always
+                          // constrain the dof with the higher FE index to
+                          // the one with the lower, to avoid circular
+                          // reasoning.
+                          for (const auto &identity : identities)
                             {
-                              // make sure the entry in the equivalence table
-                              // exists
-                              const auto &identities =
-                                *ensure_existence_and_return_dof_identities<0>(
-                                  dof_handler.get_fe(most_dominating_fe_index),
-                                  dof_handler.get_fe(other_fe_index),
-                                  vertex_dof_identities
-                                    [most_dominating_fe_index][other_fe_index]);
+                              const types::global_dof_index primary_dof_index =
+                                dealii::internal::DoFAccessorImplementation::
+                                  Implementation::get_dof_index(
+                                    dof_handler,
+                                    0,
+                                    global_vertex_index,
+                                    most_dominating_fe_index,
+                                    identity.first,
+                                    std::integral_constant<int, 0>());
+                              const types::global_dof_index
+                                dependent_dof_index =
+                                  dealii::internal::DoFAccessorImplementation::
+                                    Implementation::get_dof_index(
+                                      dof_handler,
+                                      0,
+                                      global_vertex_index,
+                                      other_fe_index,
+                                      identity.second,
+                                      std::integral_constant<int, 0>());
 
-                              // then loop through the identities we have. first
-                              // get the global numbers of the dofs we want to
-                              // identify and make sure they are not yet
-                              // constrained to anything else, except for to
-                              // each other. use the rule that we will always
-                              // constrain the dof with the higher FE index to
-                              // the one with the lower, to avoid circular
-                              // reasoning.
-                              for (const auto &identity : identities)
+                              if (dependent_dof_index !=
+                                  numbers::invalid_dof_index)
                                 {
-                                  const types::global_dof_index
-                                    primary_dof_index = dealii::internal::
-                                      DoFAccessorImplementation::
-                                        Implementation::get_dof_index(
-                                          dof_handler,
-                                          0,
-                                          global_vertex_index,
-                                          most_dominating_fe_index,
-                                          identity.first,
-                                          std::integral_constant<int, 0>());
-                                  const types::global_dof_index
-                                    dependent_dof_index = dealii::internal::
-                                      DoFAccessorImplementation::
-                                        Implementation::get_dof_index(
-                                          dof_handler,
-                                          0,
-                                          global_vertex_index,
-                                          other_fe_index,
-                                          identity.second,
-                                          std::integral_constant<int, 0>());
+                                  // if the DoF indices of both elements are
+                                  // already distributed, i.e., both of
+                                  // these 'fe_indices' are associated with
+                                  // a locally owned cell, then we should
+                                  // either not have a dof_identity yet, or
+                                  // it must come out here to be exactly as
+                                  // we had computed before
+                                  Assert(
+                                    (dof_identities.find(primary_dof_index) ==
+                                     dof_identities.end()) ||
+                                      (dof_identities[dependent_dof_index] ==
+                                       primary_dof_index),
+                                    ExcInternalError());
 
-                                  if ((primary_dof_index !=
-                                       numbers::invalid_dof_index) &&
-                                      (dependent_dof_index !=
-                                       numbers::invalid_dof_index))
-                                    {
-                                      // unification over local boundary
-
-                                      // if the DoF indices of both elements are
-                                      // already distributed, i.e., both of
-                                      // these 'fe_indices' are associated with
-                                      // a locally owned cell, then we should
-                                      // either not have a dof_identity yet, or
-                                      // it must come out here to be exactly as
-                                      // we had computed before
-                                      Assert((dof_identities.find(
-                                                primary_dof_index) ==
-                                              dof_identities.end()) ||
-                                               (dof_identities
-                                                  [dependent_dof_index] ==
-                                                primary_dof_index),
-                                             ExcInternalError());
-
-                                      dof_identities[dependent_dof_index] =
-                                        primary_dof_index;
-                                    }
-                                  else
-                                    {
-                                      // unification over ghost boundary
-
-                                      // check tie-break criterion
-                                      if (min_subdomain_id
-                                            [global_vertex_index] <
-                                          cell->subdomain_id())
-                                        {
-                                          if (primary_dof_index !=
-                                              numbers::invalid_dof_index)
-                                            dof_identities[primary_dof_index] =
-                                              numbers::invalid_dof_index;
-                                          if (dependent_dof_index !=
-                                              numbers::invalid_dof_index)
-                                            dof_identities
-                                              [dependent_dof_index] =
-                                                numbers::invalid_dof_index;
-                                        }
-                                    }
+                                  dof_identities[dependent_dof_index] =
+                                    primary_dof_index;
                                 }
                             }
-                      }
+                        }
                   }
+              }
 
           return dof_identities;
         }
@@ -443,31 +407,20 @@ namespace internal
             dof_handler.get_triangulation())
             .clear_user_flags_line();
 
-          // on all ghost cells, predetermine the minimal subdomain id that each
-          // vertex borders. all vertices that are only part of locally owned
-          // cells or artificial cells will get an invalid value assigned.
-          //
-          // we use user indices for this purpose
-          std::vector<unsigned int> user_indices;
-          dof_handler.get_triangulation().save_user_indices_line(user_indices);
-          const_cast<dealii::Triangulation<dim, spacedim> &>(
-            dof_handler.get_triangulation())
-            .clear_user_data();
-
-          const_cast<dealii::Triangulation<dim, spacedim> &>(
-            dof_handler.get_triangulation())
-            .load_user_indices_line(std::vector<unsigned int>(
-              dof_handler.get_triangulation().n_lines(),
-              numbers::invalid_subdomain_id));
+          // TODO: Might be inefficient: Rather use user_pointers?
+          //       We just need vertices on the ghost boundary.
+          std::map<typename DoFHandler<dim, spacedim>::line_iterator,
+                   std::multimap<types::subdomain_id, unsigned int>>
+            ghost_lines_subdomain_fe;
           for (const auto &cell : dof_handler.active_cell_iterators())
-            if (cell->is_ghost())
+            if (cell->is_locally_owned() || cell->is_ghost())
               for (const auto l : cell->line_indices())
                 {
-                  const auto line = cell->line(l);
-                  if (cell->subdomain_id() < line->user_index())
-                    line->set_user_index(cell->subdomain_id());
+                  const auto line         = cell->line(l);
+                  auto &     subdomain_fe = ghost_lines_subdomain_fe[line];
+                  subdomain_fe.insert(
+                    {cell->subdomain_id(), cell->active_fe_index()});
                 }
-
 
           // An implementation of the algorithm described in the hp-paper,
           // including the modification mentioned later in the "complications in
@@ -570,10 +523,36 @@ namespace internal
 
                                       --unique_sets_of_dofs;
 
-                                      // determine which one of both finite
-                                      // elements is the dominating one.
-                                      const std::set<unsigned int> fe_indices{
-                                        fe_index_1, fe_index_2};
+                                      auto &subdomain_fe =
+                                        ghost_lines_subdomain_fe[line];
+
+                                      unsigned int subdomain_1 =
+                                        numbers::invalid_unsigned_int;
+                                      unsigned int subdomain_2 =
+                                        numbers::invalid_unsigned_int;
+                                      for (auto &pair : subdomain_fe)
+                                        {
+                                          if (pair.second == fe_index_1 &&
+                                              pair.first < subdomain_1)
+                                            subdomain_1 = pair.first;
+                                          else if (pair.second == fe_index_2 &&
+                                                   pair.first < subdomain_2)
+                                            subdomain_2 = pair.first;
+                                        }
+                                      Assert((subdomain_1 !=
+                                              numbers::invalid_unsigned_int) &&
+                                               (subdomain_2 !=
+                                                numbers::invalid_unsigned_int),
+                                             ExcInternalError());
+
+                                      std::set<unsigned int> fe_indices;
+                                      if (subdomain_1 == subdomain_2)
+                                        fe_indices.insert(
+                                          {fe_index_1, fe_index_2});
+                                      else if (subdomain_1 < subdomain_2)
+                                        fe_indices.insert(fe_index_1);
+                                      else if (subdomain_1 > subdomain_2)
+                                        fe_indices.insert(fe_index_2);
 
                                       unsigned int dominating_fe_index =
                                         dof_handler.get_fe_collection()
@@ -610,10 +589,8 @@ namespace internal
                                               line->dof_index(j,
                                                               other_fe_index);
 
-                                          if ((primary_dof_index !=
-                                               numbers::invalid_dof_index) &&
-                                              (dependent_dof_index !=
-                                               numbers::invalid_dof_index))
+                                          if (dependent_dof_index !=
+                                              numbers::invalid_dof_index)
                                             {
                                               // unification over local boundary
 
@@ -667,30 +644,6 @@ namespace internal
                                                       primary_dof_index;
                                                 }
                                             }
-                                          else
-                                            {
-                                              // unification over ghost boundary
-
-                                              // check tie-break criterion
-                                              if (line->user_index() <
-                                                  cell->subdomain_id())
-                                                {
-                                                  if (primary_dof_index !=
-                                                      numbers::
-                                                        invalid_dof_index)
-                                                    dof_identities
-                                                      [primary_dof_index] =
-                                                        numbers::
-                                                          invalid_dof_index;
-                                                  if (dependent_dof_index !=
-                                                      numbers::
-                                                        invalid_dof_index)
-                                                    dof_identities
-                                                      [dependent_dof_index] =
-                                                        numbers::
-                                                          invalid_dof_index;
-                                                }
-                                            }
                                         }
                                     }
                                 }
@@ -708,8 +661,12 @@ namespace internal
                     // here is not what we describe in the paper!
                     if ((unique_sets_of_dofs == 2) && (dim == 2))
                       {
-                        const std::set<unsigned int> fe_indices =
-                          line->get_active_fe_indices();
+                        std::set<unsigned int> fe_indices;
+                        auto &subdomain_fe = ghost_lines_subdomain_fe[line];
+                        const auto &range =
+                          subdomain_fe.equal_range(subdomain_fe.begin()->first);
+                        for (auto it = range.first; it != range.second; ++it)
+                          fe_indices.insert(it->second);
 
                         // find out which is the most dominating finite element
                         // of the ones that are used on this line
@@ -757,13 +714,9 @@ namespace internal
                                           line->dof_index(identity.second,
                                                           other_fe_index);
 
-                                      if ((primary_dof_index !=
-                                           numbers::invalid_dof_index) &&
-                                          (dependent_dof_index !=
-                                           numbers::invalid_dof_index))
+                                      if (dependent_dof_index !=
+                                          numbers::invalid_dof_index)
                                         {
-                                          // unification over local boundary
-
                                           // if the DoF indices of both elements
                                           // are already distributed, i.e., both
                                           // of these 'fe_indices' are
@@ -783,26 +736,6 @@ namespace internal
                                           dof_identities[dependent_dof_index] =
                                             primary_dof_index;
                                         }
-                                      else
-                                        {
-                                          // unification over ghost boundary
-
-                                          // check tie-break criterion
-                                          if (line->user_index() <
-                                              cell->subdomain_id())
-                                            {
-                                              if (primary_dof_index !=
-                                                  numbers::invalid_dof_index)
-                                                dof_identities
-                                                  [primary_dof_index] =
-                                                    numbers::invalid_dof_index;
-                                              if (dependent_dof_index !=
-                                                  numbers::invalid_dof_index)
-                                                dof_identities
-                                                  [dependent_dof_index] =
-                                                    numbers::invalid_dof_index;
-                                            }
-                                        }
                                     }
                                 }
                           }
@@ -813,9 +746,6 @@ namespace internal
           const_cast<dealii::Triangulation<dim, spacedim> &>(
             dof_handler.get_triangulation())
             .load_user_flags_line(user_flags);
-          const_cast<dealii::Triangulation<dim, spacedim> &>(
-            dof_handler.get_triangulation())
-            .load_user_indices_line(user_indices);
 
           return dof_identities;
         }
@@ -857,7 +787,6 @@ namespace internal
           std::map<types::global_dof_index, types::global_dof_index>
             dof_identities;
 
-
           // we will mark quads that we have already treated, so first
           // save and clear the user flags on quads and later restore
           // them
@@ -867,29 +796,19 @@ namespace internal
             dof_handler.get_triangulation())
             .clear_user_flags_quad();
 
-          // on all ghost cells, predetermine the minimal subdomain id that each
-          // vertex borders. all vertices that are only part of locally owned
-          // cells or artificial cells will get an invalid value assigned.
-          //
-          // we use user indices for this purpose
-          std::vector<unsigned int> user_indices;
-          dof_handler.get_triangulation().save_user_indices_quad(user_indices);
-          const_cast<dealii::Triangulation<dim, spacedim> &>(
-            dof_handler.get_triangulation())
-            .clear_user_data();
-
-          const_cast<dealii::Triangulation<dim, spacedim> &>(
-            dof_handler.get_triangulation())
-            .load_user_indices_quad(std::vector<unsigned int>(
-              dof_handler.get_triangulation().n_quads(),
-              numbers::invalid_subdomain_id));
+          // TODO: Might be inefficient: Rather use user_pointers?
+          //       We just need vertices on the ghost boundary.
+          std::map<typename DoFHandler<dim, spacedim>::quad_iterator,
+                   std::multimap<types::subdomain_id, unsigned int>>
+            ghost_quads_subdomain_fe;
           for (const auto &cell : dof_handler.active_cell_iterators())
-            if (cell->is_ghost())
-              for (const auto q : cell->face_indices())
+            if (cell->is_locally_owned() || cell->is_ghost())
+              for (const auto f : cell->face_indices())
                 {
-                  const auto quad = cell->quad(q);
-                  if (cell->subdomain_id() < quad->user_index())
-                    quad->set_user_index(cell->subdomain_id());
+                  const auto quad         = cell->quad(f);
+                  auto &     subdomain_fe = ghost_quads_subdomain_fe[quad];
+                  subdomain_fe.insert(
+                    {cell->subdomain_id(), cell->active_fe_index()});
                 }
 
 
@@ -917,8 +836,12 @@ namespace internal
                     const auto quad = cell->quad(q);
                     quad->set_user_flag();
 
-                    const std::set<unsigned int> fe_indices =
-                      quad->get_active_fe_indices();
+                    std::set<unsigned int> fe_indices;
+                    auto &      subdomain_fe = ghost_quads_subdomain_fe[quad];
+                    const auto &range =
+                      subdomain_fe.equal_range(subdomain_fe.begin()->first);
+                    for (auto it = range.first; it != range.second; ++it)
+                      fe_indices.insert(it->second);
 
                     // find out which is the most dominating finite
                     // element of the ones that are used on this quad
@@ -969,13 +892,9 @@ namespace internal
                                       quad->dof_index(identity.second,
                                                       other_fe_index);
 
-                                  if ((primary_dof_index !=
-                                       numbers::invalid_dof_index) &&
-                                      (dependent_dof_index !=
-                                       numbers::invalid_dof_index))
+                                  if (dependent_dof_index !=
+                                      numbers::invalid_dof_index)
                                     {
-                                      // unification over local boundary
-
                                       // if the DoF indices of both elements are
                                       // already distributed, i.e., both of
                                       // these 'fe_indices' are associated with
@@ -994,25 +913,6 @@ namespace internal
                                       dof_identities[dependent_dof_index] =
                                         primary_dof_index;
                                     }
-                                  else
-                                    {
-                                      // unification over ghost boundary
-
-                                      // check tie-break criterion
-                                      if (quad->user_index() <
-                                          cell->subdomain_id())
-                                        {
-                                          if (primary_dof_index !=
-                                              numbers::invalid_dof_index)
-                                            dof_identities[primary_dof_index] =
-                                              numbers::invalid_dof_index;
-                                          if (dependent_dof_index !=
-                                              numbers::invalid_dof_index)
-                                            dof_identities
-                                              [dependent_dof_index] =
-                                                numbers::invalid_dof_index;
-                                        }
-                                    }
                                 }
                             }
                       }
@@ -1022,9 +922,6 @@ namespace internal
           const_cast<dealii::Triangulation<dim, spacedim> &>(
             dof_handler.get_triangulation())
             .load_user_flags_quad(user_flags);
-          const_cast<dealii::Triangulation<dim, spacedim> &>(
-            dof_handler.get_triangulation())
-            .load_user_indices_quad(user_indices);
 
           return dof_identities;
         }
@@ -1223,6 +1120,22 @@ namespace internal
                 for (const unsigned int v : cell->vertex_indices())
                   ghost_vertex[cell->vertex_index(v)] = true;
 
+          // TODO: Might be inefficient: Rather use user_pointers?
+          //       We just need vertices on the ghost boundary.
+          std::map<unsigned int,
+                   std::multimap<types::subdomain_id, unsigned int>>
+            ghost_vertices_subdomain_fe;
+          for (const auto &cell : dof_handler.active_cell_iterators())
+            if (cell->is_locally_owned() || cell->is_ghost())
+              for (unsigned int v = 0; v < cell->n_vertices(); ++v)
+                {
+                  const auto global_vertex_index = cell->vertex_index(v);
+                  auto &     subdomain_fe =
+                    ghost_vertices_subdomain_fe[global_vertex_index];
+                  subdomain_fe.insert(
+                    {cell->subdomain_id(), cell->active_fe_index()});
+                }
+
           // loop over all vertices and see which one we need to work on
           for (const auto &cell : dof_handler.active_cell_iterators())
             if (cell->is_locally_owned())
@@ -1249,13 +1162,13 @@ namespace internal
 
                     if (n_active_fe_indices > 1)
                       {
-                        const std::set<unsigned int> fe_indices =
-                          dealii::internal::DoFAccessorImplementation::
-                            Implementation::get_active_fe_indices(
-                              dof_handler,
-                              0,
-                              global_vertex_index,
-                              std::integral_constant<int, 0>());
+                        std::set<unsigned int> fe_indices;
+                        auto &                 subdomain_fe =
+                          ghost_vertices_subdomain_fe[global_vertex_index];
+                        const auto &range =
+                          subdomain_fe.equal_range(subdomain_fe.begin()->first);
+                        for (auto it = range.first; it != range.second; ++it)
+                          fe_indices.insert(it->second);
 
                         // find out which is the most dominating finite
                         // element of the ones that are used on this vertex
@@ -1411,6 +1324,21 @@ namespace internal
               for (const auto l : cell->line_indices())
                 cell->line(l)->set_user_flag();
 
+          // TODO: Might be inefficient: Rather use user_pointers?
+          //       We just need vertices on the ghost boundary.
+          std::map<typename DoFHandler<dim, spacedim>::line_iterator,
+                   std::multimap<types::subdomain_id, unsigned int>>
+            ghost_lines_subdomain_fe;
+          for (const auto &cell : dof_handler.active_cell_iterators())
+            if (cell->is_locally_owned() || cell->is_ghost())
+              for (const auto l : cell->line_indices())
+                {
+                  const auto line         = cell->line(l);
+                  auto &     subdomain_fe = ghost_lines_subdomain_fe[line];
+                  subdomain_fe.insert(
+                    {cell->subdomain_id(), cell->active_fe_index()});
+                }
+
           // An implementation of the algorithm described in the hp-paper,
           // including the modification mentioned later in the "complications in
           // 3-d" subsections
@@ -1497,10 +1425,36 @@ namespace internal
 
                                       --unique_sets_of_dofs;
 
-                                      // determine which one of both finite
-                                      // elements is the dominating one.
-                                      const std::set<unsigned int> fe_indices{
-                                        fe_index_1, fe_index_2};
+                                      auto &subdomain_fe =
+                                        ghost_lines_subdomain_fe[line];
+
+                                      unsigned int subdomain_1 =
+                                        numbers::invalid_unsigned_int;
+                                      unsigned int subdomain_2 =
+                                        numbers::invalid_unsigned_int;
+                                      for (auto &pair : subdomain_fe)
+                                        {
+                                          if (pair.second == fe_index_1 &&
+                                              pair.first < subdomain_1)
+                                            subdomain_1 = pair.first;
+                                          else if (pair.second == fe_index_2 &&
+                                                   pair.first < subdomain_2)
+                                            subdomain_2 = pair.first;
+                                        }
+                                      Assert((subdomain_1 !=
+                                              numbers::invalid_unsigned_int) &&
+                                               (subdomain_2 !=
+                                                numbers::invalid_unsigned_int),
+                                             ExcInternalError());
+
+                                      std::set<unsigned int> fe_indices;
+                                      if (subdomain_1 == subdomain_2)
+                                        fe_indices.insert(
+                                          {fe_index_1, fe_index_2});
+                                      else if (subdomain_1 < subdomain_2)
+                                        fe_indices.insert(fe_index_1);
+                                      else if (subdomain_1 > subdomain_2)
+                                        fe_indices.insert(fe_index_2);
 
                                       unsigned int dominating_fe_index =
                                         dof_handler.get_fe_collection()
@@ -1582,8 +1536,12 @@ namespace internal
                     // here is not what we describe in the paper!.
                     if ((unique_sets_of_dofs == 2) && (dim == 2))
                       {
-                        const std::set<unsigned int> fe_indices =
-                          line->get_active_fe_indices();
+                        std::set<unsigned int> fe_indices;
+                        auto &subdomain_fe = ghost_lines_subdomain_fe[line];
+                        const auto &range =
+                          subdomain_fe.equal_range(subdomain_fe.begin()->first);
+                        for (auto it = range.first; it != range.second; ++it)
+                          fe_indices.insert(it->second);
 
                         // find out which is the most dominating finite element
                         // of the ones that are used on this line
@@ -1730,6 +1688,21 @@ namespace internal
             dof_handler.fe_collection.size(),
             2 /*triangle (0) or quadrilateral (1)*/);
 
+          // TODO: Might be inefficient: Rather use user_pointers?
+          //       We just need vertices on the ghost boundary.
+          std::map<typename DoFHandler<dim, spacedim>::quad_iterator,
+                   std::multimap<types::subdomain_id, unsigned int>>
+            ghost_quads_subdomain_fe;
+          for (const auto &cell : dof_handler.active_cell_iterators())
+            if (cell->is_locally_owned() || cell->is_ghost())
+              for (const auto f : cell->face_indices())
+                {
+                  const auto quad         = cell->quad(f);
+                  auto &     subdomain_fe = ghost_quads_subdomain_fe[quad];
+                  subdomain_fe.insert(
+                    {cell->subdomain_id(), cell->active_fe_index()});
+                }
+
           for (const auto &cell : dof_handler.active_cell_iterators())
             if (cell->is_locally_owned())
               for (const auto q : cell->face_indices())
@@ -1739,8 +1712,12 @@ namespace internal
                     const auto quad = cell->quad(q);
                     quad->clear_user_flag();
 
-                    const std::set<unsigned int> fe_indices =
-                      quad->get_active_fe_indices();
+                    std::set<unsigned int> fe_indices;
+                    auto &      subdomain_fe = ghost_quads_subdomain_fe[quad];
+                    const auto &range =
+                      subdomain_fe.equal_range(subdomain_fe.begin()->first);
+                    for (auto it = range.first; it != range.second; ++it)
+                      fe_indices.insert(it->second);
 
                     // find out which is the most dominating finite
                     // element of the ones that are used on this quad
