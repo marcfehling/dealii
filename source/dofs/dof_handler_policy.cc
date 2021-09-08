@@ -269,19 +269,19 @@ namespace internal
 
                 if (n_active_fe_indices > 1)
                   {
-                    std::set<unsigned int> fe_indices;
+                    std::set<unsigned int> fe_indices_for_domination;
                     auto &                 subdomain_fe =
                       ghost_vertices_subdomain_fe[global_vertex_index];
                     const auto &range =
                       subdomain_fe.equal_range(subdomain_fe.begin()->first);
                     for (auto it = range.first; it != range.second; ++it)
-                      fe_indices.insert(it->second);
+                      fe_indices_for_domination.insert(it->second);
 
                     // find out which is the most dominating finite element
                     // of the ones that are used on this vertex
                     unsigned int most_dominating_fe_index =
                       dof_handler.get_fe_collection().find_dominating_fe(
-                        fe_indices,
+                        fe_indices_for_domination,
                         /*codim*/ dim);
 
                     // if we haven't found a dominating finite element,
@@ -296,6 +296,14 @@ namespace internal
                             global_vertex_index,
                             0,
                             std::integral_constant<int, 0>());
+
+                    const std::set<unsigned int> fe_indices =
+                      dealii::internal::DoFAccessorImplementation::
+                        Implementation::get_active_fe_indices(
+                          dof_handler,
+                          0,
+                          global_vertex_index,
+                          std::integral_constant<int, 0>());
 
                     // loop over the indices of all the finite elements that
                     // are not dominating, and identify their dofs to the
@@ -661,18 +669,18 @@ namespace internal
                     // here is not what we describe in the paper!
                     if ((unique_sets_of_dofs == 2) && (dim == 2))
                       {
-                        std::set<unsigned int> fe_indices;
+                        std::set<unsigned int> fe_indices_for_domination;
                         auto &subdomain_fe = ghost_lines_subdomain_fe[line];
                         const auto &range =
                           subdomain_fe.equal_range(subdomain_fe.begin()->first);
                         for (auto it = range.first; it != range.second; ++it)
-                          fe_indices.insert(it->second);
+                          fe_indices_for_domination.insert(it->second);
 
                         // find out which is the most dominating finite element
                         // of the ones that are used on this line
                         const unsigned int most_dominating_fe_index =
                           dof_handler.get_fe_collection().find_dominating_fe(
-                            fe_indices,
+                            fe_indices_for_domination,
                             /*codim=*/dim - 1);
 
                         // if we found the most dominating element, then use
@@ -687,6 +695,9 @@ namespace internal
                             // check if neighboring cell is ghost
                             // if yes, check lowest subdomain id of line
                             // if loweer than this cell
+
+                            const std::set<unsigned int> fe_indices =
+                              line->get_active_fe_indices();
 
                             // loop over the indices of all the finite elements
                             // that are not dominating, and identify their dofs
@@ -836,24 +847,27 @@ namespace internal
                     const auto quad = cell->quad(q);
                     quad->set_user_flag();
 
-                    std::set<unsigned int> fe_indices;
+                    std::set<unsigned int> fe_indices_for_domination;
                     auto &      subdomain_fe = ghost_quads_subdomain_fe[quad];
                     const auto &range =
                       subdomain_fe.equal_range(subdomain_fe.begin()->first);
                     for (auto it = range.first; it != range.second; ++it)
-                      fe_indices.insert(it->second);
+                      fe_indices_for_domination.insert(it->second);
 
                     // find out which is the most dominating finite
                     // element of the ones that are used on this quad
                     const unsigned int most_dominating_fe_index =
                       dof_handler.get_fe_collection().find_dominating_fe(
-                        fe_indices,
+                        fe_indices_for_domination,
                         /*codim=*/dim - 2);
 
                     const unsigned int most_dominating_fe_index_face_no =
                       cell->active_fe_index() == most_dominating_fe_index ?
                         q :
                         cell->neighbor_face_no(q);
+
+                    const std::set<unsigned int> fe_indices =
+                      quad->get_active_fe_indices();
 
                     // if we found the most dominating element, then use
                     // this to eliminate some of the degrees of freedom
@@ -1162,19 +1176,19 @@ namespace internal
 
                     if (n_active_fe_indices > 1)
                       {
-                        std::set<unsigned int> fe_indices;
+                        std::set<unsigned int> fe_indices_for_domination;
                         auto &                 subdomain_fe =
                           ghost_vertices_subdomain_fe[global_vertex_index];
                         const auto &range =
                           subdomain_fe.equal_range(subdomain_fe.begin()->first);
                         for (auto it = range.first; it != range.second; ++it)
-                          fe_indices.insert(it->second);
+                          fe_indices_for_domination.insert(it->second);
 
                         // find out which is the most dominating finite
                         // element of the ones that are used on this vertex
                         unsigned int most_dominating_fe_index =
                           dof_handler.get_fe_collection().find_dominating_fe(
-                            fe_indices,
+                            fe_indices_for_domination,
                             /*codim=*/dim);
 
                         // if we haven't found a dominating finite element,
@@ -1190,6 +1204,14 @@ namespace internal
                                 global_vertex_index,
                                 0,
                                 std::integral_constant<int, 0>());
+
+                        const std::set<unsigned int> fe_indices =
+                          dealii::internal::DoFAccessorImplementation::
+                            Implementation::get_active_fe_indices(
+                              dof_handler,
+                              0,
+                              global_vertex_index,
+                              std::integral_constant<int, 0>());
 
                         // loop over the indices of all the finite
                         // elements that are not dominating, and
@@ -1536,18 +1558,18 @@ namespace internal
                     // here is not what we describe in the paper!.
                     if ((unique_sets_of_dofs == 2) && (dim == 2))
                       {
-                        std::set<unsigned int> fe_indices;
+                        std::set<unsigned int> fe_indices_for_domination;
                         auto &subdomain_fe = ghost_lines_subdomain_fe[line];
                         const auto &range =
                           subdomain_fe.equal_range(subdomain_fe.begin()->first);
                         for (auto it = range.first; it != range.second; ++it)
-                          fe_indices.insert(it->second);
+                          fe_indices_for_domination.insert(it->second);
 
                         // find out which is the most dominating finite element
                         // of the ones that are used on this line
                         const unsigned int most_dominating_fe_index =
                           dof_handler.get_fe_collection().find_dominating_fe(
-                            fe_indices,
+                            fe_indices_for_domination,
                             /*codim=*/dim - 1);
 
                         // if we found the most dominating element, then use
@@ -1562,6 +1584,10 @@ namespace internal
                             // loop over the indices of all the finite elements
                             // that are not dominating, and identify their dofs
                             // to the most dominating one
+
+                            const std::set<unsigned int> fe_indices =
+                              line->get_active_fe_indices();
+
                             for (const auto &other_fe_index : fe_indices)
                               if (other_fe_index != most_dominating_fe_index)
                                 {
@@ -1712,24 +1738,27 @@ namespace internal
                     const auto quad = cell->quad(q);
                     quad->clear_user_flag();
 
-                    std::set<unsigned int> fe_indices;
+                    std::set<unsigned int> fe_indices_for_domination;
                     auto &      subdomain_fe = ghost_quads_subdomain_fe[quad];
                     const auto &range =
                       subdomain_fe.equal_range(subdomain_fe.begin()->first);
                     for (auto it = range.first; it != range.second; ++it)
-                      fe_indices.insert(it->second);
+                      fe_indices_for_domination.insert(it->second);
 
                     // find out which is the most dominating finite
                     // element of the ones that are used on this quad
                     const unsigned int most_dominating_fe_index =
                       dof_handler.get_fe_collection().find_dominating_fe(
-                        fe_indices,
+                        fe_indices_for_domination,
                         /*codim=*/dim - 2);
 
                     const unsigned int most_dominating_fe_index_face_no =
                       cell->active_fe_index() == most_dominating_fe_index ?
                         q :
                         cell->neighbor_face_no(q);
+
+                    const std::set<unsigned int> fe_indices =
+                      quad->get_active_fe_indices();
 
                     // if we found the most dominating element, then use
                     // this to eliminate some of the degrees of freedom
