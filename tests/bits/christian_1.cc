@@ -17,6 +17,7 @@
 // check intergrid transfer
 
 #include <deal.II/base/function_derivative.h>
+#include <deal.II/base/numbers.h>
 #include <deal.II/base/quadrature_lib.h>
 
 #include <deal.II/dofs/dof_handler.h>
@@ -108,7 +109,7 @@ public:
   virtual double
   value(const Point<2> &p, const unsigned int) const
   {
-    return std::sin(3.14159 * p(0)) * std::sin(3.14159 * p(1));
+    return std::sin(numbers::PI * p(0)) * std::sin(numbers::PI * p(1));
   }
 };
 
