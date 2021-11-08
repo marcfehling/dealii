@@ -568,7 +568,7 @@ namespace
   }
 
 
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
   template <int dim>
   class PartitionSearch
   {
@@ -1144,7 +1144,7 @@ namespace
 
     are_vertices_initialized = true;
   }
-#  endif //  P4EST_SEARCH_LOCAL defined
+#  endif //  P4EST_WITH_SEARCH_LOCAL defined
 
 
   /**
@@ -3151,7 +3151,7 @@ namespace parallel
     Triangulation<dim, spacedim>::find_point_owner_rank(
       const std::vector<Point<dim>> &points)
     {
-#  ifndef P4EST_SEARCH_LOCAL
+#  if not P4EST_WITH_SEARCH_LOCAL
       (void)points;
       AssertThrow(
         false,
@@ -3241,7 +3241,7 @@ namespace parallel
       sc_array_destroy_null(&point_sc_array);
 
       return owner_rank;
-#  endif // P4EST_SEARCH_LOCAL defined
+#  endif // P4EST_WITH_SEARCH_LOCAL defined
     }
 
 

@@ -96,7 +96,7 @@ namespace internal
       using balance_type     = p4est_connect_type_t;
       using ghost            = p4est_ghost_t;
       using transfer_context = p4est_transfer_context_t;
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
       using search_partition_callback = p4est_search_partition_t;
 #  endif
     };
@@ -115,7 +115,7 @@ namespace internal
       using balance_type     = p8est_connect_type_t;
       using ghost            = p8est_ghost_t;
       using transfer_context = p8est_transfer_context_t;
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
       using search_partition_callback = p8est_search_partition_t;
 #  endif
     };
@@ -317,7 +317,7 @@ namespace internal
 
       static void (&transfer_custom_end)(types<2>::transfer_context *tc);
 
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
       static void (&search_partition)(
         types<2>::forest *                  forest,
         int                                 call_post,
@@ -517,7 +517,7 @@ namespace internal
 
       static void (&transfer_custom_end)(types<3>::transfer_context *tc);
 
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
       static void (&search_partition)(
         types<3>::forest *                  forest,
         int                                 call_post,

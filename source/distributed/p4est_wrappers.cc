@@ -535,7 +535,7 @@ namespace internal
     void (&functions<2>::transfer_custom_end)(types<2>::transfer_context *tc) =
       p4est_transfer_custom_end;
 
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
     void (&functions<2>::search_partition)(
       types<2>::forest *                  p4est,
       int                                 call_post,
@@ -757,7 +757,7 @@ namespace internal
     void (&functions<3>::transfer_custom_end)(types<3>::transfer_context *tc) =
       p8est_transfer_custom_end;
 
-#  ifdef P4EST_SEARCH_LOCAL
+#  if P4EST_WITH_SEARCH_LOCAL
     void (&functions<3>::search_partition)(
       types<3>::forest *                  p4est,
       int                                 call_post,
