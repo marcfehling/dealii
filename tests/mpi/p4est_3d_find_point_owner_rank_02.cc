@@ -36,17 +36,17 @@ main(int argc, char *argv[])
    * processes we must find the same owner ranks.
    */
   std::vector<Point<3>> points;
-  points.emplace_back(Point<3>(0.23, 0.23, 0.23));
-  points.emplace_back(Point<3>(0.23, 0.77, 0.23));
-  points.emplace_back(Point<3>(0.77, 0.23, 0.23));
-  points.emplace_back(Point<3>(0.77, 0.77, 0.23));
-  points.emplace_back(Point<3>(0.23, 0.23, 0.77));
-  points.emplace_back(Point<3>(0.23, 0.77, 0.77));
-  points.emplace_back(Point<3>(0.77, 0.23, 0.77));
-  points.emplace_back(Point<3>(0.77, 0.77, 0.77));
+  points.emplace_back(0.23, 0.23, 0.23);
+  points.emplace_back(0.23, 0.77, 0.23);
+  points.emplace_back(0.77, 0.23, 0.23);
+  points.emplace_back(0.77, 0.77, 0.23);
+  points.emplace_back(0.23, 0.23, 0.77);
+  points.emplace_back(0.23, 0.77, 0.77);
+  points.emplace_back(0.77, 0.23, 0.77);
+  points.emplace_back(0.77, 0.77, 0.77);
 
   // this point is outside the mesh
-  points.emplace_back(Point<3>(1.1, 1.1, 1.1));
+  points.emplace_back(1.1, 1.1, 1.1);
 
   deallog.push("3D-Test");
   test<3>(points);
