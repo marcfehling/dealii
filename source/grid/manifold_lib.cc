@@ -401,29 +401,24 @@ SphericalManifold<dim, spacedim>::get_intermediate_point(
   Assert(r1 > tol && r2 > tol,
          ExcMessage("p1 and p2 cannot coincide with the center."));
 
-  const Tensor<1, spacedim> e1 = v1 / r1;
-  const Tensor<1, spacedim> e2 = v2 / r2;
+  // Find the angle gamma between v1 and v2.
+  const double gamma = Physics::VectorRelations::angle(v1, v2);
 
-  // Find the cosine of the angle gamma described by v1 and v2.
-  const double cosgamma = e1 * e2;
-
-  // Points are collinear with the center (allow for 8*eps as a tolerance)
-  if (cosgamma < -1 + 8. * std::numeric_limits<double>::epsilon())
+  if (gamma == numbers::PI)
+    // Points are collinear with the center (allow for 8*eps as a tolerance)
     return center;
-
-  // Points are along a line, in which case e1 and e2 are essentially the same.
-  if (cosgamma > 1 - 8. * std::numeric_limits<double>::epsilon())
+  else if (gamma == 0)
+    // Points are along a line, in which case e1 and e2 are essentially the same.
     return Point<spacedim>(center + w * v2 + (1 - w) * v1);
 
-  // Find the angle sigma that corresponds to arclength equal to w. acos
-  // should never be undefined because we have ruled out the two special cases
-  // above.
-  const double sigma = w * std::acos(cosgamma);
+  // Find the angle sigma that corresponds to arclength equal to w.
+  const double sigma = w * gamma;
 
   // Normal to v1 in the plane described by v1,v2,and the origin.
   // Since p1 and p2 do not coincide n is not zero and well defined.
-  Tensor<1, spacedim> n      = v2 - (v2 * e1) * e1;
-  const double        n_norm = n.norm();
+  const Tensor<1, spacedim> e1     = v1 / r1;
+  Tensor<1, spacedim>       n      = v2 - (v2 * e1) * e1;
+  const double              n_norm = n.norm();
   Assert(n_norm > 0,
          ExcInternalError("n should be different from the null vector. "
                           "Probably, this means v1==v2 or v2==0."));
