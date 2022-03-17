@@ -1011,7 +1011,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                       neumann_bc,
   const InputVector &       solution,
-  Vector<float> &           error,
+  Vector<double> &          error,
   const ComponentMask &     component_mask,
   const Function<spacedim> *coefficients,
   const unsigned int        n_threads,
@@ -1021,7 +1021,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
 {
   // just pass on to the other function
   const std::vector<const InputVector *> solutions(1, &solution);
-  std::vector<Vector<float> *>           errors(1, &error);
+  std::vector<Vector<double> *>          errors(1, &error);
   estimate(mapping,
            dof_handler,
            quadrature,
@@ -1047,7 +1047,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                       neumann_bc,
   const InputVector &       solution,
-  Vector<float> &           error,
+  Vector<double> &          error,
   const ComponentMask &     component_mask,
   const Function<spacedim> *coefficients,
   const unsigned int        n_threads,
@@ -1081,7 +1081,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                       neumann_bc,
   const InputVector &       solution,
-  Vector<float> &           error,
+  Vector<double> &          error,
   const ComponentMask &     component_mask,
   const Function<spacedim> *coefficients,
   const unsigned int        n_threads,
@@ -1091,7 +1091,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
 {
   // just pass on to the other function
   const std::vector<const InputVector *> solutions(1, &solution);
-  std::vector<Vector<float> *>           errors(1, &error);
+  std::vector<Vector<double> *>          errors(1, &error);
   estimate(mapping,
            dof_handler,
            quadrature,
@@ -1117,7 +1117,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                       neumann_bc,
   const InputVector &       solution,
-  Vector<float> &           error,
+  Vector<double> &          error,
   const ComponentMask &     component_mask,
   const Function<spacedim> *coefficients,
   const unsigned int        n_threads,
@@ -1152,7 +1152,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                                     neumann_bc,
   const std::vector<const InputVector *> &solutions,
-  std::vector<Vector<float> *> &          errors,
+  std::vector<Vector<double> *> &         errors,
   const ComponentMask &                   component_mask,
   const Function<spacedim> *              coefficients,
   const unsigned int,
@@ -1321,7 +1321,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                                     neumann_bc,
   const std::vector<const InputVector *> &solutions,
-  std::vector<Vector<float> *> &          errors,
+  std::vector<Vector<double> *> &         errors,
   const ComponentMask &                   component_mask,
   const Function<spacedim> *              coefficients,
   const unsigned int                      n_threads,
@@ -1355,7 +1355,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                                     neumann_bc,
   const std::vector<const InputVector *> &solutions,
-  std::vector<Vector<float> *> &          errors,
+  std::vector<Vector<double> *> &         errors,
   const ComponentMask &                   component_mask,
   const Function<spacedim> *              coefficients,
   const unsigned int                      n_threads,
@@ -1389,7 +1389,7 @@ KellyErrorEstimator<dim, spacedim>::estimate(
                  const Function<spacedim, typename InputVector::value_type> *>
     &                                     neumann_bc,
   const std::vector<const InputVector *> &solutions,
-  std::vector<Vector<float> *> &          errors,
+  std::vector<Vector<double> *> &         errors,
   const ComponentMask &                   component_mask,
   const Function<spacedim> *              coefficients,
   const unsigned int                      n_threads,

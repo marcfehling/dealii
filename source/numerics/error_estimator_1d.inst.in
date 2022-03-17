@@ -29,7 +29,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const VEC &,
-      Vector<float> &,
+      Vector<double> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -46,7 +46,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const VEC &,
-      Vector<float> &,
+      Vector<double> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -64,7 +64,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const std::vector<const VEC *> &,
-      std::vector<Vector<float> *> &,
+      std::vector<Vector<double> *> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -81,7 +81,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const std::vector<const VEC *> &,
-      std::vector<Vector<float> *> &,
+      std::vector<Vector<double> *> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -99,7 +99,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const VEC &,
-      Vector<float> &,
+      Vector<double> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -116,7 +116,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const VEC &,
-      Vector<float> &,
+      Vector<double> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -134,7 +134,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const std::vector<const VEC *> &,
-      std::vector<Vector<float> *> &,
+      std::vector<Vector<double> *> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
@@ -151,7 +151,7 @@ for (VEC : VECTOR_TYPES; deal_II_dimension : DIMENSIONS;
                      const Function<deal_II_space_dimension, VEC::value_type> *>
         &,
       const std::vector<const VEC *> &,
-      std::vector<Vector<float> *> &,
+      std::vector<Vector<double> *> &,
       const ComponentMask &,
       const Function<deal_II_space_dimension> *,
       const unsigned int,
