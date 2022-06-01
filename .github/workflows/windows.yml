@@ -44,6 +44,10 @@ jobs:
         cmake --build build  --target install -- -m
         cd c:/project
         7z a dealii-windows.zip *
+    - name: build examples
+      shell: bash
+      run: |
+        cmake --build build  --target examples -- -m
     - name: test library
       shell: bash
       run: |
