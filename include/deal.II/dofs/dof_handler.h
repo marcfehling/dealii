@@ -517,14 +517,15 @@ public:
   /**
    * The default index of the finite element to be used on a given cell.
    */
-  static const unsigned int default_fe_index = 0;
+  static const types::fe_index default_fe_index = 0;
 
   /**
    * Invalid index of the finite element to be used on a given cell.
    *
    * @deprecated Use numbers::invalid_fe_index instead.
    */
-  static const unsigned int invalid_fe_index DEAL_II_DEPRECATED = numbers::invalid_fe_index;
+  static const unsigned int invalid_fe_index DEAL_II_DEPRECATED =
+    numbers::invalid_fe_index;
 
   /**
    * The type in which we store the active FE index.
@@ -642,7 +643,7 @@ public:
    * active cells to the values given in @p active_fe_indices.
    */
   void
-  set_active_fe_indices(const std::vector<unsigned int> &active_fe_indices);
+  set_active_fe_indices(const std::vector<types::fe_index> &active_fe_indices);
 
   /**
    * Go through the triangulation and store the active FE indices of all
@@ -650,7 +651,7 @@ public:
    * resized, if necessary.
    */
   void
-  get_active_fe_indices(std::vector<unsigned int> &active_fe_indices) const;
+  get_active_fe_indices(std::vector<types::fe_index> &active_fe_indices) const;
 
   /**
    * Assign a Triangulation to the DoFHandler.
@@ -1204,7 +1205,7 @@ public:
    * used by this object.
    */
   const FiniteElement<dim, spacedim> &
-  get_fe(const unsigned int index = 0) const;
+  get_fe(const types::fe_index index = 0) const;
 
   /**
    * Return a constant reference to the set of finite element objects that
@@ -1448,26 +1449,28 @@ private:
      * Container to temporarily store the iterator and future active FE index
      * of cells that persist.
      */
-    std::map<const cell_iterator, const unsigned int> persisting_cells_fe_index;
+    std::map<const cell_iterator, const types::fe_index>
+      persisting_cells_fe_index;
 
     /**
      * Container to temporarily store the iterator and future active FE index
      * of cells that will be refined.
      */
-    std::map<const cell_iterator, const unsigned int> refined_cells_fe_index;
+    std::map<const cell_iterator, const types::fe_index> refined_cells_fe_index;
 
     /**
      * Container to temporarily store the iterator and future active FE index
      * of parent cells that will remain after coarsening.
      */
-    std::map<const cell_iterator, const unsigned int> coarsened_cells_fe_index;
+    std::map<const cell_iterator, const types::fe_index>
+      coarsened_cells_fe_index;
 
     /**
      * Container to temporarily store the active FE index of every locally
      * owned cell for transfer across parallel::distributed::Triangulation
      * objects.
      */
-    std::vector<unsigned int> active_fe_indices;
+    std::vector<types::fe_index> active_fe_indices;
 
     /**
      * Helper object to transfer all active FE indices on
@@ -1476,7 +1479,7 @@ private:
      */
     std::unique_ptr<
       parallel::distributed::
-        CellDataTransfer<dim, spacedim, std::vector<unsigned int>>>
+        CellDataTransfer<dim, spacedim, std::vector<types::fe_index>>>
       cell_data_transfer;
   };
 
@@ -1640,10 +1643,10 @@ private:
    */
   template <int structdim>
   types::global_dof_index
-  get_dof_index(const unsigned int obj_level,
-                const unsigned int obj_index,
-                const unsigned int fe_index,
-                const unsigned int local_index) const;
+  get_dof_index(const unsigned int    obj_level,
+                const unsigned int    obj_index,
+                const types::fe_index fe_index,
+                const unsigned int    local_index) const;
 
   /**
    * Return dof index of specified object.
@@ -1652,7 +1655,7 @@ private:
   void
   set_dof_index(const unsigned int            obj_level,
                 const unsigned int            obj_index,
-                const unsigned int            fe_index,
+                const types::fe_index         fe_index,
                 const unsigned int            local_index,
                 const types::global_dof_index global_index) const;
 
@@ -1919,7 +1922,7 @@ DoFHandler<dim, spacedim>::locally_owned_mg_dofs(const unsigned int level) const
 
 template <int dim, int spacedim>
 inline const FiniteElement<dim, spacedim> &
-DoFHandler<dim, spacedim>::get_fe(const unsigned int number) const
+DoFHandler<dim, spacedim>::get_fe(const types::fe_index number) const
 {
   Assert(fe_collection.size() > 0,
          ExcMessage("No finite element collection is associated with "

@@ -717,7 +717,7 @@ namespace hp
     limit_p_level_difference(
       const dealii::DoFHandler<dim, spacedim> &dof_handler,
       const unsigned int                       max_difference    = 1,
-      const unsigned int                       contains_fe_index = 0);
+      const types::fe_index                    contains_fe_index = 0);
 
     /**
      * @}

@@ -84,7 +84,7 @@ namespace hp
           {
             if (cell->refine_flag_set())
               {
-                const unsigned int super_fe_index =
+                const types::fe_index super_fe_index =
                   dof_handler.get_fe_collection().next_in_hierarchy(
                     cell->active_fe_index());
 
@@ -94,7 +94,7 @@ namespace hp
               }
             else if (cell->coarsen_flag_set())
               {
-                const unsigned int sub_fe_index =
+                const types::fe_index sub_fe_index =
                   dof_handler.get_fe_collection().previous_in_hierarchy(
                     cell->active_fe_index());
 
@@ -465,7 +465,7 @@ namespace hp
           {
             if (cell->refine_flag_set())
               {
-                const unsigned int super_fe_index =
+                const types::fe_index super_fe_index =
                   dof_handler.get_fe_collection().next_in_hierarchy(
                     cell->active_fe_index());
 
@@ -482,7 +482,7 @@ namespace hp
               }
             else if (cell->coarsen_flag_set())
               {
-                const unsigned int sub_fe_index =
+                const types::fe_index sub_fe_index =
                   dof_handler.get_fe_collection().previous_in_hierarchy(
                     cell->active_fe_index());
 
@@ -568,8 +568,8 @@ namespace hp
       Assert(0 < gamma_n, dealii::GridRefinement::ExcInvalidParameterValue());
 
       // auxiliary variables
-      unsigned int future_fe_degree       = numbers::invalid_unsigned_int;
-      unsigned int parent_future_fe_index = numbers::invalid_unsigned_int;
+      unsigned int    future_fe_degree       = numbers::invalid_unsigned_int;
+      types::fe_index parent_future_fe_index = numbers::invalid_fe_index;
       // store all determined future finite element indices on parent cells for
       // coarsening
       std::map<typename DoFHandler<dim, spacedim>::cell_iterator, unsigned int>
@@ -803,7 +803,7 @@ namespace hp
     limit_p_level_difference(
       const dealii::DoFHandler<dim, spacedim> &dof_handler,
       const unsigned int                       max_difference,
-      const unsigned int                       contains_fe_index)
+      const types::fe_index                    contains_fe_index)
     {
       if (dof_handler.get_fe_collection().size() == 0)
         // nothing to do
@@ -831,16 +831,16 @@ namespace hp
 
       // map from FE index to level in hierarchy
       // FE indices that are not covered in the hierarchy are not in the map
-      const std::vector<unsigned int> fe_index_for_hierarchy_level =
+      const std::vector<types::fe_index> fe_index_for_hierarchy_level =
         dof_handler.get_fe_collection().get_hierarchy_sequence(
           contains_fe_index);
 
       // map from level in hierarchy to FE index
       // FE indices that are not covered in the hierarchy will be mapped to
       // invalid_level
-      std::vector<unsigned int> hierarchy_level_for_fe_index(
+      std::vector<level_type> hierarchy_level_for_fe_index(
         dof_handler.get_fe_collection().size(), invalid_level);
-      for (unsigned int l = 0; l < fe_index_for_hierarchy_level.size(); ++l)
+      for (level_type l = 0; l < fe_index_for_hierarchy_level.size(); ++l)
         hierarchy_level_for_fe_index[fe_index_for_hierarchy_level[l]] = l;
 
 
@@ -1047,7 +1047,7 @@ namespace hp
 
           if (cell_level != invalid_level)
             {
-              const unsigned int fe_index =
+              const types::fe_index fe_index =
                 fe_index_for_hierarchy_level[cell_level];
 
               // only update if necessary

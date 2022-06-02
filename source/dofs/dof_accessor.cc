@@ -79,7 +79,7 @@ template <int structdim, int dim, int spacedim>
 types::global_dof_index
 DoFInvalidAccessor<structdim, dim, spacedim>::dof_index(
   const unsigned int,
-  const unsigned int) const
+  const types::fe_index) const
 {
   Assert(false, ExcInternalError());
   return 0;
@@ -92,7 +92,7 @@ void
 DoFInvalidAccessor<structdim, dim, spacedim>::set_dof_index(
   const unsigned int,
   const types::global_dof_index,
-  const unsigned int) const
+  const types::fe_index) const
 {
   Assert(false, ExcInternalError());
 }

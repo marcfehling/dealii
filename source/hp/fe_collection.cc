@@ -117,10 +117,10 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  std::set<unsigned int>
+  std::set<types::fe_index>
   FECollection<dim, spacedim>::find_common_fes(
-    const std::set<unsigned int> &fes,
-    const unsigned int            codim) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               codim) const
   {
 #ifdef DEBUG
     // Validate user inputs.
@@ -133,8 +133,9 @@ namespace hp
     // Check if any element of this FECollection is able to dominate all
     // elements of @p fes. If one was found, we add it to the set of
     // dominating elements.
-    std::set<unsigned int> dominating_fes;
-    for (unsigned int current_fe = 0; current_fe < this->size(); ++current_fe)
+    std::set<types::fe_index> dominating_fes;
+    for (types::fe_index current_fe = 0; current_fe < this->size();
+         ++current_fe)
       {
         // Check if current_fe can dominate all elements in @p fes.
         FiniteElementDomination::Domination domination =
@@ -157,10 +158,10 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  std::set<unsigned int>
+  std::set<types::fe_index>
   FECollection<dim, spacedim>::find_enclosing_fes(
-    const std::set<unsigned int> &fes,
-    const unsigned int            codim) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               codim) const
   {
 #ifdef DEBUG
     // Validate user inputs.
@@ -173,8 +174,9 @@ namespace hp
     // Check if any element of this FECollection is dominated by all
     // elements of @p fes. If one was found, we add it to the set of
     // dominated elements.
-    std::set<unsigned int> dominated_fes;
-    for (unsigned int current_fe = 0; current_fe < this->size(); ++current_fe)
+    std::set<types::fe_index> dominated_fes;
+    for (types::fe_index current_fe = 0; current_fe < this->size();
+         ++current_fe)
       {
         // Check if current_fe is dominated by all other elements in @p fes.
         FiniteElementDomination::Domination domination =
@@ -197,10 +199,10 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  unsigned int
+  types::fe_index
   FECollection<dim, spacedim>::find_dominating_fe(
-    const std::set<unsigned int> &fes,
-    const unsigned int            codim) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               codim) const
   {
     // If the set of elements contains only a single element,
     // then this very element is considered to be the dominating one.
@@ -238,16 +240,16 @@ namespace hp
       }
 
     // If we couldn't find the dominating object, return an invalid one.
-    return numbers::invalid_unsigned_int;
+    return numbers::invalid_fe_index;
   }
 
 
 
   template <int dim, int spacedim>
-  unsigned int
+  types::fe_index
   FECollection<dim, spacedim>::find_dominated_fe(
-    const std::set<unsigned int> &fes,
-    const unsigned int            codim) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               codim) const
   {
     // If the set of elements contains only a single element,
     // then this very element is considered to be the dominated one.
@@ -285,22 +287,22 @@ namespace hp
       }
 
     // If we couldn't find the dominated object, return an invalid one.
-    return numbers::invalid_unsigned_int;
+    return numbers::invalid_fe_index;
   }
 
 
 
   template <int dim, int spacedim>
-  unsigned int
+  types::fe_index
   FECollection<dim, spacedim>::find_dominating_fe_extended(
-    const std::set<unsigned int> &fes,
-    const unsigned int            codim) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               codim) const
   {
-    unsigned int fe_index = find_dominating_fe(fes, codim);
+    types::fe_index fe_index = find_dominating_fe(fes, codim);
 
-    if (fe_index == numbers::invalid_unsigned_int)
+    if (fe_index == numbers::invalid_fe_index)
       {
-        const std::set<unsigned int> dominating_fes =
+        const std::set<types::fe_index> dominating_fes =
           find_common_fes(fes, codim);
         fe_index = find_dominated_fe(dominating_fes, codim);
       }
@@ -311,16 +313,16 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  unsigned int
+  types::fe_index
   FECollection<dim, spacedim>::find_dominated_fe_extended(
-    const std::set<unsigned int> &fes,
-    const unsigned int            codim) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               codim) const
   {
-    unsigned int fe_index = find_dominated_fe(fes, codim);
+    types::fe_index fe_index = find_dominated_fe(fes, codim);
 
-    if (fe_index == numbers::invalid_unsigned_int)
+    if (fe_index == numbers::invalid_fe_index)
       {
-        const std::set<unsigned int> dominated_fes =
+        const std::set<types::fe_index> dominated_fes =
           find_enclosing_fes(fes, codim);
         fe_index = find_dominating_fe(dominated_fes, codim);
       }
@@ -336,12 +338,12 @@ namespace hp
      * Implement the action of the hp_*_dof_identities() functions
      * in a generic way.
      */
-    std::vector<std::map<unsigned int, unsigned int>>
+    std::vector<std::map<types::fe_index, unsigned int>>
     compute_hp_dof_identities(
-      const std::set<unsigned int> &fes,
+      const std::set<types::fe_index> &fes,
       const std::function<std::vector<std::pair<unsigned int, unsigned int>>(
-        const unsigned int,
-        const unsigned int)> &      query_identities)
+        const types::fe_index,
+        const types::fe_index)> &   query_identities)
     {
       // Let's deal with the easy cases first. If the set of fe indices is empty
       // or has only one entry, then there are no identities:
@@ -353,19 +355,19 @@ namespace hp
       // need. We just need to prefix its output with the respective fe indices:
       if (fes.size() == 2)
         {
-          const unsigned int fe_index_1 = *fes.begin();
-          const unsigned int fe_index_2 = *(++fes.begin());
-          const auto         reduced_identities =
+          const types::fe_index fe_index_1 = *fes.begin();
+          const types::fe_index fe_index_2 = *(++fes.begin());
+          const auto            reduced_identities =
             query_identities(fe_index_1, fe_index_2);
 
-          std::vector<std::map<unsigned int, unsigned int>> complete_identities;
+          std::vector<std::map<types::fe_index, unsigned int>> complete_identities;
 
           for (const auto &reduced_identity : reduced_identities)
             {
               // Each identity returned by query_identities() is a pair of
               // dof indices. Prefix each with its fe index and put the result
               // into a vector
-              std::map<unsigned int, unsigned int> complete_identity = {
+              std::map<types::fe_index, unsigned int> complete_identity = {
                 {fe_index_1, reduced_identity.first},
                 {fe_index_2, reduced_identity.second}};
               complete_identities.emplace_back(std::move(complete_identity));
@@ -382,13 +384,13 @@ namespace hp
       // selected in the argument say. Let us first build this graph, where we
       // only store the edges of the graph, and as a consequence ignore nodes
       // (DoFs) that simply don't show up at all in any of the identities:
-      using Node  = std::pair<unsigned int, unsigned int>;
+      using Node  = std::pair<types::fe_index, unsigned int>;
       using Edge  = std::pair<Node, Node>;
       using Graph = std::set<Edge>;
 
       Graph identities_graph;
-      for (const unsigned int fe_index_1 : fes)
-        for (const unsigned int fe_index_2 : fes)
+      for (const types::fe_index fe_index_1 : fes)
+        for (const types::fe_index fe_index_2 : fes)
           if (fe_index_1 != fe_index_2)
             for (const auto &identity :
                  query_identities(fe_index_1, fe_index_2))
@@ -455,7 +457,7 @@ namespace hp
       // run through because it modifies the graph and thus invalidates
       // iterators. But because SG stores all of these edges, we can remove them
       // all from G after collecting the edges in SG.)
-      std::vector<std::map<unsigned int, unsigned int>> identities;
+      std::vector<std::map<types::fe_index, unsigned int>> identities;
       while (identities_graph.size() > 0)
         {
           Graph          sub_graph;       // SG
@@ -528,26 +530,28 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  std::vector<std::map<unsigned int, unsigned int>>
+  std::vector<std::map<types::fe_index, unsigned int>>
   FECollection<dim, spacedim>::hp_vertex_dof_identities(
-    const std::set<unsigned int> &fes) const
+    const std::set<types::fe_index> &fes) const
   {
-    auto query_vertex_dof_identities = [this](const unsigned int fe_index_1,
-                                              const unsigned int fe_index_2) {
-      return (*this)[fe_index_1].hp_vertex_dof_identities((*this)[fe_index_2]);
-    };
+    auto query_vertex_dof_identities =
+      [this](const types::fe_index fe_index_1,
+             const types::fe_index fe_index_2) {
+        return (*this)[fe_index_1].hp_vertex_dof_identities(
+          (*this)[fe_index_2]);
+      };
     return compute_hp_dof_identities(fes, query_vertex_dof_identities);
   }
 
 
 
   template <int dim, int spacedim>
-  std::vector<std::map<unsigned int, unsigned int>>
+  std::vector<std::map<types::fe_index, unsigned int>>
   FECollection<dim, spacedim>::hp_line_dof_identities(
-    const std::set<unsigned int> &fes) const
+    const std::set<types::fe_index> &fes) const
   {
-    auto query_line_dof_identities = [this](const unsigned int fe_index_1,
-                                            const unsigned int fe_index_2) {
+    auto query_line_dof_identities = [this](const types::fe_index fe_index_1,
+                                            const types::fe_index fe_index_2) {
       return (*this)[fe_index_1].hp_line_dof_identities((*this)[fe_index_2]);
     };
     return compute_hp_dof_identities(fes, query_line_dof_identities);
@@ -556,17 +560,17 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  std::vector<std::map<unsigned int, unsigned int>>
+  std::vector<std::map<types::fe_index, unsigned int>>
   FECollection<dim, spacedim>::hp_quad_dof_identities(
-    const std::set<unsigned int> &fes,
-    const unsigned int            face_no) const
+    const std::set<types::fe_index> &fes,
+    const unsigned int               face_no) const
   {
-    auto query_quad_dof_identities = [this,
-                                      face_no](const unsigned int fe_index_1,
-                                               const unsigned int fe_index_2) {
-      return (*this)[fe_index_1].hp_quad_dof_identities((*this)[fe_index_2],
-                                                        face_no);
-    };
+    auto query_quad_dof_identities =
+      [this, face_no](const types::fe_index fe_index_1,
+                      const types::fe_index fe_index_2) {
+        return (*this)[fe_index_1].hp_quad_dof_identities((*this)[fe_index_2],
+                                                          face_no);
+      };
     return compute_hp_dof_identities(fes, query_quad_dof_identities);
   }
 
@@ -576,11 +580,11 @@ namespace hp
   void
   FECollection<dim, spacedim>::set_hierarchy(
     const std::function<
-      unsigned int(const typename hp::FECollection<dim, spacedim> &,
-                   const unsigned int)> &next,
+      types::fe_index(const typename hp::FECollection<dim, spacedim> &,
+                      const types::fe_index)> &next,
     const std::function<
-      unsigned int(const typename hp::FECollection<dim, spacedim> &,
-                   const unsigned int)> &prev)
+      types::fe_index(const typename hp::FECollection<dim, spacedim> &,
+                      const types::fe_index)> &prev)
   {
     // copy hierarchy functions
     hierarchy_next = next;
@@ -601,18 +605,18 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  std::vector<unsigned int>
+  std::vector<types::fe_index>
   FECollection<dim, spacedim>::get_hierarchy_sequence(
-    const unsigned int fe_index) const
+    const types::fe_index fe_index) const
   {
     AssertIndexRange(fe_index, this->size());
 
-    std::deque<unsigned int> sequence = {fe_index};
+    std::deque<types::fe_index> sequence = {fe_index};
 
     // get predecessors
     {
-      unsigned int front = sequence.front();
-      unsigned int previous;
+      types::fe_index front = sequence.front();
+      types::fe_index previous;
       while ((previous = previous_in_hierarchy(front)) != front)
         {
           sequence.push_front(previous);
@@ -627,8 +631,8 @@ namespace hp
 
     // get successors
     {
-      unsigned int back = sequence.back();
-      unsigned int next;
+      types::fe_index back = sequence.back();
+      types::fe_index next;
       while ((next = next_in_hierarchy(back)) != back)
         {
           sequence.push_back(next);
@@ -647,13 +651,13 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  unsigned int
+  types::fe_index
   FECollection<dim, spacedim>::next_in_hierarchy(
-    const unsigned int fe_index) const
+    const types::fe_index fe_index) const
   {
     AssertIndexRange(fe_index, this->size());
 
-    const unsigned int new_fe_index = hierarchy_next(*this, fe_index);
+    const types::fe_index new_fe_index = hierarchy_next(*this, fe_index);
     AssertIndexRange(new_fe_index, this->size());
 
     return new_fe_index;
@@ -662,13 +666,13 @@ namespace hp
 
 
   template <int dim, int spacedim>
-  unsigned int
+  types::fe_index
   FECollection<dim, spacedim>::previous_in_hierarchy(
-    const unsigned int fe_index) const
+    const types::fe_index fe_index) const
   {
     AssertIndexRange(fe_index, this->size());
 
-    const unsigned int new_fe_index = hierarchy_prev(*this, fe_index);
+    const types::fe_index new_fe_index = hierarchy_prev(*this, fe_index);
     AssertIndexRange(new_fe_index, this->size());
 
     return new_fe_index;
