@@ -473,8 +473,8 @@ namespace internal
     FineDoFHandlerViewCell(
       const std::function<bool()> &has_children_function,
       const std::function<void(std::vector<types::global_dof_index> &)>
-        &                                  get_dof_indices_function,
-      const std::function<unsigned int()> &active_fe_index_function)
+        &                                     get_dof_indices_function,
+      const std::function<types::fe_index()> &active_fe_index_function)
       : has_children_function(has_children_function)
       , get_dof_indices_function(get_dof_indices_function)
       , active_fe_index_function(active_fe_index_function)
@@ -492,7 +492,7 @@ namespace internal
       get_dof_indices_function(dof_indices);
     }
 
-    unsigned int
+    types::fe_index
     active_fe_index() const
     {
       return active_fe_index_function();
@@ -502,8 +502,8 @@ namespace internal
   private:
     const std::function<bool()> has_children_function;
     const std::function<void(std::vector<types::global_dof_index> &)>
-                                        get_dof_indices_function;
-    const std::function<unsigned int()> active_fe_index_function;
+                                           get_dof_indices_function;
+    const std::function<types::fe_index()> active_fe_index_function;
   };
 
 
@@ -744,7 +744,7 @@ namespace internal
 
             for (unsigned int i = 0, k = 0; i < ids.size(); ++i)
               {
-                const unsigned int active_fe_index = buffer[k++];
+                const types::fe_index active_fe_index = buffer[k++];
 
                 indices.resize(
                   dof_handler_fine.get_fe(active_fe_index).n_dofs_per_cell());
@@ -831,7 +831,7 @@ namespace internal
             }
         },
         [cell, is_cell_locally_owned, is_cell_remotly_owned, id, this]()
-          -> unsigned int {
+          -> types::fe_index {
           if (is_cell_locally_owned)
             {
               return (typename DoFHandler<dim>::cell_iterator(
@@ -894,7 +894,7 @@ namespace internal
               AssertThrow(false, ExcNotImplemented()); // should not happen!
             }
         },
-        []() -> unsigned int {
+        []() -> types::fe_index {
           AssertThrow(false, ExcNotImplemented()); // currently we do not need
                                                    // active_fe_index() for
                                                    // children
@@ -1297,10 +1297,10 @@ namespace internal
                                                          mg_level_coarse);
 
       // gather ranges for active FE indices on both fine and coarse dofhandlers
-      std::array<unsigned int, 2> min_active_fe_indices = {
-        {std::numeric_limits<unsigned int>::max(),
-         std::numeric_limits<unsigned int>::max()}};
-      std::array<unsigned int, 2> max_active_fe_indices = {{0, 0}};
+      std::array<types::fe_index, 2> min_active_fe_indices = {
+        {std::numeric_limits<types::fe_index>::max(),
+         std::numeric_limits<types::fe_index>::max()}};
+      std::array<types::fe_index, 2> max_active_fe_indices = {{0, 0}};
 
       loop_over_active_or_level_cells(
         dof_handler_fine, mg_level_fine, [&](const auto &cell) {
@@ -1323,8 +1323,8 @@ namespace internal
       Assert(comm == dof_handler_coarse.get_communicator(),
              ExcNotImplemented());
 
-      ArrayView<unsigned int> temp_min(min_active_fe_indices);
-      ArrayView<unsigned int> temp_max(max_active_fe_indices);
+      ArrayView<types::fe_index> temp_min(min_active_fe_indices);
+      ArrayView<types::fe_index> temp_max(max_active_fe_indices);
       Utilities::MPI::min(temp_min, comm, temp_min);
       Utilities::MPI::max(temp_max, comm, temp_max);
 
@@ -1338,8 +1338,8 @@ namespace internal
       //   (1) h-refinement
       transfer.schemes.resize(2);
 
-      const unsigned int fe_index_fine   = min_active_fe_indices[0];
-      const unsigned int fe_index_coarse = min_active_fe_indices[1];
+      const types::fe_index fe_index_fine   = min_active_fe_indices[0];
+      const types::fe_index fe_index_coarse = min_active_fe_indices[1];
 
       const auto &fe_fine   = dof_handler_fine.get_fe(fe_index_fine);
       const auto &fe_coarse = dof_handler_coarse.get_fe(fe_index_coarse);
@@ -1863,14 +1863,14 @@ namespace internal
           });
       };
 
-      std::map<std::pair<unsigned int, unsigned int>, unsigned int>
+      std::map<std::pair<types::fe_index, types::fe_index>, unsigned int>
         fe_index_pairs;
 
       process_cells([&](const auto &cell_coarse, const auto &cell_fine) {
-        fe_index_pairs.emplace(
-          std::pair<unsigned int, unsigned int>(cell_coarse->active_fe_index(),
-                                                cell_fine->active_fe_index()),
-          0);
+        fe_index_pairs.emplace(std::pair<types::fe_index, types::fe_index>(
+                                 cell_coarse->active_fe_index(),
+                                 cell_fine->active_fe_index()),
+                               0);
       });
 
       unsigned int counter = 0;
@@ -2037,7 +2037,7 @@ namespace internal
 
         process_cells([&](const auto &cell_coarse, const auto &cell_fine) {
           const auto fe_pair_no =
-            fe_index_pairs[std::pair<unsigned int, unsigned int>(
+            fe_index_pairs[std::pair<types::fe_index, types::fe_index>(
               cell_coarse->active_fe_index(), cell_fine->active_fe_index())];
 
           // parent
@@ -2244,7 +2244,7 @@ namespace internal
 
           process_cells([&](const auto &cell_coarse, const auto &cell_fine) {
             const auto fe_pair_no =
-              fe_index_pairs[std::pair<unsigned int, unsigned int>(
+              fe_index_pairs[std::pair<types::fe_index, types::fe_index>(
                 cell_coarse->active_fe_index(), cell_fine->active_fe_index())];
 
             for (unsigned int i = 0;
