@@ -2378,9 +2378,8 @@ namespace internal
                ExcMessage("DoFHandler not initialized"));
 
         // TODO
-        using active_fe_index_type = unsigned short int;
-        static const active_fe_index_type invalid_active_fe_index =
-          static_cast<active_fe_index_type>(-1);
+        static const types::active_fe_index_type invalid_active_fe_index =
+          static_cast<types::active_fe_index_type>(-1);
 
         accessor.dof_handler
           ->hp_cell_future_fe_indices[accessor.level()]
