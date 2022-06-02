@@ -695,7 +695,7 @@ namespace DoFTools
 
                 // ok, start up the work
                 const FiniteElement<dim, spacedim> &fe = cell->get_fe();
-                const unsigned int fe_index = cell->active_fe_index();
+                const types::fe_index fe_index = cell->active_fe_index();
 
                 const unsigned int n_dofs_on_mother =
                                      2 * fe.n_dofs_per_vertex() +
@@ -881,7 +881,7 @@ namespace DoFTools
 
                 // ok, start up the work
                 const FiniteElement<dim> &fe       = cell->get_fe();
-                const unsigned int        fe_index = cell->active_fe_index();
+                const types::fe_index     fe_index = cell->active_fe_index();
 
                 const unsigned int n_dofs_on_mother = fe.n_dofs_per_face(face);
                 const unsigned int n_dofs_on_children =
@@ -1135,7 +1135,7 @@ namespace DoFTools
                 // auxiliary variable which holds FE indices of the mother face
                 // and its subfaces. This knowledge will be needed in hp-case
                 // with neither_element_dominates.
-                std::set<unsigned int> fe_ind_face_subface;
+                std::set<types::fe_index> fe_ind_face_subface;
                 fe_ind_face_subface.insert(cell->active_fe_index());
 
                 if (dof_handler.has_hp_capabilities())
@@ -1193,7 +1193,7 @@ namespace DoFTools
                             Assert(subface->n_active_fe_indices() == 1,
                                    ExcInternalError());
 
-                            const unsigned int subface_fe_index =
+                            const types::fe_index subface_fe_index =
                               subface->nth_active_fe_index(0);
 
                             // we sometime run into the situation where for
@@ -1310,12 +1310,12 @@ namespace DoFTools
                         // Note that the last solution covers the first two
                         // scenarios, thus we stick with it assuming that we
                         // won't lose much time/efficiency.
-                        const unsigned int dominating_fe_index =
+                        const types::fe_index dominating_fe_index =
                           fe_collection.find_dominating_fe_extended(
                             fe_ind_face_subface, /*codim=*/1);
 
                         AssertThrow(
-                          dominating_fe_index != numbers::invalid_unsigned_int,
+                          dominating_fe_index != numbers::invalid_fe_index,
                           ExcMessage(
                             "Could not find a least face dominating FE."));
 
@@ -1428,7 +1428,7 @@ namespace DoFTools
                                        ->n_active_fe_indices() == 1,
                                    ExcInternalError());
 
-                            const unsigned int subface_fe_index =
+                            const types::fe_index subface_fe_index =
                               cell->face(face)->child(sf)->nth_active_fe_index(
                                 0);
                             const FiniteElement<dim, spacedim> &subface_fe =
@@ -1609,23 +1609,22 @@ namespace DoFTools
                             // to primary dofs based on the interpolation
                             // matrix.
 
-                            const unsigned int this_fe_index =
+                            const types::fe_index this_fe_index =
                               cell->active_fe_index();
-                            const unsigned int neighbor_fe_index =
+                            const types::fe_index neighbor_fe_index =
                               neighbor->active_fe_index();
-                            std::set<unsigned int> fes;
+                            std::set<types::fe_index> fes;
                             fes.insert(this_fe_index);
                             fes.insert(neighbor_fe_index);
                             const dealii::hp::FECollection<dim, spacedim>
                               &fe_collection = dof_handler.get_fe_collection();
 
-                            const unsigned int dominating_fe_index =
+                            const types::fe_index dominating_fe_index =
                               fe_collection.find_dominating_fe_extended(
                                 fes, /*codim=*/1);
 
                             AssertThrow(
-                              dominating_fe_index !=
-                                numbers::invalid_unsigned_int,
+                              dominating_fe_index != numbers::invalid_fe_index,
                               ExcMessage(
                                 "Could not find the dominating FE for " +
                                 cell->get_fe().get_name() + " and " +

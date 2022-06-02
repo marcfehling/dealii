@@ -692,7 +692,7 @@ namespace Step75
         get_max_active_fe_degree(dof_handler), mg_data.transfer.p_sequence)
         .size();
 
-    std::map<unsigned int, unsigned int> fe_index_for_degree;
+    std::map<unsigned int, types::fe_index> fe_index_for_degree;
     for (unsigned int i = 0; i < dof_handler.get_fe_collection().size(); ++i)
       {
         const unsigned int degree = dof_handler.get_fe(i).degree;
@@ -943,17 +943,17 @@ namespace Step75
     // consult this hierarchy to determine future FE indices. We will register
     // such a hierarchy that only works on finite elements with polynomial
     // degrees in the proposed range <code>[min_p_degree, max_p_degree]</code>.
-    const unsigned int min_fe_index = prm.min_p_degree - 1;
+    const types::fe_index min_fe_index = prm.min_p_degree - 1;
     fe_collection.set_hierarchy(
       /*next_index=*/
       [](const typename hp::FECollection<dim> &fe_collection,
-         const unsigned int                    fe_index) -> unsigned int {
+         const types::fe_index                 fe_index) -> types::fe_index {
         return ((fe_index + 1) < fe_collection.size()) ? fe_index + 1 :
                                                          fe_index;
       },
       /*previous_index=*/
       [min_fe_index](const typename hp::FECollection<dim> &,
-                     const unsigned int fe_index) -> unsigned int {
+                     const types::fe_index fe_index) -> types::fe_index {
         Assert(fe_index >= min_fe_index,
                ExcMessage("Finite element is not part of hierarchy!"));
         return (fe_index > min_fe_index) ? fe_index - 1 : fe_index;
@@ -1080,7 +1080,7 @@ namespace Step75
     GridGenerator::subdivided_hyper_L(
       triangulation, repetitions, bottom_left, top_right, cells_to_remove);
 
-    const unsigned int min_fe_index = prm.min_p_degree - 1;
+    const types::fe_index min_fe_index = prm.min_p_degree - 1;
     for (const auto &cell : dof_handler.active_cell_iterators())
       if (cell->is_locally_owned())
         cell->set_active_fe_index(min_fe_index);

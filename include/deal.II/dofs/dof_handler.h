@@ -515,7 +515,7 @@ public:
   /**
    * The default index of the finite element to be used on a given cell.
    */
-  static const unsigned int default_fe_index = 0;
+  static const types::fe_index default_fe_index = 0;
 
   /**
    * Invalid index of the finite element to be used on a given cell.
@@ -584,6 +584,16 @@ public:
    * locally owned cells to the values given in @p active_fe_indices.
    */
   void
+  set_active_fe_indices(const std::vector<types::fe_index> &active_fe_indices);
+
+  /**
+   * Go through the triangulation and set the active FE indices of all
+   * locally owned cells to the values given in @p active_fe_indices.
+   *
+   * @deprecated Use set_active_fe_indices() with the types::fe_index datatype.
+   */
+  DEAL_II_DEPRECATED_EARLY
+  void
   set_active_fe_indices(const std::vector<unsigned int> &active_fe_indices);
 
   /**
@@ -591,7 +601,7 @@ public:
    * all locally relevant cells. Artificial cells will have the value
    * numbers::invalid_fe_index assigned.
    */
-  std::vector<unsigned int>
+  std::vector<types::fe_index>
   get_active_fe_indices() const;
 
   /**
@@ -599,7 +609,7 @@ public:
    * locally relevant cells to the vector @p active_fe_indices. This vector
    * is resized, if necessary.
    *
-   * @deprecated Use the function that returns the result vector.
+   * @deprecated Use get_active_fe_indices() that returns the result vector.
    */
   DEAL_II_DEPRECATED_EARLY
   void
@@ -611,14 +621,14 @@ public:
    * Cells corresponding to numbers::invalid_fe_index will be skipped.
    */
   void
-  set_future_fe_indices(const std::vector<unsigned int> &future_fe_indices);
+  set_future_fe_indices(const std::vector<types::fe_index> &future_fe_indices);
 
   /**
    * Go through the triangulation and return a vector of future FE indices of
    * all locally owned cells. If no future FE index has been set on a cell,
    * its value will be numbers::invalid_fe_index.
    */
-  std::vector<unsigned int>
+  std::vector<types::fe_index>
   get_future_fe_indices() const;
 
   /**
@@ -1173,7 +1183,7 @@ public:
    * used by this object.
    */
   const FiniteElement<dim, spacedim> &
-  get_fe(const unsigned int index = 0) const;
+  get_fe(const types::fe_index index = 0) const;
 
   /**
    * Return a constant reference to the set of finite element objects that
@@ -1407,26 +1417,28 @@ private:
      * Container to temporarily store the iterator and future active FE index
      * of cells that persist.
      */
-    std::map<const cell_iterator, const unsigned int> persisting_cells_fe_index;
+    std::map<const cell_iterator, const types::fe_index>
+      persisting_cells_fe_index;
 
     /**
      * Container to temporarily store the iterator and future active FE index
      * of cells that will be refined.
      */
-    std::map<const cell_iterator, const unsigned int> refined_cells_fe_index;
+    std::map<const cell_iterator, const types::fe_index> refined_cells_fe_index;
 
     /**
      * Container to temporarily store the iterator and future active FE index
      * of parent cells that will remain after coarsening.
      */
-    std::map<const cell_iterator, const unsigned int> coarsened_cells_fe_index;
+    std::map<const cell_iterator, const types::fe_index>
+      coarsened_cells_fe_index;
 
     /**
      * Container to temporarily store the active FE index of every locally
      * owned cell for transfer across parallel::distributed::Triangulation
      * objects.
      */
-    std::vector<unsigned int> active_fe_indices;
+    std::vector<types::fe_index> active_fe_indices;
 
     /**
      * Helper object to transfer all active FE indices on
@@ -1435,7 +1447,7 @@ private:
      */
     std::unique_ptr<
       parallel::distributed::
-        CellDataTransfer<dim, spacedim, std::vector<unsigned int>>>
+        CellDataTransfer<dim, spacedim, std::vector<types::fe_index>>>
       cell_data_transfer;
   };
 
@@ -1857,7 +1869,7 @@ DoFHandler<dim, spacedim>::locally_owned_mg_dofs(const unsigned int level) const
 
 template <int dim, int spacedim>
 inline const FiniteElement<dim, spacedim> &
-DoFHandler<dim, spacedim>::get_fe(const unsigned int number) const
+DoFHandler<dim, spacedim>::get_fe(const types::fe_index number) const
 {
   Assert(fe_collection.size() > 0,
          ExcMessage("No finite element collection is associated with "

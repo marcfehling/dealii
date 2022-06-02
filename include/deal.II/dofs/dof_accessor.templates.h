@@ -202,10 +202,10 @@ namespace internal
      * numbers::invalid_fe_index to a right value if needed/possible.
      */
     template <int structdim, int dim, int spacedim, bool level_dof_access>
-    unsigned int
+    types::fe_index
     get_fe_index_or_default(
       const DoFAccessor<structdim, dim, spacedim, level_dof_access> &cell,
-      const unsigned int                                             fe_index)
+      const types::fe_index                                          fe_index)
     {
       if (cell.get_dof_handler().has_hp_capabilities() == false)
         {
@@ -283,7 +283,7 @@ namespace internal
       process_dof_index(const DoFHandler<dim, spacedim> &dof_handler,
                         const unsigned int               obj_level,
                         const unsigned int               obj_index,
-                        const unsigned int               fe_index,
+                        const types::fe_index            fe_index,
                         const unsigned int               local_index,
                         const std::integral_constant<int, structdim> &,
                         GlobalIndexType &    global_index,
@@ -343,7 +343,7 @@ namespace internal
                  "You are requesting an active FE index that is not assigned "
                  "to any of the cells connected to this entity."));
 
-        const unsigned int fe_index_ =
+        const types::fe_index fe_index_ =
           std::distance(dof_handler.hp_object_fe_indices[structdim].begin() +
                           dof_handler.hp_object_fe_ptr[structdim][obj_index],
                         ptr);
@@ -390,7 +390,7 @@ namespace internal
       process_object_range(const DoFHandler<dim, spacedim> &dof_handler,
                            const unsigned int               obj_level,
                            const unsigned int               obj_index,
-                           const unsigned int               fe_index,
+                           const types::fe_index            fe_index,
                            const std::integral_constant<int, structdim> &)
       {
         Assert(structdim == dim || obj_level == 0, ExcNotImplemented());
@@ -443,7 +443,7 @@ namespace internal
                    dof_handler.hp_object_fe_ptr[structdim][obj_index + 1],
                ExcNotImplemented());
 
-        const unsigned int fe_index_local =
+        const types::fe_index fe_index_local =
           std::distance(dof_handler.hp_object_fe_indices[structdim].begin() +
                           dof_handler.hp_object_fe_ptr[structdim][obj_index],
                         fe_index_local_ptr);
@@ -470,8 +470,8 @@ namespace internal
       static std::pair<unsigned int, unsigned int>
       process_object_range(
         const dealii::DoFAccessor<structdim, dim, spacedim, level_dof_access>
-                           accessor,
-        const unsigned int fe_index)
+                              accessor,
+        const types::fe_index fe_index)
       {
         return process_object_range(accessor.get_dof_handler(),
                                     accessor.level(),
@@ -509,7 +509,7 @@ namespace internal
       process_object(const DoFHandler<dim, spacedim> &             dof_handler,
                      const unsigned int                            obj_level,
                      const unsigned int                            obj_index,
-                     const unsigned int                            fe_index,
+                     const types::fe_index                         fe_index,
                      const DoFMapping &                            mapping,
                      const std::integral_constant<int, structdim> &dd,
                      types::global_dof_index *&dof_indices_ptr,
@@ -549,7 +549,7 @@ namespace internal
       set_dof_index(const DoFHandler<dim, spacedim> &             dof_handler,
                     const unsigned int                            obj_level,
                     const unsigned int                            obj_index,
-                    const unsigned int                            fe_index,
+                    const types::fe_index                         fe_index,
                     const unsigned int                            local_index,
                     const std::integral_constant<int, structdim> &dd,
                     const types::global_dof_index                 global_index)
@@ -580,7 +580,7 @@ namespace internal
       get_dof_index(const DoFHandler<dim, spacedim> &             dof_handler,
                     const unsigned int                            obj_level,
                     const unsigned int                            obj_index,
-                    const unsigned int                            fe_index,
+                    const types::fe_index                         fe_index,
                     const unsigned int                            local_index,
                     const std::integral_constant<int, structdim> &dd)
       {
@@ -663,7 +663,7 @@ namespace internal
        * get a DoF index on a vertex of the indicated cell.
        */
       template <int dim, int spacedim, int structdim>
-      static unsigned int
+      static types::fe_index
       nth_active_fe_index(const DoFHandler<dim, spacedim> &dof_handler,
                           const unsigned int               obj_level,
                           const unsigned int               obj_index,
@@ -715,7 +715,7 @@ namespace internal
        * get a DoF index on a vertex of the indicated cell.
        */
       template <int dim, int spacedim, int structdim>
-      static std::set<unsigned int>
+      static std::set<types::fe_index>
       get_active_fe_indices(const DoFHandler<dim, spacedim> &dof_handler,
                             const unsigned int               obj_level,
                             const unsigned int               obj_index,
@@ -732,7 +732,7 @@ namespace internal
           return {dof_handler.hp_cell_active_fe_indices[obj_level][obj_index]};
 
         // 3) general entity and hp is used
-        std::set<unsigned int> active_fe_indices;
+        std::set<types::fe_index> active_fe_indices;
         for (unsigned int i = 0;
              i < n_active_fe_indices(dof_handler, obj_level, obj_index, t);
              ++i)
@@ -748,7 +748,7 @@ namespace internal
       fe_index_is_active(const DoFHandler<dim, spacedim> &dof_handler,
                          const unsigned int               obj_level,
                          const unsigned int               obj_index,
-                         const unsigned int               fe_index,
+                         const types::fe_index            fe_index,
                          const std::integral_constant<int, structdim> &)
       {
         Assert(structdim == dim || obj_level == 0, ExcNotImplemented());
@@ -872,9 +872,9 @@ namespace internal
       static unsigned int
       n_dof_indices(
         const dealii::DoFAccessor<structdim, dim, spacedim, level_dof_access>
-          &                accessor,
-        const unsigned int fe_index_,
-        const bool         count_level_dofs)
+          &                   accessor,
+        const types::fe_index fe_index_,
+        const bool            count_level_dofs)
       {
         // note: we cannot rely on the template parameter level_dof_access here,
         // since the function get_mg_dof_indices()/set_mg_dof_indices() can be
@@ -996,12 +996,12 @@ namespace internal
         const dealii::DoFAccessor<structdim, dim, spacedim, level_dof_access>
           &                   accessor,
         const DoFIndicesType &const_dof_indices,
-        const unsigned int    fe_index_,
+        const types::fe_index fe_index_,
         const DoFOperation &  dof_operation,
         const DoFProcessor &  dof_processor,
         const bool            count_level_dofs)
       {
-        const unsigned int fe_index =
+        const types::fe_index fe_index =
           internal::DoFAccessorImplementation::get_fe_index_or_default(
             accessor, fe_index_);
 
@@ -1166,7 +1166,7 @@ namespace internal
         DEAL_II_ALWAYS_INLINE void
         process_vertex_dofs(DoFHandler<dim, spacedim> &dof_handler,
                             const unsigned int         vertex_index,
-                            const unsigned int         fe_index,
+                            const types::fe_index      fe_index,
                             types::global_dof_index *& dof_indices_ptr,
                             const DoFProcessor &       dof_processor) const
         {
@@ -1192,7 +1192,7 @@ namespace internal
         process_dofs(const DoFHandler<dim, spacedim> &dof_handler,
                      const unsigned int               obj_level,
                      const unsigned int               obj_index,
-                     const unsigned int               fe_index,
+                     const types::fe_index            fe_index,
                      const DoFMapping &               mapping,
                      const std::integral_constant<int, structdim>,
                      types::global_dof_index *&dof_indices_ptr,
@@ -1233,7 +1233,7 @@ namespace internal
         DEAL_II_ALWAYS_INLINE void
         process_vertex_dofs(DoFHandler<dim, spacedim> &dof_handler,
                             const unsigned int         vertex_index,
-                            const unsigned int,
+                            const types::fe_index,
                             types::global_dof_index *&dof_indices_ptr,
                             const DoFProcessor &      dof_processor) const
         {
@@ -1254,9 +1254,9 @@ namespace internal
         DEAL_II_ALWAYS_INLINE void
         process_dofs(const DoFHandler<dim, spacedim> &dof_handler,
                      const unsigned int,
-                     const unsigned int obj_index,
-                     const unsigned int fe_index,
-                     const DoFMapping & mapping,
+                     const unsigned int    obj_index,
+                     const types::fe_index fe_index,
+                     const DoFMapping &    mapping,
                      const std::integral_constant<int, structdim>,
                      types::global_dof_index *&dof_indices_ptr,
                      const DoFProcessor &      dof_processor) const
@@ -1288,7 +1288,7 @@ namespace internal
         const dealii::DoFAccessor<structdim, dim, spacedim, level_dof_access>
           &                                   accessor,
         std::vector<types::global_dof_index> &dof_indices,
-        const unsigned int                    fe_index)
+        const types::fe_index                 fe_index)
       {
         process_dof_indices(
           accessor,
@@ -1307,7 +1307,7 @@ namespace internal
         const dealii::DoFAccessor<structdim, dim, spacedim, level_dof_access>
           &                                         accessor,
         const std::vector<types::global_dof_index> &dof_indices,
-        const unsigned int                          fe_index)
+        const types::fe_index                       fe_index)
       {
         // Note: this function is as general as `get_dof_indices()`. This
         // assert is placed here since it is currently only used by the
@@ -1338,7 +1338,7 @@ namespace internal
           &                                   accessor,
         const int                             level,
         std::vector<types::global_dof_index> &dof_indices,
-        const unsigned int                    fe_index)
+        const types::fe_index                 fe_index)
       {
         Assert((fe_index == DoFHandler<dim, spacedim>::default_fe_index),
                ExcMessage("MG DoF indices cannot be queried in hp case"));
@@ -1360,7 +1360,7 @@ namespace internal
           &                                         accessor,
         const int                                   level,
         const std::vector<types::global_dof_index> &dof_indices,
-        const unsigned int                          fe_index)
+        const types::fe_index                       fe_index)
       {
         Assert((fe_index == DoFHandler<dim, spacedim>::default_fe_index),
                ExcMessage("MG DoF indices cannot be queried in hp case"));
@@ -1462,8 +1462,8 @@ namespace internal
 template <int structdim, int dim, int spacedim, bool level_dof_access>
 inline types::global_dof_index
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::dof_index(
-  const unsigned int i,
-  const unsigned int fe_index_) const
+  const unsigned int    i,
+  const types::fe_index fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1502,7 +1502,7 @@ inline void
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::set_dof_index(
   const unsigned int            i,
   const types::global_dof_index index,
-  const unsigned int            fe_index_) const
+  const types::fe_index         fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1572,11 +1572,11 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::nth_active_fe_index(
 
 
 template <int structdim, int dim, int spacedim, bool level_dof_access>
-inline std::set<unsigned int>
+inline std::set<types::fe_index>
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::get_active_fe_indices()
   const
 {
-  std::set<unsigned int> active_fe_indices;
+  std::set<types::fe_index> active_fe_indices;
   for (unsigned int i = 0; i < n_active_fe_indices(); ++i)
     active_fe_indices.insert(nth_active_fe_index(i));
   return active_fe_indices;
@@ -1587,7 +1587,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::get_active_fe_indices()
 template <int structdim, int dim, int spacedim, bool level_dof_access>
 inline bool
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::fe_index_is_active(
-  const unsigned int fe_index) const
+  const types::fe_index fe_index) const
 {
   // access the respective DoF
   return dealii::internal::DoFAccessorImplementation::Implementation::
@@ -1603,11 +1603,11 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::fe_index_is_active(
 template <int structdim, int dim, int spacedim, bool level_dof_access>
 inline types::global_dof_index
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::vertex_dof_index(
-  const unsigned int vertex,
-  const unsigned int i,
-  const unsigned int fe_index_) const
+  const unsigned int    vertex,
+  const unsigned int    i,
+  const types::fe_index fe_index_) const
 {
-  const unsigned int fe_index =
+  const types::fe_index fe_index =
     (((this->dof_handler->hp_capability_enabled == false) &&
       (fe_index_ == numbers::invalid_fe_index)) ?
        // No hp enabled, and the argument is at its default value -> we
@@ -1635,10 +1635,10 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::vertex_dof_index(
 template <int structdim, int dim, int spacedim, bool level_dof_access>
 inline types::global_dof_index
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::mg_vertex_dof_index(
-  const int          level,
-  const unsigned int vertex,
-  const unsigned int i,
-  const unsigned int fe_index_) const
+  const int             level,
+  const unsigned int    vertex,
+  const unsigned int    i,
+  const types::fe_index fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1668,7 +1668,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::
                           const unsigned int            vertex,
                           const unsigned int            i,
                           const types::global_dof_index index,
-                          const unsigned int            fe_index_) const
+                          const types::fe_index         fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1691,7 +1691,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::
 template <int structdim, int dim, int spacedim, bool level_dof_access>
 inline const FiniteElement<dim, spacedim> &
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::get_fe(
-  const unsigned int fe_index) const
+  const types::fe_index fe_index) const
 {
   Assert(fe_index_is_active(fe_index) == true,
          ExcMessage("This function can only be called for active FE indices"));
@@ -1864,7 +1864,7 @@ inline void
 DoFAccessor<0, 1, spacedim, level_dof_access>::set_dof_index(
   const unsigned int /*i*/,
   const types::global_dof_index /*index*/,
-  const unsigned int /*fe_index*/) const
+  const types::fe_index /*fe_index*/) const
 {
   Assert(false, ExcNotImplemented());
 }
@@ -1884,7 +1884,7 @@ template <int spacedim, bool level_dof_access>
 inline void
 DoFAccessor<0, 1, spacedim, level_dof_access>::get_dof_indices(
   std::vector<types::global_dof_index> &dof_indices,
-  const unsigned int                    fe_index_) const
+  const types::fe_index                 fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1907,7 +1907,7 @@ inline void
 DoFAccessor<0, 1, spacedim, level_dof_access>::get_mg_dof_indices(
   const int                             level,
   std::vector<types::global_dof_index> &dof_indices,
-  const unsigned int                    fe_index_) const
+  const types::fe_index                 fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1926,9 +1926,9 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::get_mg_dof_indices(
 template <int spacedim, bool level_dof_access>
 inline types::global_dof_index
 DoFAccessor<0, 1, spacedim, level_dof_access>::vertex_dof_index(
-  const unsigned int vertex,
-  const unsigned int i,
-  const unsigned int fe_index_) const
+  const unsigned int    vertex,
+  const unsigned int    i,
+  const types::fe_index fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1950,8 +1950,8 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::vertex_dof_index(
 template <int spacedim, bool level_dof_access>
 inline types::global_dof_index
 DoFAccessor<0, 1, spacedim, level_dof_access>::dof_index(
-  const unsigned int i,
-  const unsigned int fe_index_) const
+  const unsigned int    i,
+  const types::fe_index fe_index_) const
 {
   const auto fe_index =
     internal::DoFAccessorImplementation::get_fe_index_or_default(*this,
@@ -1998,7 +1998,7 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::nth_active_fe_index(
 template <int spacedim, bool level_dof_access>
 inline bool
 DoFAccessor<0, 1, spacedim, level_dof_access>::fe_index_is_active(
-  const unsigned int /*fe_index*/) const
+  const types::fe_index /*fe_index*/) const
 {
   Assert(false, ExcNotImplemented());
   return false;
@@ -2009,7 +2009,7 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::fe_index_is_active(
 template <int spacedim, bool level_dof_access>
 inline const FiniteElement<1, spacedim> &
 DoFAccessor<0, 1, spacedim, level_dof_access>::get_fe(
-  const unsigned int fe_index) const
+  const types::fe_index fe_index) const
 {
   Assert(this->dof_handler != nullptr, ExcInvalidObject());
   return dof_handler->get_fe(fe_index);
@@ -2167,7 +2167,7 @@ namespace internal
        * do.
        */
       template <int dim, int spacedim, bool level_dof_access>
-      static unsigned int
+      static types::fe_index
       active_fe_index(
         const DoFCellAccessor<dim, spacedim, level_dof_access> &accessor)
       {
@@ -2196,7 +2196,7 @@ namespace internal
       static void
       set_active_fe_index(
         const DoFCellAccessor<dim, spacedim, level_dof_access> &accessor,
-        const unsigned int                                      i)
+        const types::fe_index                                   i)
       {
         if (accessor.dof_handler->hp_capability_enabled == false)
           {
@@ -2226,7 +2226,7 @@ namespace internal
        * do.
        */
       template <int dim, int spacedim, bool level_dof_access>
-      static unsigned int
+      static types::fe_index
       future_fe_index(
         const DoFCellAccessor<dim, spacedim, level_dof_access> &accessor)
       {
@@ -2262,7 +2262,7 @@ namespace internal
       static void
       set_future_fe_index(
         const DoFCellAccessor<dim, spacedim, level_dof_access> &accessor,
-        const unsigned int                                      i)
+        const types::fe_index                                   i)
       {
         if (accessor.dof_handler->hp_capability_enabled == false)
           {
@@ -2743,7 +2743,7 @@ DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::get_fe() const
 
 
 template <int dimension_, int space_dimension_, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::
   active_fe_index() const
 {
@@ -2769,7 +2769,7 @@ DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::
 template <int dimension_, int space_dimension_, bool level_dof_access>
 inline void
 DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::
-  set_active_fe_index(const unsigned int i) const
+  set_active_fe_index(const types::fe_index i) const
 {
   Assert((this->dof_handler->hp_capability_enabled == false) ||
            this->is_active(),
@@ -2810,7 +2810,7 @@ DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::get_future_fe()
 
 
 template <int dimension_, int space_dimension_, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::
   future_fe_index() const
 {
@@ -2835,7 +2835,7 @@ DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::
 template <int dimension_, int space_dimension_, bool level_dof_access>
 inline void
 DoFCellAccessor<dimension_, space_dimension_, level_dof_access>::
-  set_future_fe_index(const unsigned int i) const
+  set_future_fe_index(const types::fe_index i) const
 {
   Assert((this->dof_handler->hp_capability_enabled == false) ||
            (this->has_children() == false),

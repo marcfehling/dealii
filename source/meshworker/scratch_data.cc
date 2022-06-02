@@ -317,9 +317,9 @@ namespace MeshWorker
         // then we defer to the dominance of one FE over another. This should
         // ensure that the optimal integration order and mapping order are
         // selected for this situation.
-        const unsigned int dominated_fe_index =
-          fe_collection->find_dominated_fe(
-            {cell->active_fe_index(), neighbor_cell->active_fe_index()});
+        const types::fe_index dominated_fe_index =
+          fe_collection->find_dominated_fe(std::set<types::fe_index>(
+            {cell->active_fe_index(), neighbor_cell->active_fe_index()}));
 
         hp_fe_face_values->reinit(cell,
                                   face_no,
@@ -404,9 +404,9 @@ namespace MeshWorker
             // face, then we defer to the dominance of one FE over another. This
             // should ensure that the optimal integration order and mapping
             // order are selected for this situation.
-            const unsigned int dominated_fe_index =
-              fe_collection->find_dominated_fe(
-                {cell->active_fe_index(), neighbor_cell->active_fe_index()});
+            const types::fe_index dominated_fe_index =
+              fe_collection->find_dominated_fe(std::set<types::fe_index>(
+                {cell->active_fe_index(), neighbor_cell->active_fe_index()}));
 
             hp_fe_subface_values->reinit(cell,
                                          face_no,
@@ -570,9 +570,9 @@ namespace MeshWorker
         // then we defer to the dominance of one FE over another. This should
         // ensure that the optimal integration order and mapping order are
         // selected for this situation.
-        const unsigned int dominated_fe_index =
-          fe_collection->find_dominated_fe(
-            {cell->active_fe_index(), neighbor_cell->active_fe_index()});
+        const types::fe_index dominated_fe_index =
+          fe_collection->find_dominated_fe(std::set<types::fe_index>(
+            {cell->active_fe_index(), neighbor_cell->active_fe_index()}));
 
         neighbor_hp_fe_face_values->reinit(neighbor_cell,
                                            face_no,
@@ -659,9 +659,9 @@ namespace MeshWorker
             // face, then we defer to the dominance of one FE over another. This
             // should ensure that the optimal integration order and mapping
             // order are selected for this situation.
-            const unsigned int dominated_fe_index =
-              fe_collection->find_dominated_fe(
-                {cell->active_fe_index(), neighbor_cell->active_fe_index()});
+            const types::fe_index dominated_fe_index =
+              fe_collection->find_dominated_fe(std::set<types::fe_index>(
+                {cell->active_fe_index(), neighbor_cell->active_fe_index()}));
 
             neighbor_hp_fe_subface_values->reinit(neighbor_cell,
                                                   face_no,

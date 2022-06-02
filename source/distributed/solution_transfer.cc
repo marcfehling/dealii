@@ -319,7 +319,7 @@ namespace parallel
       std::vector<::dealii::Vector<typename VectorType::value_type>> dof_values(
         input_vectors.size());
 
-      unsigned int fe_index = 0;
+      types::fe_index fe_index = 0;
       if (dof_handler->has_hp_capabilities())
         {
           switch (status)
@@ -390,7 +390,7 @@ namespace parallel
       typename DoFHandler<dim, spacedim>::cell_iterator cell(*cell_,
                                                              dof_handler);
 
-      unsigned int fe_index = 0;
+      types::fe_index fe_index = 0;
       if (dof_handler->has_hp_capabilities())
         {
           switch (status)

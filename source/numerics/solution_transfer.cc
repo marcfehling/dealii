@@ -176,7 +176,7 @@ SolutionTransfer<dim, VectorType, spacedim>::refine_interpolate(
         // which is both done by one
         // function
         {
-          const unsigned int this_fe_index =
+          const types::fe_index this_fe_index =
             pointerstruct->second.active_fe_index;
           const unsigned int dofs_per_cell =
             cell->get_dof_handler().get_fe(this_fe_index).n_dofs_per_cell();
@@ -381,7 +381,7 @@ SolutionTransfer<dim, VectorType, spacedim>::
           // to since that is not implied by the global FE as in the non-hp-
           // case. we choose the 'least dominant fe' on all children from
           // the associated FECollection.
-          std::set<unsigned int> fe_indices_children;
+          std::set<types::fe_index> fe_indices_children;
           for (const auto &child : cell->child_iterators())
             {
               Assert(child->is_active() && child->coarsen_flag_set(),
@@ -392,11 +392,11 @@ SolutionTransfer<dim, VectorType, spacedim>::
             }
           Assert(!fe_indices_children.empty(), ExcInternalError());
 
-          const unsigned int target_fe_index =
+          const types::fe_index target_fe_index =
             dof_handler->get_fe_collection().find_dominated_fe_extended(
               fe_indices_children, /*codim=*/0);
 
-          Assert(target_fe_index != numbers::invalid_unsigned_int,
+          Assert(target_fe_index != numbers::invalid_fe_index,
                  internal::hp::DoFHandlerImplementation::
                    ExcNoDominatedFiniteElementOnChildren());
 
@@ -505,7 +505,7 @@ SolutionTransfer<dim, VectorType, spacedim>::interpolate(
             {
               Assert(valuesptr == nullptr, ExcInternalError());
 
-              const unsigned int old_fe_index =
+              const types::fe_index old_fe_index =
                 pointerstruct->second.active_fe_index;
 
               // get the values of each of the input data vectors on this cell
@@ -546,10 +546,11 @@ SolutionTransfer<dim, VectorType, spacedim>::interpolate(
                   // FE in the hp-case. to really do that test we would have to
                   // store the fe_index of all cells
                   const Vector<typename VectorType::value_type> *data = nullptr;
-                  const unsigned int active_fe_index = cell->active_fe_index();
+                  const types::fe_index active_fe_index =
+                    cell->active_fe_index();
                   if (active_fe_index != pointerstruct->second.active_fe_index)
                     {
-                      const unsigned int old_index =
+                      const types::fe_index old_index =
                         pointerstruct->second.active_fe_index;
                       const FullMatrix<double> &interpolation_matrix =
                         interpolation_hp(active_fe_index, old_index);
