@@ -343,7 +343,7 @@ namespace hp
       const std::set<types::fe_index> &fes,
       const std::function<std::vector<std::pair<unsigned int, unsigned int>>(
         const types::fe_index,
-        const types::fe_index)> &   query_identities)
+        const types::fe_index)> &      query_identities)
     {
       // Let's deal with the easy cases first. If the set of fe indices is empty
       // or has only one entry, then there are no identities:
@@ -360,7 +360,8 @@ namespace hp
           const auto            reduced_identities =
             query_identities(fe_index_1, fe_index_2);
 
-          std::vector<std::map<types::fe_index, unsigned int>> complete_identities;
+          std::vector<std::map<types::fe_index, unsigned int>>
+            complete_identities;
 
           for (const auto &reduced_identity : reduced_identities)
             {
