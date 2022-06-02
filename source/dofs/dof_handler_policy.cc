@@ -158,7 +158,7 @@ namespace internal
           // exists
           if (identities.get() == nullptr)
             {
-              std::vector<std::map<unsigned int, unsigned int>>
+              std::vector<std::map<types::fe_index, unsigned int>>
                 complete_identities;
 
               switch (structdim)
