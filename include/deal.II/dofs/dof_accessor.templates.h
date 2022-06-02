@@ -2257,6 +2257,7 @@ namespace internal
         Assert(static_cast<unsigned int>(accessor.level()) <
                  accessor.dof_handler->hp_cell_future_fe_indices.size(),
                ExcMessage("DoFHandler not initialized"));
+        Assert(i != numbers::invalid_fe_index, ExcMessage("Invalid finite element index."));
 
         accessor.dof_handler
           ->hp_cell_active_fe_indices[accessor.level()]
@@ -2321,6 +2322,7 @@ namespace internal
         Assert(static_cast<unsigned int>(accessor.level()) <
                  accessor.dof_handler->hp_cell_future_fe_indices.size(),
                ExcMessage("DoFHandler not initialized"));
+        Assert(i != numbers::invalid_fe_index, ExcMessage("Invalid finite element index."));
 
         accessor.dof_handler
           ->hp_cell_future_fe_indices[accessor.level()]
@@ -2352,7 +2354,7 @@ namespace internal
         return accessor.dof_handler
                  ->hp_cell_future_fe_indices[accessor.level()]
                                             [accessor.present_index] !=
-               DoFHandler<dim, spacedim>::invalid_active_fe_index;
+               numbers::invalid_fe_index;
       }
 
 
@@ -2377,14 +2379,10 @@ namespace internal
                  accessor.dof_handler->hp_cell_future_fe_indices.size(),
                ExcMessage("DoFHandler not initialized"));
 
-        // TODO
-        static const types::active_fe_index_type invalid_active_fe_index =
-          static_cast<types::active_fe_index_type>(-1);
-
         accessor.dof_handler
           ->hp_cell_future_fe_indices[accessor.level()]
                                      [accessor.present_index] =
-          invalid_active_fe_index;
+          numbers::invalid_fe_index;
       }
     };
   } // namespace DoFCellAccessorImplementation

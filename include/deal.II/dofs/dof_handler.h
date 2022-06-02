@@ -521,8 +521,10 @@ public:
 
   /**
    * Invalid index of the finite element to be used on a given cell.
+   *
+   * @deprecated Use numbers::invalid_fe_index instead.
    */
-  static const unsigned int invalid_fe_index = numbers::invalid_unsigned_int;
+  static const unsigned int invalid_fe_index DEAL_II_DEPRECATED = numbers::invalid_fe_index;
 
   /**
    * The type in which we store the active FE index.
@@ -539,9 +541,11 @@ public:
   /**
    * Invalid active FE index which will be used as a default value to determine
    * whether a future FE index has been set or not.
+   *
+   * @deprecated Use numbers::invalid_fe_index instead.
    */
-  static const types::fe_index invalid_active_fe_index =
-    static_cast<types::fe_index>(-1);
+  static const types::fe_index invalid_active_fe_index DEAL_II_DEPRECATED =
+    numbers::invalid_fe_index;
 
   /**
    * Standard constructor, not initializing any data. After constructing an

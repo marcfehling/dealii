@@ -45,10 +45,6 @@ template <int dim, int spacedim>
 const unsigned int DoFHandler<dim, spacedim>::default_fe_index;
 
 
-template <int dim, int spacedim>
-const types::fe_index DoFHandler<dim, spacedim>::invalid_active_fe_index;
-
-
 namespace internal
 {
   template <int dim, int spacedim>
@@ -3272,7 +3268,7 @@ DoFHandler<dim, spacedim>::create_active_fe_table()
           this->hp_cell_active_fe_indices[level].resize(
             this->tria->n_raw_cells(level), 0);
           this->hp_cell_future_fe_indices[level].resize(
-            this->tria->n_raw_cells(level), invalid_active_fe_index);
+            this->tria->n_raw_cells(level), numbers::invalid_fe_index);
         }
       else
         {
@@ -3331,7 +3327,7 @@ DoFHandler<dim, spacedim>::update_active_fe_table()
       // We have used future FE indices to update all active FE indices
       // before refinement happened, thus we are safe to clear them now.
       this->hp_cell_future_fe_indices[i].assign(this->tria->n_raw_cells(i),
-                                                invalid_active_fe_index);
+                                                numbers::invalid_fe_index);
     }
 }
 
