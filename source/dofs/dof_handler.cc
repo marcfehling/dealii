@@ -3550,7 +3550,7 @@ DoFHandler<dim, spacedim>::prepare_for_serialization_of_active_fe_indices()
   // active FE indices since ownership of cells may change.
 
   // Gather all current active FE indices
-  get_active_fe_indices(active_fe_index_transfer->active_fe_indices);
+  active_fe_index_transfer->active_fe_indices = get_active_fe_indices();
 
   // Attach to transfer object
   active_fe_index_transfer->cell_data_transfer->prepare_for_serialization(
