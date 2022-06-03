@@ -1371,12 +1371,18 @@ namespace DoFTools
   get_active_fe_indices(const DoFHandler<dim, spacedim> &dof_handler,
                         std::vector<unsigned int> &      active_fe_indices)
   {
+    const std::vector<types::fe_index> correct_type_indices =
+      dof_handler.get_active_fe_indices();
+
     AssertDimension(active_fe_indices.size(),
                     dof_handler.get_triangulation().n_active_cells());
 
-    for (const auto &cell : dof_handler.active_cell_iterators())
-      active_fe_indices[cell->active_cell_index()] = cell->active_fe_index();
+    std::copy(correct_type_indices.begin(),
+              correct_type_indices.end(),
+              active_fe_indices.begin());
   }
+
+
 
   template <int dim, int spacedim>
   std::vector<IndexSet>

@@ -2167,9 +2167,15 @@ namespace DoFTools
    * For DoFHandler objects without hp-capabilities given as first argument, the
    * returned vector will consist of only zeros, indicating that all cells use
    * the same finite element. In hp-mode, the values may be different, though.
+   *
+   * As we do not know the active FE index on artificial cells, we set them to
+   * the invalid value numbers::invalid_fe_index.
+   *
+   * @deprecated Use DoFHandler::get_active_fe_indices() with the
+   *   types::fe_index datatype.
    */
   template <int dim, int spacedim>
-  void
+  DEAL_II_DEPRECATED_EARLY void
   get_active_fe_indices(const DoFHandler<dim, spacedim> &dof_handler,
                         std::vector<unsigned int> &      active_fe_indices);
 

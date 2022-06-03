@@ -639,19 +639,58 @@ public:
   set_fe(const hp::FECollection<dim, spacedim> &fe);
 
   /**
-   * Go through the triangulation and set the active FE indices of all
-   * active cells to the values given in @p active_fe_indices.
+   * For each active cell, set the active finite element index to the
+   * corresponding value given in @p active_fe_indices. Indices must be in the
+   * order we iterate over active cells.
+   *
+   * Active FE indices will only be set for locally owned cells. Ghost and
+   * artificial cells will be ignored; no active FE index will be assigned to
+   * them.
+   *
+   * The vector @p active_fe_indices is assumed to have as many entries as
+   * there are active cells.
    */
   void
   set_active_fe_indices(const std::vector<types::fe_index> &active_fe_indices);
 
   /**
-   * Go through the triangulation and store the active FE indices of all
-   * active cells to the vector @p active_fe_indices. This vector is
-   * resized, if necessary.
+   * For each active cell, extract the active finite element index. Return all
+   * indices in the order we iterate over active cells.
+   *
+   * For DoFHandler objects without hp-capabilities, the vector will consist of
+   * only zeros, indicating that all cells use the same finite element. In
+   * hp-mode, the values may be different, though.
+   *
+   * As we do not know the active FE index on artificial cells, we set it to an
+   * invalid value numbers::invalid_fe_index.
    */
-  void
-  get_active_fe_indices(std::vector<types::fe_index> &active_fe_indices) const;
+  std::vector<types::fe_index>
+  get_active_fe_indices() const;
+
+  /**
+   * @copydoc set_active_fe_indices()
+   *
+   * @deprecated Use set_active_fe_indices() with the types::fe_index datatype.
+   */
+  DEAL_II_DEPRECATED_EARLY void
+  set_active_fe_indices(const std::vector<unsigned int> &active_fe_indices);
+
+  /**
+   * For each active cell of a DoFHandler, extract the active finite element
+   * index and fill the vector @p active_fe_indices in the order we iterate
+   * over active cells.
+   *
+   * For DoFHandler objects without hp-capabilities, the vector will consist of
+   * only zeros, indicating that all cells use the same finite element. In
+   * hp-mode, the values may be different, though.
+   *
+   * As we do not know the active FE index on artificial cells, we set them to
+   * the invalid value numbers::invalid_fe_index.
+   *
+   * @deprecated Use get_active_fe_indices() with the types::fe_index datatype.
+   */
+  DEAL_II_DEPRECATED_EARLY void
+  get_active_fe_indices(std::vector<unsigned int> &active_fe_indices) const;
 
   /**
    * Assign a Triangulation to the DoFHandler.
