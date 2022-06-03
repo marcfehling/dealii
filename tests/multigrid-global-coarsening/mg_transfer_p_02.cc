@@ -102,8 +102,9 @@ do_test()
             {
               if (cell->is_locally_owned())
                 cell->set_active_fe_index(
-                  std::max(((cell)->active_fe_index() + 1) / 2 /*bisection*/,
-                           1u) -
+                  std::max<types::fe_index>(((cell)->active_fe_index() + 1) /
+                                              2 /*bisection*/,
+                                            1u) -
                   1);
             }
         }
@@ -115,9 +116,8 @@ do_test()
           {
             if (cell->is_locally_owned())
               cell->set_active_fe_index(
-                std::max(((cell_other)->active_fe_index() + 1) /
-                           2 /*bisection*/,
-                         1u) -
+                std::max<types::fe_index>(
+                  ((cell_other)->active_fe_index() + 1) / 2 /*bisection*/, 1u) -
                 1);
             cell_other++;
           }
@@ -151,7 +151,7 @@ do_test()
 
       // break if all cells on coarse level have active_fe_index=0
       {
-        unsigned int min = 0;
+        types::fe_index min = 0;
 
         for (auto &cell : dof_handler_coarse.active_cell_iterators())
           {
