@@ -2021,7 +2021,7 @@ namespace parallel
           std::ofstream f(fname.c_str());
           f << "version nproc n_attached_fixed_size_objs n_attached_variable_size_objs n_coarse_cells"
             << std::endl
-            << 4 << " "
+            << 5 << " "
             << Utilities::MPI::n_mpi_processes(this->mpi_communicator) << " "
             << this->cell_attached_data.pack_callbacks_fixed.size() << " "
             << this->cell_attached_data.pack_callbacks_variable.size() << " "
