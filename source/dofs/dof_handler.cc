@@ -2086,7 +2086,7 @@ namespace internal
        * Public wrapper of Implementation::dominated_future_fe_on_children().
        */
       template <int dim, int spacedim>
-      unsigned int
+      types::fe_index
       dominated_future_fe_on_children(
         const typename DoFHandler<dim, spacedim>::cell_iterator &parent)
       {
@@ -3158,12 +3158,8 @@ void
 DoFHandler<dim, spacedim>::set_active_fe_indices(
   const std::vector<unsigned int> &active_fe_indices)
 {
-  std::vector<types::fe_index> correct_type_indices(active_fe_indices.size());
-  std::copy(active_fe_indices.begin(),
-            active_fe_indices.end(),
-            correct_type_indices.begin());
-
-  set_active_fe_indices(correct_type_indices);
+  set_active_fe_indices(std::vector<types::fe_index>(active_fe_indices.begin(),
+                                                     active_fe_indices.end()));
 }
 
 
@@ -3173,14 +3169,9 @@ void
 DoFHandler<dim, spacedim>::get_active_fe_indices(
   std::vector<unsigned int> &active_fe_indices) const
 {
-  const std::vector<types::fe_index> correct_type_indices =
-    get_active_fe_indices();
+  const std::vector<types::fe_index> indices = get_active_fe_indices();
 
-  active_fe_indices.resize(correct_type_indices.size());
-
-  std::copy(correct_type_indices.begin(),
-            correct_type_indices.end(),
-            active_fe_indices.begin());
+  active_fe_indices.assign(indices.begin(), indices.end());
 }
 
 

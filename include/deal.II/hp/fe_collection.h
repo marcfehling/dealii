@@ -358,6 +358,31 @@ namespace hp
     hp_quad_dof_identities(const std::set<types::fe_index> &fes,
                            const unsigned int               face_no = 0) const;
 
+    /**
+     * @copydoc hp_vertex_dof_identities()
+     *
+     * @deprecated Use hp_vertex_dof_identities() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<std::map<unsigned int, unsigned int>>
+    hp_vertex_dof_identities(const std::set<unsigned int> &fes) const;
+
+    /**
+     * @copydoc hp_line_dof_identities()
+     *
+     * @deprecated Use hp_line_dof_identities() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<std::map<unsigned int, unsigned int>>
+    hp_line_dof_identities(const std::set<unsigned int> &fes) const;
+
+    /**
+     * @copydoc hp_quad_dof_identities()
+     *
+     * @deprecated Use hp_quad_dof_identities() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<std::map<unsigned int, unsigned int>>
+    hp_quad_dof_identities(const std::set<unsigned int> &fes,
+                           const unsigned int            face_no = 0) const;
+
 
     /**
      * Return the indices of finite elements in this FECollection that dominate
@@ -533,6 +558,60 @@ namespace hp
     types::fe_index
     find_dominated_fe_extended(const std::set<types::fe_index> &fes,
                                const unsigned int codim = 0) const;
+
+    /**
+     * @copydoc find_common_fes()
+     *
+     * @deprecated Use find_common_fes() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY std::set<unsigned int>
+                             find_common_fes(const std::set<unsigned int> &fes,
+                                             const unsigned int            codim = 0) const;
+
+    /**
+     * @copydoc find_enclosing_fes()
+     *
+     * @deprecated Use find_enclosing_fes() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY std::set<unsigned int>
+    find_enclosing_fes(const std::set<unsigned int> &fes,
+                       const unsigned int            codim = 0) const;
+
+    /**
+     * @copydoc find_dominating_fe()
+     *
+     * @deprecated Use find_dominating_fe() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominating_fe(const std::set<unsigned int> &fes,
+                       const unsigned int            codim = 0) const;
+
+    /**
+     * @copydoc find_dominated_fe()
+     *
+     * @deprecated Use find_dominated_fe() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominated_fe(const std::set<unsigned int> &fes,
+                      const unsigned int            codim = 0) const;
+
+    /**
+     * @copydoc find_dominating_fe_extended()
+     *
+     * @deprecated Use find_dominating_fe_extended() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominating_fe_extended(const std::set<unsigned int> &fes,
+                                const unsigned int            codim = 0) const;
+
+    /**
+     * @copydoc find_dominated_fe_extended()
+     *
+     * @deprecated Use find_dominated_fe_extended() with the types::fe_index datatype.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominated_fe_extended(const std::set<unsigned int> &fes,
+                               const unsigned int            codim = 0) const;
 
     /**
      * @}

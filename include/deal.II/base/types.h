@@ -216,15 +216,19 @@ namespace numbers
     static_cast<types::global_dof_index>(-1);
 
   /**
-   * An invalid value for active and future fe indices.
-   */
-  const types::fe_index invalid_fe_index = static_cast<types::fe_index>(-1);
-
-  /**
    * An invalid value for indices of degrees of freedom.
    */
   const types::global_dof_index invalid_dof_index =
     static_cast<types::global_dof_index>(-1);
+
+  /**
+   * An invalid value for finite element indices.
+   *
+   * Used for active FE indices on artificial cells that do not have a finite
+   * element assigned. Also used for future FE indices when no future finite
+   * element is set.
+   */
+  const types::fe_index invalid_fe_index = static_cast<types::fe_index>(-1);
 
   /**
    * An invalid value for coarse cell ids. See the glossary

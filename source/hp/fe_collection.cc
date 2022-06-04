@@ -866,6 +866,150 @@ namespace hp
 
     return nb;
   }
+
+
+
+  //
+  // Deprecated funtions
+  //
+
+  template <int dim, int spacedim>
+  std::vector<std::map<unsigned int, unsigned int>>
+  FECollection<dim, spacedim>::hp_vertex_dof_identities(
+    const std::set<unsigned int> &fes) const
+  {
+    std::vector<std::map<types::fe_index, unsigned int>> result =
+      hp_vertex_dof_identities(
+        std::set<types::fe_index>(fes.begin(), fes.end()));
+
+    std::vector<std::map<unsigned int, unsigned int>> converted_result;
+    converted_result.reserve(result.size());
+
+    for (const auto &res : result)
+      converted_result.emplace_back(res.begin(), res.end());
+    AssertDimension(result.size(), converted_result.size());
+
+    return converted_result;
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::vector<std::map<unsigned int, unsigned int>>
+  FECollection<dim, spacedim>::hp_line_dof_identities(
+    const std::set<unsigned int> &fes) const
+  {
+    std::vector<std::map<types::fe_index, unsigned int>> result =
+      hp_line_dof_identities(std::set<types::fe_index>(fes.begin(), fes.end()));
+
+    std::vector<std::map<unsigned int, unsigned int>> converted_result;
+    converted_result.reserve(result.size());
+
+    for (const auto &res : result)
+      converted_result.emplace_back(res.begin(), res.end());
+    AssertDimension(result.size(), converted_result.size());
+
+    return converted_result;
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::vector<std::map<unsigned int, unsigned int>>
+  FECollection<dim, spacedim>::hp_quad_dof_identities(
+    const std::set<unsigned int> &fes,
+    const unsigned int            face_no) const
+  {
+    std::vector<std::map<types::fe_index, unsigned int>> result =
+      hp_quad_dof_identities(std::set<types::fe_index>(fes.begin(), fes.end()),
+                             face_no);
+
+    std::vector<std::map<unsigned int, unsigned int>> converted_result;
+    converted_result.reserve(result.size());
+
+    for (const auto &res : result)
+      converted_result.emplace_back(res.begin(), res.end());
+    AssertDimension(result.size(), converted_result.size());
+
+    return converted_result;
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::set<unsigned int>
+  FECollection<dim, spacedim>::find_common_fes(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    std::set<types::fe_index> result =
+      find_common_fes(std::set<types::fe_index>(fes.begin(), fes.end()), codim);
+    return {result.begin(), result.end()};
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::set<unsigned int>
+  FECollection<dim, spacedim>::find_enclosing_fes(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    std::set<types::fe_index> result =
+      find_enclosing_fes(std::set<types::fe_index>(fes.begin(), fes.end()),
+                         codim);
+    return {result.begin(), result.end()};
+  }
+
+
+
+  template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominating_fe(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return static_cast<unsigned int>(
+      find_dominating_fe(std::set<types::fe_index>(fes.begin(), fes.end()),
+                         codim));
+  }
+
+
+
+  template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominated_fe(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return static_cast<unsigned int>(
+      find_dominated_fe(std::set<types::fe_index>(fes.begin(), fes.end()),
+                        codim));
+  }
+
+
+
+  template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominating_fe_extended(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return static_cast<unsigned int>(find_dominating_fe_extended(
+      std::set<types::fe_index>(fes.begin(), fes.end()), codim));
+  }
+
+
+
+  template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominated_fe_extended(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return static_cast<unsigned int>(find_dominated_fe_extended(
+      std::set<types::fe_index>(fes.begin(), fes.end()), codim));
+  }
 } // namespace hp
 
 

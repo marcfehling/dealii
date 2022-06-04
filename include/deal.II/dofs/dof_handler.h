@@ -1855,7 +1855,7 @@ namespace internal
        * consistency of future FE indices.
        */
       template <int dim, int spacedim = dim>
-      unsigned int
+      types::fe_index
       dominated_future_fe_on_children(
         const typename DoFHandler<dim, spacedim>::cell_iterator &parent);
 

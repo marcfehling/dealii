@@ -35,7 +35,7 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : DIMENSIONS)
                                         deal_II_space_dimension>(
             DoFHandler<deal_II_dimension, deal_II_space_dimension> &);
 
-          template unsigned int
+          template types::fe_index
           dominated_future_fe_on_children<deal_II_dimension,
                                           deal_II_space_dimension>(
             const typename DoFHandler<deal_II_dimension,
