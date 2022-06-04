@@ -2096,7 +2096,7 @@ namespace parallel
           attached_count_variable >> n_coarse_cells;
       }
 
-      AssertThrow(version == 4,
+      AssertThrow(version == 5,
                   ExcMessage("Incompatible version found in .info file."));
       Assert(this->n_cells(0) == n_coarse_cells,
              ExcMessage("Number of coarse cells differ!"));
