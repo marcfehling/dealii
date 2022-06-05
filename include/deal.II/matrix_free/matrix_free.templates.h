@@ -99,14 +99,14 @@ template <int dim, typename Number, typename VectorizedArrayType>
 std::pair<unsigned int, unsigned int>
 MatrixFree<dim, Number, VectorizedArrayType>::create_cell_subrange_hp_by_index(
   const std::pair<unsigned int, unsigned int> &range,
-  const unsigned int                           fe_index,
+  const types::fe_index                        fe_index,
   const unsigned int                           dof_handler_index) const
 {
   if (dof_info[dof_handler_index].max_fe_index == 0)
     return range;
 
   AssertIndexRange(fe_index, dof_info[dof_handler_index].max_fe_index);
-  const std::vector<unsigned int> &fe_indices =
+  const std::vector<types::fe_index> &fe_indices =
     dof_info[dof_handler_index].cell_active_fe_index;
 
   if (fe_indices.empty() == true ||
@@ -149,9 +149,9 @@ namespace
   class FaceRangeCompartor
   {
   public:
-    FaceRangeCompartor(const std::vector<unsigned int> &fe_indices,
-                       const bool                       include,
-                       const bool                       only_face_type)
+    FaceRangeCompartor(const std::vector<types::fe_index> &fe_indices,
+                       const bool                          include,
+                       const bool                          only_face_type)
       : fe_indices(fe_indices)
       , include(include)
       , only_face_type(only_face_type)
@@ -160,8 +160,8 @@ namespace
     template <int vectorization_width>
     bool
     operator()(const internal::MatrixFreeFunctions::FaceToCellTopology<
-                 vectorization_width> &           face,
-               const std::array<unsigned int, 2> &fe_index)
+                 vectorization_width> &              face,
+               const std::array<types::fe_index, 2> &fe_index)
     {
       const unsigned int face_type = face.face_type;
 
@@ -177,8 +177,8 @@ namespace
     template <int vectorization_width>
     bool
     operator()(const internal::MatrixFreeFunctions::FaceToCellTopology<
-                 vectorization_width> &           face,
-               const std::array<unsigned int, 3> &fe_index)
+                 vectorization_width> &              face,
+               const std::array<types::fe_index, 3> &fe_index)
     {
       const unsigned int face_type = face.face_type;
 
@@ -194,9 +194,9 @@ namespace
     }
 
   private:
-    const std::vector<unsigned int> &fe_indices;
-    const bool                       include;
-    const bool                       only_face_type;
+    const std::vector<types::fe_index> &fe_indices;
+    const bool                          include;
+    const bool                          only_face_type;
   };
 } // namespace
 
@@ -564,7 +564,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
                   task_info.cell_partition_data[i + 1]};
 
                 if (range.second > range.first)
-                  for (unsigned int i = 0; i < this->n_active_fe_indices(); ++i)
+                  for (types::fe_index i = 0; i < this->n_active_fe_indices();
+                       ++i)
                     {
                       const auto cell_subrange =
                         this->create_cell_subrange_hp_by_index(range, i);
@@ -594,8 +595,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
           const auto create_inner_face_subrange_hp_by_index =
             [&](const std::pair<unsigned int, unsigned int> &range,
                 const unsigned int                           face_type,
-                const unsigned int                           fe_index_interior,
-                const unsigned int                           fe_index_exterior,
+                const types::fe_index                        fe_index_interior,
+                const types::fe_index                        fe_index_exterior,
                 const unsigned int                           dof_handler_index =
                   0) -> std::pair<unsigned int, unsigned int> {
             const unsigned int n_face_types =
@@ -611,7 +612,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
                              dof_info[dof_handler_index].max_fe_index);
             AssertIndexRange(fe_index_exterior,
                              dof_info[dof_handler_index].max_fe_index);
-            const std::vector<unsigned int> &fe_indices =
+            const std::vector<types::fe_index> &fe_indices =
               dof_info[dof_handler_index].cell_active_fe_index;
             if (fe_indices.empty() == true && n_face_types == 1)
               return range;
@@ -661,9 +662,10 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
                     for (unsigned int t = 0;
                          t < std::max<unsigned int>(dim - 1, 1);
                          ++t)
-                      for (unsigned int i = 0; i < this->n_active_fe_indices();
+                      for (types::fe_index i = 0;
+                           i < this->n_active_fe_indices();
                            ++i)
-                        for (unsigned int j = 0;
+                        for (types::fe_index j = 0;
                              j < this->n_active_fe_indices();
                              ++j)
                           {
@@ -698,7 +700,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
           const auto create_boundary_face_subrange_hp_by_index =
             [&](const std::pair<unsigned int, unsigned int> &range,
                 const unsigned int                           face_type,
-                const unsigned int                           fe_index,
+                const types::fe_index                        fe_index,
                 const unsigned int                           dof_handler_index =
                   0) -> std::pair<unsigned int, unsigned int> {
             const unsigned int n_face_types =
@@ -712,7 +714,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
 
             AssertIndexRange(fe_index,
                              dof_info[dof_handler_index].max_fe_index);
-            const std::vector<unsigned int> &fe_indices =
+            const std::vector<types::fe_index> &fe_indices =
               dof_info[dof_handler_index].cell_active_fe_index;
             if (fe_indices.empty() == true && n_face_types == 1)
               return range;
@@ -761,7 +763,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::internal_reinit(
                     for (unsigned int t = 0;
                          t < std::max<unsigned int>(dim - 1, 1);
                          ++t)
-                      for (unsigned int i = 0; i < this->n_active_fe_indices();
+                      for (types::fe_index = 0; i < this->n_active_fe_indices();
                            ++i)
                         {
                           const auto cell_subrange =
@@ -1158,7 +1160,7 @@ namespace internal
 
         dof_info[no].component_dof_indices_offset.clear();
         dof_info[no].component_dof_indices_offset.resize(fes.size());
-        for (unsigned int fe_index = 0; fe_index < fes.size(); ++fe_index)
+        for (types::fe_index fe_index = 0; fe_index < fes.size(); ++fe_index)
           {
             const FiniteElement<dim> &fe = fes[fe_index];
             // cache number of finite elements and dofs_per_cell
@@ -1298,7 +1300,7 @@ namespace internal
                   cell_level_index[counter].first,
                   cell_level_index[counter].second,
                   dofh);
-                const unsigned int fe_index =
+                const types::fe_index fe_index =
                   dofh->get_fe_collection().size() > 1 ?
                     cell_it->active_fe_index() :
                     0;

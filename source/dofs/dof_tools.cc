@@ -215,7 +215,7 @@ namespace DoFTools
       // component that degree of freedom 'd' belongs to
       std::vector<std::vector<unsigned char>> local_component_association(
         fe_collection.size());
-      for (unsigned int f = 0; f < fe_collection.size(); ++f)
+      for (types::fe_index f = 0; f < fe_collection.size(); ++f)
         {
           const FiniteElement<dim, spacedim> &fe = fe_collection[f];
           local_component_association[f] =
@@ -227,8 +227,8 @@ namespace DoFTools
       for (const auto &c :
            dof.active_cell_iterators() | IteratorFilters::LocallyOwnedCell())
         {
-          const unsigned int fe_index      = c->active_fe_index();
-          const unsigned int dofs_per_cell = c->get_fe().n_dofs_per_cell();
+          const types::fe_index fe_index      = c->active_fe_index();
+          const unsigned int    dofs_per_cell = c->get_fe().n_dofs_per_cell();
           indices.resize(dofs_per_cell);
           c->get_dof_indices(indices);
           for (unsigned int i = 0; i < dofs_per_cell; ++i)
@@ -267,7 +267,7 @@ namespace DoFTools
       // degree of freedom 'd' belongs to
       std::vector<std::vector<unsigned char>> local_block_association(
         fe_collection.size());
-      for (unsigned int f = 0; f < fe_collection.size(); ++f)
+      for (types::fe_index f = 0; f < fe_collection.size(); ++f)
         {
           const FiniteElement<dim, spacedim> &fe = fe_collection[f];
           local_block_association[f].resize(fe.n_dofs_per_cell(),
@@ -287,7 +287,7 @@ namespace DoFTools
       for (const auto &cell : dof.active_cell_iterators())
         if (cell->is_locally_owned())
           {
-            const unsigned int fe_index      = cell->active_fe_index();
+            const types::fe_index fe_index   = cell->active_fe_index();
             const unsigned int dofs_per_cell = cell->get_fe().n_dofs_per_cell();
             indices.resize(dofs_per_cell);
             cell->get_dof_indices(indices);
@@ -315,7 +315,7 @@ namespace DoFTools
     AssertDimension(dof_data.size(), dof_handler.n_dofs());
     const auto &fe_collection = dof_handler.get_fe_collection();
     AssertIndexRange(component, fe_collection.n_components());
-    for (unsigned int i = 0; i < fe_collection.size(); ++i)
+    for (types::fe_index i = 0; i < fe_collection.size(); ++i)
       {
         Assert(fe_collection[i].is_primitive() == true,
                typename FiniteElement<dim>::ExcFENotPrimitive());
@@ -1301,7 +1301,7 @@ namespace DoFTools
     {
       unsigned int n_constant_modes              = 0;
       int          first_non_empty_constant_mode = -1;
-      for (unsigned int f = 0; f < fe_collection.size(); ++f)
+      for (types::fe_index f = 0; f < fe_collection.size(); ++f)
         {
           std::pair<Table<2, bool>, std::vector<unsigned int>> data =
             fe_collection[f].get_constant_modes();
@@ -1824,7 +1824,7 @@ namespace DoFTools
       // assert that all elements in the collection have the same structure
       // (base elements and multiplicity, components per base element) and
       // then simply call the function above
-      for (unsigned int fe = 1; fe < fe_collection.size(); ++fe)
+      for (types::fe_index fe = 1; fe < fe_collection.size(); ++fe)
         {
           Assert(fe_collection[fe].n_components() ==
                    fe_collection[0].n_components(),
@@ -1878,7 +1878,7 @@ namespace DoFTools
       all_elements_are_primitive(
         const dealii::hp::FECollection<dim, spacedim> &fe_collection)
       {
-        for (unsigned int i = 0; i < fe_collection.size(); ++i)
+        for (types::fe_index i = 0; i < fe_collection.size(); ++i)
           if (fe_collection[i].is_primitive() == false)
             return false;
 
@@ -2007,7 +2007,7 @@ namespace DoFTools
     else
       Assert(target_block.size() == n_blocks,
              ExcDimensionMismatch(target_block.size(), n_blocks));
-    for (unsigned int f = 1; f < fe_collection.size(); ++f)
+    for (types::fe_index f = 1; f < fe_collection.size(); ++f)
       Assert(fe_collection[0].n_blocks() == fe_collection[f].n_blocks(),
              ExcMessage("This function can only work if all elements in a "
                         "collection have the same number of blocks."));
@@ -2030,7 +2030,7 @@ namespace DoFTools
 
     // Loop over the elements of the collection, but really only consider
     // the last element (see #9271)
-    for (unsigned int this_fe = fe_collection.size() - 1;
+    for (types::fe_index this_fe = fe_collection.size() - 1;
          this_fe < fe_collection.size();
          ++this_fe)
       {
@@ -2167,7 +2167,7 @@ namespace DoFTools
           dof_handler.get_fe_collection();
         hp::QCollection<dim> q_coll_dummy;
 
-        for (unsigned int fe_index = 0; fe_index < fe_collection.size();
+        for (types::fe_index fe_index = 0; fe_index < fe_collection.size();
              ++fe_index)
           {
             // check whether every FE in the collection has support points
@@ -2412,7 +2412,7 @@ namespace DoFTools
           dof_handler.get_fe_collection();
         tables_by_block.resize(fe_collection.size());
 
-        for (unsigned int f = 0; f < fe_collection.size(); ++f)
+        for (types::fe_index f = 0; f < fe_collection.size(); ++f)
           {
             const FiniteElement<dim, spacedim> &fe = fe_collection[f];
 

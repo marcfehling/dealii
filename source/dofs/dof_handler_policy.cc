@@ -129,7 +129,7 @@ namespace internal
 
 
         using DoFIdentities =
-          std::vector<std::pair<unsigned int, unsigned int>>;
+          std::vector<std::pair<types::fe_index, unsigned int>>;
 
 
         /**
@@ -291,7 +291,7 @@ namespace internal
             if (dof_handler.get_triangulation()
                   .get_used_vertices()[vertex_index] == true)
               {
-                const unsigned int n_active_fe_indices =
+                const types::fe_index n_active_fe_indices =
                   dealii::internal::DoFAccessorImplementation::Implementation::
                     n_active_fe_indices(dof_handler,
                                         0,
@@ -483,15 +483,16 @@ namespace internal
                   const auto line = cell->line(l);
                   line->set_user_flag();
 
-                  unsigned int unique_sets_of_dofs =
+                  types::fe_index unique_sets_of_dofs =
                     line->n_active_fe_indices();
 
                   // do a first loop over all sets of dofs and do identity
                   // uniquification
-                  const unsigned int n_active_fe_indices =
+                  const types::fe_index n_active_fe_indices =
                     line->n_active_fe_indices();
-                  for (unsigned int f = 0; f < n_active_fe_indices; ++f)
-                    for (unsigned int g = f + 1; g < n_active_fe_indices; ++g)
+                  for (types::fe_index f = 0; f < n_active_fe_indices; ++f)
+                    for (types::fe_index g = f + 1; g < n_active_fe_indices;
+                         ++g)
                       {
                         const types::fe_index fe_index_1 =
                                                 line->nth_active_fe_index(f),
@@ -1147,7 +1148,7 @@ namespace internal
                    .get_used_vertices()[vertex_index] == true) &&
                 (include_vertex[vertex_index] == true))
               {
-                const unsigned int n_active_fe_indices =
+                const types::fe_index n_active_fe_indices =
                   dealii::internal::DoFAccessorImplementation::Implementation::
                     n_active_fe_indices(dof_handler,
                                         0,
@@ -1332,15 +1333,16 @@ namespace internal
                   const auto line = cell->line(l);
                   line->clear_user_flag();
 
-                  unsigned int unique_sets_of_dofs =
+                  types::fe_index unique_sets_of_dofs =
                     line->n_active_fe_indices();
 
                   // do a first loop over all sets of dofs and do identity
                   // uniquification
-                  const unsigned int n_active_fe_indices =
+                  const types::fe_index n_active_fe_indices =
                     line->n_active_fe_indices();
-                  for (unsigned int f = 0; f < n_active_fe_indices; ++f)
-                    for (unsigned int g = f + 1; g < n_active_fe_indices; ++g)
+                  for (types::fe_index f = 0; f < n_active_fe_indices; ++f)
+                    for (types::fe_index g = f + 1; g < n_active_fe_indices;
+                         ++g)
                       {
                         const types::fe_index fe_index_1 =
                                                 line->nth_active_fe_index(f),
@@ -1963,7 +1965,7 @@ namespace internal
                vertex_index < dof_handler.get_triangulation().n_vertices();
                ++vertex_index)
             {
-              const unsigned int n_active_fe_indices =
+              const types::fe_index n_active_fe_indices =
                 dealii::internal::DoFAccessorImplementation::Implementation::
                   n_active_fe_indices(dof_handler,
                                       0,
@@ -1982,7 +1984,7 @@ namespace internal
               // indices if it is located on an artificial cell and not adjacent
               // to a ghost cell, but in that case there is simply nothing for
               // us to do
-              for (unsigned int f = 0; f < n_active_fe_indices; ++f)
+              for (types::fe_index f = 0; f < n_active_fe_indices; ++f)
                 {
                   const types::fe_index fe_index =
                     dealii::internal::DoFAccessorImplementation::
@@ -2207,10 +2209,10 @@ namespace internal
                       const auto line = cell->line(l);
                       line->set_user_flag();
 
-                      const unsigned int n_active_fe_indices =
+                      const types::fe_index n_active_fe_indices =
                         line->n_active_fe_indices();
 
-                      for (unsigned int f = 0; f < n_active_fe_indices; ++f)
+                      for (types::fe_index f = 0; f < n_active_fe_indices; ++f)
                         {
                           const types::fe_index fe_index =
                             line->nth_active_fe_index(f);
@@ -2316,10 +2318,10 @@ namespace internal
                       const auto line = cell->line(l);
                       line->set_user_flag();
 
-                      const unsigned int n_active_fe_indices =
+                      const types::fe_index n_active_fe_indices =
                         line->n_active_fe_indices();
 
-                      for (unsigned int f = 0; f < n_active_fe_indices; ++f)
+                      for (types::fe_index f = 0; f < n_active_fe_indices; ++f)
                         {
                           const types::fe_index fe_index =
                             line->nth_active_fe_index(f);
@@ -2394,10 +2396,10 @@ namespace internal
                       const auto quad = cell->quad(q);
                       quad->set_user_flag();
 
-                      const unsigned int n_active_fe_indices =
+                      const types::fe_index n_active_fe_indices =
                         quad->n_active_fe_indices();
 
-                      for (unsigned int f = 0; f < n_active_fe_indices; ++f)
+                      for (types::fe_index f = 0; f < n_active_fe_indices; ++f)
                         {
                           const types::fe_index fe_index =
                             quad->nth_active_fe_index(f);

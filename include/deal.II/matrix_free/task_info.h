@@ -294,6 +294,19 @@ namespace internal
        */
       void
       make_thread_graph_partition_partition(
+        const std::vector<types::fe_index> &cell_active_fe_index,
+        DynamicSparsityPattern &            connectivity,
+        std::vector<unsigned int> &         renumbering,
+        std::vector<unsigned char> &        irregular_cells,
+        const bool                          hp_bool);
+
+      /**
+       * @copydoc make_thread_graph_partition_partition()
+       *
+       * @deprecated Use make_thread_graph_partition_partition() with the types::fe_index type.
+       */
+      DEAL_II_DEPRECATED_EARLY void
+      make_thread_graph_partition_partition(
         const std::vector<unsigned int> &cell_active_fe_index,
         DynamicSparsityPattern &         connectivity,
         std::vector<unsigned int> &      renumbering,
@@ -324,6 +337,19 @@ namespace internal
        * @param hp_bool Defines whether we are in hp-mode or not
        */
       void
+      make_thread_graph(
+        const std::vector<types::fe_index> &cell_active_fe_index,
+        DynamicSparsityPattern &            connectivity,
+        std::vector<unsigned int> &         renumbering,
+        std::vector<unsigned char> &        irregular_cells,
+        const bool                          hp_bool);
+
+      /**
+       * @copydoc make_thread_graph()
+       *
+       * @deprecated Use make_thread_graph() with the types::fe_index type.
+       */
+      DEAL_II_DEPRECATED_EARLY void
       make_thread_graph(const std::vector<unsigned int> &cell_active_fe_index,
                         DynamicSparsityPattern &         connectivity,
                         std::vector<unsigned int> &      renumbering,
@@ -358,6 +384,24 @@ namespace internal
        * partition.
        */
       void
+      make_partitioning_within_partitions_post_blocked(
+        const DynamicSparsityPattern &      connectivity,
+        const std::vector<types::fe_index> &cell_active_fe_index,
+        const unsigned int                  partition,
+        const unsigned int                  cluster_size,
+        const bool                          hp_bool,
+        const std::vector<unsigned int> &   cell_partition,
+        const std::vector<unsigned int> &   partition_list,
+        const std::vector<unsigned int> &   partition_size,
+        std::vector<unsigned int> &         partition_partition_list,
+        std::vector<unsigned char> &        irregular_cells);
+
+      /**
+       * @copydoc make_partitioning_within_partitions_post_blocked()
+       *
+       * @deprecated Use make_partitioning_within_partitions_post_blocked() with the types::fe_index type.
+       */
+      DEAL_II_DEPRECATED_EARLY void
       make_partitioning_within_partitions_post_blocked(
         const DynamicSparsityPattern &   connectivity,
         const std::vector<unsigned int> &cell_active_fe_index,

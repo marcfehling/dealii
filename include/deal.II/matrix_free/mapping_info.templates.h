@@ -62,7 +62,7 @@ namespace internal
       const dealii::Triangulation<dim> &                        tria,
       const std::vector<std::pair<unsigned int, unsigned int>> &cells,
       const FaceInfo<VectorizedArrayType::size()> &             face_info,
-      const std::vector<unsigned int> &                         active_fe_index,
+      const std::vector<types::fe_index> &                      active_fe_index,
       const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping,
       const std::vector<dealii::hp::QCollection<dim>> &          quad,
       const UpdateFlags update_flags_cells,
@@ -104,7 +104,7 @@ namespace internal
 
       for (unsigned int my_q = 0; my_q < quad.size(); ++my_q)
         {
-          const unsigned int n_hp_quads = quad[my_q].size();
+          const types::fe_index n_hp_quads = quad[my_q].size();
           AssertIndexRange(0, n_hp_quads);
 
           const unsigned int scale = std::max<unsigned int>(1, dim - 1);
@@ -115,7 +115,7 @@ namespace internal
           face_data_by_cells[my_q].descriptor.resize(n_hp_quads * scale);
           reference_cell_types[my_q].resize(n_hp_quads);
 
-          for (unsigned int hpq = 0; hpq < n_hp_quads; ++hpq)
+          for (types::fe_index hpq = 0; hpq < n_hp_quads; ++hpq)
             {
               bool flag = quad[my_q][hpq].is_tensor_product();
 
@@ -197,11 +197,40 @@ namespace internal
 
     template <int dim, typename Number, typename VectorizedArrayType>
     void
-    MappingInfo<dim, Number, VectorizedArrayType>::update_mapping(
+    MappingInfo<dim, Number, VectorizedArrayType>::initialize(
       const dealii::Triangulation<dim> &                        tria,
       const std::vector<std::pair<unsigned int, unsigned int>> &cells,
       const FaceInfo<VectorizedArrayType::size()> &             face_info,
       const std::vector<unsigned int> &                         active_fe_index,
+      const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping,
+      const std::vector<dealii::hp::QCollection<dim>> &          quad,
+      const UpdateFlags update_flags_cells,
+      const UpdateFlags update_flags_boundary_faces,
+      const UpdateFlags update_flags_inner_faces,
+      const UpdateFlags update_flags_faces_by_cells)
+    {
+      initialize(tria,
+                 cells,
+                 face_info,
+                 std::vector<types::fe_index>(active_fe_index.begin(),
+                                              active_fe_index.end()),
+                 mapping,
+                 quad,
+                 update_flags_cells,
+                 update_flags_boundary_faces,
+                 update_flags_inner_faces,
+                 update_flags_faces_by_cells);
+    }
+
+
+
+    template <int dim, typename Number, typename VectorizedArrayType>
+    void
+    MappingInfo<dim, Number, VectorizedArrayType>::update_mapping(
+      const dealii::Triangulation<dim> &                        tria,
+      const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+      const FaceInfo<VectorizedArrayType::size()> &             face_info,
+      const std::vector<types::fe_index> &                      active_fe_index,
       const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping)
     {
       AssertDimension(cells.size() / VectorizedArrayType::size(),
@@ -229,6 +258,25 @@ namespace internal
             tria, cells, face_info.faces, active_fe_index, *mapping);
           initialize_faces_by_cells(tria, cells, *mapping);
         }
+    }
+
+
+
+    template <int dim, typename Number, typename VectorizedArrayType>
+    void
+    MappingInfo<dim, Number, VectorizedArrayType>::update_mapping(
+      const dealii::Triangulation<dim> &                        tria,
+      const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+      const FaceInfo<VectorizedArrayType::size()> &             face_info,
+      const std::vector<types::fe_index> &                      active_fe_index,
+      const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping)
+    {
+      update_mapping(tria,
+                     cells,
+                     face_info,
+                     std::vector<types::fe_index>(active_fe_index.begin(),
+                                                  active_fe_index.end()),
+                     mapping);
     }
 
 
@@ -596,7 +644,7 @@ namespace internal
         const std::pair<unsigned int, unsigned int>               cell_range,
         const dealii::Triangulation<dim> &                        tria,
         const std::vector<std::pair<unsigned int, unsigned int>> &cells,
-        const std::vector<unsigned int> &              active_fe_index,
+        const std::vector<types::fe_index> &           active_fe_index,
         const dealii::hp::MappingCollection<dim> &     mapping,
         MappingInfo<dim, Number, VectorizedArrayType> &mapping_info,
         std::pair<
@@ -635,7 +683,7 @@ namespace internal
         std::vector<std::vector<std::shared_ptr<dealii::FEValues<dim>>>>
           fe_values(mapping_info.cell_data.size());
 
-        const unsigned int max_active_fe_index =
+        const types::fe_index max_active_fe_index =
           active_fe_index.size() > 0 ?
             *std::max_element(active_fe_index.begin(), active_fe_index.end()) :
             0;
@@ -662,12 +710,12 @@ namespace internal
               // for vectorization_width cells, and then find the most
               // general type of cell for appropriate vectorized formats. then
               // fill this data in
-              const unsigned int fe_index =
+              const types::fe_index fe_index =
                 active_fe_index.size() > 0 ? active_fe_index[cell] : 0;
-              const unsigned int hp_quad_index =
+              const types::fe_index hp_quad_index =
                 mapping_info.cell_data[my_q].descriptor.size() == 1 ? 0 :
                                                                       fe_index;
-              const unsigned int hp_mapping_index =
+              const types::fe_index hp_mapping_index =
                 mapping.size() == 1 ? 0 : fe_index;
               const unsigned int n_q_points = mapping_info.cell_data[my_q]
                                                 .descriptor[hp_quad_index]
@@ -1274,7 +1322,7 @@ namespace internal
     MappingInfo<dim, Number, VectorizedArrayType>::initialize_cells(
       const dealii::Triangulation<dim> &                        tria,
       const std::vector<std::pair<unsigned int, unsigned int>> &cells,
-      const std::vector<unsigned int> &                         active_fe_index,
+      const std::vector<types::fe_index> &                      active_fe_index,
       const dealii::hp::MappingCollection<dim> &                mapping)
     {
       const unsigned int n_cells = cells.size();
@@ -1430,6 +1478,23 @@ namespace internal
 
 
 
+    template <int dim, typename Number, typename VectorizedArrayType>
+    void
+    MappingInfo<dim, Number, VectorizedArrayType>::initialize_cells(
+      const dealii::Triangulation<dim> &                        tria,
+      const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+      const std::vector<unsigned int> &                         active_fe_index,
+      const dealii::hp::MappingCollection<dim> &                mapping)
+    {
+      initialize_cells(tria,
+                       cells,
+                       std::vector<types::fe_index>(active_fe_index.begin(),
+                                                    active_fe_index.end()),
+                       mapping);
+    }
+
+
+
     /* ------------------------- initialization of faces ------------------- */
 
     // Namespace with implementation of extraction of values on face
@@ -1518,7 +1583,7 @@ namespace internal
         const std::vector<std::pair<unsigned int, unsigned int>> &cells,
         const std::vector<FaceToCellTopology<VectorizedArrayType::size()>>
           &                                            faces,
-        const std::vector<unsigned int> &              active_fe_index,
+        const std::vector<types::fe_index> &           active_fe_index,
         const dealii::hp::MappingCollection<dim> &     mapping_in,
         MappingInfo<dim, Number, VectorizedArrayType> &mapping_info,
         std::pair<
@@ -1531,16 +1596,16 @@ namespace internal
              my_q < mapping_info.reference_cell_types.size();
              ++my_q)
           {
-            const unsigned int n_hp_quads =
+            const types::fe_index n_hp_quads =
               mapping_info.reference_cell_types[my_q].size();
             dummy_fe[my_q].resize(n_hp_quads);
 
-            for (unsigned int hpq = 0; hpq < n_hp_quads; ++hpq)
+            for (types::fe_index hpq = 0; hpq < n_hp_quads; ++hpq)
               dummy_fe[my_q][hpq] = std::make_shared<FE_Nothing<dim>>(
                 mapping_info.reference_cell_types[my_q][hpq]);
           }
 
-        const unsigned int max_active_fe_index =
+        const types::fe_index max_active_fe_index =
           active_fe_index.size() > 0 ?
             *std::max_element(active_fe_index.begin(), active_fe_index.end()) :
             0;
@@ -1578,15 +1643,15 @@ namespace internal
               // indices so that the active FE index of the interior side of the
               // face batch is the same as the FE index of the interior side of
               // its first entry.
-              const unsigned int fe_index =
+              const types::fe_index fe_index =
                 active_fe_index.size() > 0 ?
                   active_fe_index[faces[face].cells_interior[0] /
                                   VectorizedArrayType::size()] :
                   0;
-              const unsigned int hp_quad_index =
+              const types::fe_index hp_quad_index =
                 mapping_info.cell_data[my_q].descriptor.size() == 1 ? 0 :
                                                                       fe_index;
-              const unsigned int hp_mapping_index =
+              const types::fe_index hp_mapping_index =
                 mapping_in.size() == 1 ? 0 : fe_index;
 
               const auto &mapping = mapping_in[hp_mapping_index];
@@ -1765,17 +1830,17 @@ namespace internal
                           // the exterior side of the face batch is the same as
                           // the FE index of the exterior side of its first
                           // entry.
-                          const unsigned int fe_index =
+                          const types::fe_index fe_index =
                             active_fe_index.size() > 0 ?
                               active_fe_index[faces[face].cells_exterior[0] /
                                               VectorizedArrayType::size()] :
                               0;
-                          const unsigned int hp_quad_index =
+                          const types::fe_index hp_quad_index =
                             mapping_info.cell_data[my_q].descriptor.size() ==
                                 1 ?
                               0 :
                               fe_index;
-                          const unsigned int hp_mapping_index =
+                          const types::fe_index hp_mapping_index =
                             mapping_in.size() == 1 ? 0 : fe_index;
 
                           const auto &mapping = mapping_in[hp_mapping_index];
@@ -2334,7 +2399,7 @@ namespace internal
       const dealii::Triangulation<dim> &                                  tria,
       const std::vector<std::pair<unsigned int, unsigned int>> &          cells,
       const std::vector<FaceToCellTopology<VectorizedArrayType::size()>> &faces,
-      const std::vector<unsigned int> &         active_fe_index,
+      const std::vector<types::fe_index> &      active_fe_index,
       const dealii::hp::MappingCollection<dim> &mapping)
     {
       face_type.resize(faces.size(), general);
@@ -2521,6 +2586,25 @@ namespace internal
               face_data[my_q]);
           tasks.join_all();
         }
+    }
+
+
+
+    template <int dim, typename Number, typename VectorizedArrayType>
+    void
+    MappingInfo<dim, Number, VectorizedArrayType>::initialize_faces(
+      const dealii::Triangulation<dim> &                                  tria,
+      const std::vector<std::pair<unsigned int, unsigned int>> &          cells,
+      const std::vector<FaceToCellTopology<VectorizedArrayType::size()>> &faces,
+      const std::vector<unsigned int> &         active_fe_index,
+      const dealii::hp::MappingCollection<dim> &mapping)
+    {
+      initialize_faces(tria,
+                       cells,
+                       faces,
+                       std::vector<types::fe_index>(active_fe_index.begin(),
+                                                    active_fe_index.end()),
+                       mapping);
     }
 
 
@@ -2974,7 +3058,7 @@ namespace internal
 
       FE_Nothing<dim> dummy_fe;
       // currently no hp-indices implemented
-      const unsigned int fe_index = 0;
+      const types::fe_index fe_index = 0;
       std::vector<std::vector<std::shared_ptr<dealii::FEFaceValues<dim>>>>
         fe_face_values(face_data_by_cells.size());
       for (unsigned int i = 0; i < fe_face_values.size(); ++i)

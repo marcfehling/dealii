@@ -3133,21 +3133,21 @@ namespace GridTools
    * @code
    * using active_cell_iterator =
    *   typename dealii::DoFHandler<dim,spacedim>::active_cell_iterator;
-   * auto pack = [] (const active_cell_iterator &cell) -> unsigned int
+   * auto pack = [] (const active_cell_iterator &cell) -> types::fe_index
    *             {
    *               return cell->active_fe_index();
    *             };
    *
    * auto unpack = [] (const active_cell_iterator &cell,
-   *                   const unsigned int active_fe_index) -> void
+   *                   const types::fe_index active_fe_index) -> void
    *               {
    *                 cell->set_active_fe_index(active_fe_index);
    *               };
    *
    * GridTools::exchange_cell_data_to_ghosts<
-   *   unsigned int, dealii::DoFHandler<dim,spacedim>> (dof_handler,
-   *                                                    pack,
-   *                                                    unpack);
+   *   types::fe_index, dealii::DoFHandler<dim,spacedim>> (dof_handler,
+   *                                                       pack,
+   *                                                       unpack);
    * @endcode
    *
    * You will notice that the @p pack lambda function returns an `unsigned int`,

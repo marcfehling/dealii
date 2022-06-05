@@ -1033,9 +1033,9 @@ namespace VectorTools
       std::pair<unsigned int, unsigned int> base_indices(0, 0);
       if (dynamic_cast<const FESystem<dim> *>(&fe) != nullptr)
         {
-          unsigned int fe_index     = 0;
-          unsigned int fe_index_old = 0;
-          unsigned int i            = 0;
+          types::fe_index fe_index     = 0;
+          types::fe_index fe_index_old = 0;
+          unsigned int    i            = 0;
 
           // Find base element:
           // base_indices.first
@@ -1341,9 +1341,9 @@ namespace VectorTools
       std::pair<unsigned int, unsigned int> base_indices(0, 0);
       if (dynamic_cast<const FESystem<dim> *>(&fe) != nullptr)
         {
-          unsigned int fe_index     = 0;
-          unsigned int fe_index_old = 0;
-          unsigned int i            = 0;
+          types::fe_index fe_index     = 0;
+          types::fe_index fe_index_old = 0;
+          unsigned int    i            = 0;
 
           // Find base element:
           // base_indices.first
@@ -1833,7 +1833,7 @@ namespace VectorTools
 
       // Create face quadrature collection
       hp::QCollection<dim - 1> face_quadrature_collection;
-      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+      for (types::fe_index i = 0; i < fe_collection.size(); ++i)
         {
           const QGauss<dim - 1> reference_face_quadrature(
             2 * fe_collection[i].degree + 1);
@@ -1954,7 +1954,7 @@ namespace VectorTools
               hp::QCollection<dim> edge_quadrature_collection;
 
               // Create equivalent of FEEdgeValues:
-              for (unsigned int i = 0; i < fe_collection.size(); ++i)
+              for (types::fe_index i = 0; i < fe_collection.size(); ++i)
                 {
                   const QGauss<dim - 2> reference_edge_quadrature(
                     2 * fe_collection[i].degree + 1);
@@ -2545,7 +2545,7 @@ namespace VectorTools
     hp::QCollection<dim - 1> face_quadrature_collection;
     hp::QCollection<dim>     quadrature_collection;
 
-    for (unsigned int i = 0; i < fe_collection.size(); ++i)
+    for (types::fe_index i = 0; i < fe_collection.size(); ++i)
       {
         const QGauss<dim - 1> quadrature(fe_collection[i].degree + 1);
 

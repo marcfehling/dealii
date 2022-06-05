@@ -639,7 +639,7 @@ namespace internal
        * get a DoF index on a vertex of the indicated cell.
        */
       template <int dim, int spacedim, int structdim>
-      static unsigned int
+      static types::fe_index
       n_active_fe_indices(const DoFHandler<dim, spacedim> &dof_handler,
                           const unsigned int               obj_level,
                           const unsigned int               obj_index,
@@ -748,7 +748,7 @@ namespace internal
 
         // 3) general entity and hp is used
         std::set<types::fe_index> active_fe_indices;
-        for (unsigned int i = 0;
+        for (types::fe_index i = 0;
              i < n_active_fe_indices(dof_handler, obj_level, obj_index, t);
              ++i)
           active_fe_indices.insert(
@@ -1498,7 +1498,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::set_dof_index(
 
 
 template <int structdim, int dim, int spacedim, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::n_active_fe_indices()
   const
 {
@@ -1513,7 +1513,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::n_active_fe_indices()
 
 
 template <int structdim, int dim, int spacedim, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::nth_active_fe_index(
   const unsigned int n) const
 {
@@ -1534,7 +1534,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::get_active_fe_indices()
   const
 {
   std::set<types::fe_index> active_fe_indices;
-  for (unsigned int i = 0; i < n_active_fe_indices(); ++i)
+  for (types::fe_index i = 0; i < n_active_fe_indices(); ++i)
     active_fe_indices.insert(nth_active_fe_index(i));
   return active_fe_indices;
 }
@@ -2013,7 +2013,7 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::dof_index(
 
 
 template <int spacedim, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFAccessor<0, 1, spacedim, level_dof_access>::n_active_fe_indices() const
 {
   Assert((std::is_same<DoFHandler<1, spacedim>,
@@ -2026,9 +2026,9 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::n_active_fe_indices() const
 
 
 template <int spacedim, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFAccessor<0, 1, spacedim, level_dof_access>::nth_active_fe_index(
-  const unsigned int /*n*/) const
+  const types::fe_index /*n*/) const
 {
   Assert((std::is_same<DoFHandler<1, spacedim>,
                        dealii::DoFHandler<1, spacedim>>::value == true),

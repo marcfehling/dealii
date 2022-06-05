@@ -597,14 +597,14 @@ protected:
   FEEvaluationBase(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face,
-    const unsigned int active_fe_index,
-    const unsigned int active_quad_index,
-    const unsigned int face_type);
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face,
+    const types::fe_index active_fe_index,
+    const types::fe_index active_quad_index,
+    const unsigned int    face_type);
 
   /**
    * Constructor that comes with reduced functionality and works similar as
@@ -787,14 +787,14 @@ protected:
   FEEvaluationAccess(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face  = true,
-    const unsigned int active_fe_index   = numbers::invalid_unsigned_int,
-    const unsigned int active_quad_index = numbers::invalid_unsigned_int,
-    const unsigned int face_type         = numbers::invalid_unsigned_int);
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face  = true,
+    const types::fe_index active_fe_index   = numbers::invalid_fe_index,
+    const types::fe_index active_quad_index = numbers::invalid_fe_index,
+    const unsigned int    face_type         = numbers::invalid_unsigned_int);
 
   /**
    * Constructor with reduced functionality for similar usage of FEEvaluation
@@ -944,14 +944,14 @@ protected:
   FEEvaluationAccess(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face  = true,
-    const unsigned int active_fe_index   = numbers::invalid_unsigned_int,
-    const unsigned int active_quad_index = numbers::invalid_unsigned_int,
-    const unsigned int face_type         = numbers::invalid_unsigned_int);
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face  = true,
+    const types::fe_index active_fe_index   = numbers::invalid_fe_index,
+    const types::fe_index active_quad_index = numbers::invalid_fe_index,
+    const unsigned int    face_type         = numbers::invalid_unsigned_int);
 
   /**
    * Constructor with reduced functionality for similar usage of FEEvaluation
@@ -1122,14 +1122,14 @@ protected:
   FEEvaluationAccess(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int dofs_per_cell,
-    const unsigned int n_q_points,
-    const bool         is_interior_face  = true,
-    const unsigned int active_fe_index   = numbers::invalid_unsigned_int,
-    const unsigned int active_quad_index = numbers::invalid_unsigned_int,
-    const unsigned int face_type         = numbers::invalid_unsigned_int);
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    dofs_per_cell,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face  = true,
+    const types::fe_index active_fe_index   = numbers::invalid_fe_index,
+    const types::fe_index active_quad_index = numbers::invalid_fe_index,
+    const unsigned int    face_type         = numbers::invalid_unsigned_int);
 
   /**
    * Constructor with reduced functionality for similar usage of FEEvaluation
@@ -1308,9 +1308,9 @@ protected:
     const unsigned int                                fe_degree,
     const unsigned int                                n_q_points,
     const bool                                        is_interior_face = true,
-    const unsigned int active_fe_index   = numbers::invalid_unsigned_int,
-    const unsigned int active_quad_index = numbers::invalid_unsigned_int,
-    const unsigned int face_type         = numbers::invalid_unsigned_int);
+    const types::fe_index active_fe_index   = numbers::invalid_fe_index,
+    const types::fe_index active_quad_index = numbers::invalid_fe_index,
+    const unsigned int    face_type         = numbers::invalid_unsigned_int);
 
   /**
    * Constructor with reduced functionality for similar usage of FEEvaluation
@@ -2023,9 +2023,9 @@ public:
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no  = 0,
     const unsigned int                                  quad_no = 0,
-    const unsigned int first_selected_component                 = 0,
-    const unsigned int active_fe_index   = numbers::invalid_unsigned_int,
-    const unsigned int active_quad_index = numbers::invalid_unsigned_int);
+    const unsigned int    first_selected_component              = 0,
+    const types::fe_index active_fe_index   = numbers::invalid_fe_index,
+    const types::fe_index active_quad_index = numbers::invalid_fe_index);
 
   /**
    * Constructor. Takes all data stored in MatrixFree for a given cell range,
@@ -2541,10 +2541,10 @@ public:
     const bool                                          is_interior_face = true,
     const unsigned int                                  dof_no           = 0,
     const unsigned int                                  quad_no          = 0,
-    const unsigned int first_selected_component                          = 0,
-    const unsigned int active_fe_index   = numbers::invalid_unsigned_int,
-    const unsigned int active_quad_index = numbers::invalid_unsigned_int,
-    const unsigned int face_type         = numbers::invalid_unsigned_int);
+    const unsigned int    first_selected_component                       = 0,
+    const types::fe_index active_fe_index   = numbers::invalid_fe_index,
+    const types::fe_index active_quad_index = numbers::invalid_fe_index,
+    const unsigned int    face_type         = numbers::invalid_unsigned_int);
 
   /**
    * Constructor. Takes all data stored in MatrixFree for a given face range,
@@ -2801,13 +2801,13 @@ namespace internal
     extract_initialization_data(
       const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
       const unsigned int                                  dof_no,
-      const unsigned int first_selected_component,
-      const unsigned int quad_no,
-      const unsigned int fe_degree,
-      const unsigned int n_q_points,
-      const unsigned int active_fe_index_given,
-      const unsigned int active_quad_index_given,
-      const unsigned int face_type)
+      const unsigned int    first_selected_component,
+      const unsigned int    quad_no,
+      const unsigned int    fe_degree,
+      const unsigned int    n_q_points,
+      const types::fe_index active_fe_index_given,
+      const types::fe_index active_quad_index_given,
+      const unsigned int    face_type)
   {
     typename FEEvaluationData<dim, VectorizedArrayType, is_face>::
       InitializationData init_data;
@@ -2822,16 +2822,16 @@ namespace internal
       fe_degree != numbers::invalid_unsigned_int ?
         init_data.dof_info->fe_index_from_degree(first_selected_component,
                                                  fe_degree) :
-        (active_fe_index_given != numbers::invalid_unsigned_int ?
+        (active_fe_index_given != numbers::invalid_fe_index ?
            active_fe_index_given :
            0);
     init_data.active_quad_index =
       fe_degree == numbers::invalid_unsigned_int ?
-        (active_quad_index_given != numbers::invalid_unsigned_int ?
+        (active_quad_index_given != numbers::invalid_fe_index ?
            active_quad_index_given :
-           std::min<unsigned int>(init_data.active_fe_index,
-                                  init_data.mapping_data->descriptor.size() -
-                                    1)) :
+           std::min<types::fe_index>(init_data.active_fe_index,
+                                     init_data.mapping_data->descriptor.size() -
+                                       1)) :
         init_data.mapping_data->quad_index_from_n_q_points(n_q_points);
 
     init_data.shape_info = &matrix_free.get_shape_info(
@@ -2868,14 +2868,14 @@ inline FEEvaluationBase<dim,
   FEEvaluationBase(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face,
-    const unsigned int active_fe_index,
-    const unsigned int active_quad_index,
-    const unsigned int face_type)
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face,
+    const types::fe_index active_fe_index,
+    const types::fe_index active_quad_index,
+    const unsigned int    face_type)
   : FEEvaluationData<dim, VectorizedArrayType, is_face>(
       internal::extract_initialization_data<is_face>(matrix_free,
                                                      dof_no,
@@ -4098,9 +4098,9 @@ namespace internal
             typename std::enable_if<has_shared_vector_data<VectorType>,
                                     VectorType>::type * = nullptr>
   const std::vector<ArrayView<const typename VectorType::value_type>> *
-  get_shared_vector_data(VectorType &       vec,
-                         const bool         is_valid_mode_for_sm,
-                         const unsigned int active_fe_index,
+  get_shared_vector_data(VectorType &          vec,
+                         const bool            is_valid_mode_for_sm,
+                         const types::fe_index active_fe_index,
                          const internal::MatrixFreeFunctions::DoFInfo *dof_info)
   {
     // note: no hp is supported
@@ -4136,10 +4136,10 @@ namespace internal
         VectorType,
         IsBlockVector<VectorType>::value>::BaseVectorType::value_type>> *,
       n_components>>
-  get_vector_data(VectorType &       src,
-                  const unsigned int first_index,
-                  const bool         is_valid_mode_for_sm,
-                  const unsigned int active_fe_index,
+  get_vector_data(VectorType &          src,
+                  const unsigned int    first_index,
+                  const bool            is_valid_mode_for_sm,
+                  const types::fe_index active_fe_index,
                   const internal::MatrixFreeFunctions::DoFInfo *dof_info)
   {
     // select between block vectors and non-block vectors. Note that the number
@@ -5219,14 +5219,14 @@ inline FEEvaluationAccess<dim,
   FEEvaluationAccess(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face,
-    const unsigned int active_fe_index,
-    const unsigned int active_quad_index,
-    const unsigned int face_type)
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face,
+    const types::fe_index active_fe_index,
+    const types::fe_index active_quad_index,
+    const unsigned int    face_type)
   : FEEvaluationBase<dim, n_components_, Number, is_face, VectorizedArrayType>(
       matrix_free,
       dof_no,
@@ -5326,14 +5326,14 @@ inline FEEvaluationAccess<dim, 1, Number, is_face, VectorizedArrayType>::
   FEEvaluationAccess(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face,
-    const unsigned int active_fe_index,
-    const unsigned int active_quad_index,
-    const unsigned int face_type)
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face,
+    const types::fe_index active_fe_index,
+    const types::fe_index active_quad_index,
+    const unsigned int    face_type)
   : FEEvaluationBase<dim, 1, Number, is_face, VectorizedArrayType>(
       matrix_free,
       dof_no,
@@ -5656,14 +5656,14 @@ inline FEEvaluationAccess<dim, dim, Number, is_face, VectorizedArrayType>::
   FEEvaluationAccess(
     const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
     const unsigned int                                  dof_no,
-    const unsigned int first_selected_component,
-    const unsigned int quad_no,
-    const unsigned int fe_degree,
-    const unsigned int n_q_points,
-    const bool         is_interior_face,
-    const unsigned int active_fe_index,
-    const unsigned int active_quad_index,
-    const unsigned int face_type)
+    const unsigned int    first_selected_component,
+    const unsigned int    quad_no,
+    const unsigned int    fe_degree,
+    const unsigned int    n_q_points,
+    const bool            is_interior_face,
+    const types::fe_index active_fe_index,
+    const types::fe_index active_quad_index,
+    const unsigned int    face_type)
   : FEEvaluationBase<dim, dim, Number, is_face, VectorizedArrayType>(
       matrix_free,
       dof_no,
@@ -6462,8 +6462,8 @@ inline FEEvaluationAccess<1, 1, Number, is_face, VectorizedArrayType>::
     const unsigned int                                fe_degree,
     const unsigned int                                n_q_points,
     const bool                                        is_interior_face,
-    const unsigned int                                active_fe_index,
-    const unsigned int                                active_quad_index,
+    const types::fe_index                             active_fe_index,
+    const types::fe_index                             active_quad_index,
     const unsigned int                                face_type)
   : FEEvaluationBase<1, 1, Number, is_face, VectorizedArrayType>(
       matrix_free,
@@ -6791,9 +6791,9 @@ inline FEEvaluation<dim,
   FEEvaluation(const MatrixFree<dim, Number, VectorizedArrayType> &matrix_free,
                const unsigned int                                  fe_no,
                const unsigned int                                  quad_no,
-               const unsigned int first_selected_component,
-               const unsigned int active_fe_index,
-               const unsigned int active_quad_index)
+               const unsigned int    first_selected_component,
+               const types::fe_index active_fe_index,
+               const types::fe_index active_quad_index)
   : BaseClass(matrix_free,
               fe_no,
               first_selected_component,
@@ -8025,10 +8025,10 @@ inline FEFaceEvaluation<dim,
     const bool                                          is_interior_face,
     const unsigned int                                  dof_no,
     const unsigned int                                  quad_no,
-    const unsigned int first_selected_component,
-    const unsigned int active_fe_index,
-    const unsigned int active_quad_index,
-    const unsigned int face_type)
+    const unsigned int    first_selected_component,
+    const types::fe_index active_fe_index,
+    const types::fe_index active_quad_index,
+    const unsigned int    face_type)
   : BaseClass(matrix_free,
               dof_no,
               first_selected_component,

@@ -92,7 +92,7 @@ namespace
 
   /**
    * Ensure that the transformation matrix for FiniteElement index
-   * @p fe_index is calculated. If not, calculate it.
+   * @p fe is calculated. If not, calculate it.
    */
   template <int spacedim>
   void
@@ -100,7 +100,7 @@ namespace
     const std::vector<unsigned int> &    n_coefficients_per_direction,
     const hp::FECollection<1, spacedim> &fe_collection,
     const hp::QCollection<1> &           q_collection,
-    const unsigned int                   fe,
+    const types::fe_index                fe,
     const unsigned int                   component,
     std::vector<FullMatrix<double>> &    legendre_transform_matrices)
   {
@@ -281,7 +281,7 @@ namespace FESeries
   void
   Legendre<dim, spacedim>::calculate(
     const dealii::Vector<Number> &local_dof_values,
-    const unsigned int            cell_active_fe_index,
+    const types::fe_index         cell_active_fe_index,
     Table<dim, CoefficientType> & legendre_coefficients)
   {
     for (unsigned int d = 0; d < dim; ++d)

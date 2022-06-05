@@ -469,7 +469,7 @@ namespace internal
         fe_collection.size(),
         std::vector<bool>(fe_collection.n_components(), false));
 
-      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+      for (types::fe_index i = 0; i < fe_collection.size(); ++i)
         {
           for (unsigned int base_element_index = 0, comp = 0;
                base_element_index < fe_collection[i].n_base_elements();

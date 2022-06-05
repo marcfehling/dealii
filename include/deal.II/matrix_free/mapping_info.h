@@ -68,6 +68,24 @@ namespace internal
         const dealii::Triangulation<dim> &                        tria,
         const std::vector<std::pair<unsigned int, unsigned int>> &cells,
         const FaceInfo<VectorizedArrayType::size()> &             faces,
+        const std::vector<types::fe_index> &active_fe_index,
+        const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping,
+        const std::vector<dealii::hp::QCollection<dim>> &          quad,
+        const UpdateFlags update_flags_cells,
+        const UpdateFlags update_flags_boundary_faces,
+        const UpdateFlags update_flags_inner_faces,
+        const UpdateFlags update_flags_faces_by_cells);
+
+      /**
+       * @copydoc initialize()
+       *
+       * @deprecated Use initialize() with the types::fe_index type.
+       */
+      void
+      initialize(
+        const dealii::Triangulation<dim> &                        tria,
+        const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+        const FaceInfo<VectorizedArrayType::size()> &             faces,
         const std::vector<unsigned int> &active_fe_index,
         const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping,
         const std::vector<dealii::hp::QCollection<dim>> &          quad,
@@ -81,6 +99,19 @@ namespace internal
        * result of a change in the given `mapping` class, keeping the cells,
        * quadrature formulas and other unknowns unchanged. This call is only
        * valid if MappingInfo::initialize() has been called before.
+       */
+      void
+      update_mapping(
+        const dealii::Triangulation<dim> &                        tria,
+        const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+        const FaceInfo<VectorizedArrayType::size()> &             faces,
+        const std::vector<types::fe_index> &active_fe_index,
+        const std::shared_ptr<dealii::hp::MappingCollection<dim>> &mapping);
+
+      /**
+       * @copydoc update_mapping()
+       *
+       * @deprecated Use update_mapping() with the types::fe_index type.
        */
       void
       update_mapping(
@@ -227,6 +258,18 @@ namespace internal
       initialize_cells(
         const dealii::Triangulation<dim> &                        tria,
         const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+        const std::vector<types::fe_index> &      active_fe_index,
+        const dealii::hp::MappingCollection<dim> &mapping);
+
+      /**
+       * @copydoc initialize_cells()
+       *
+       * @deprecated Use initialize_cells() with the types::fe_index type.
+       */
+      DEAL_II_DEPRECATED_EARLY void
+      initialize_cells(
+        const dealii::Triangulation<dim> &                        tria,
+        const std::vector<std::pair<unsigned int, unsigned int>> &cells,
         const std::vector<unsigned int> &         active_fe_index,
         const dealii::hp::MappingCollection<dim> &mapping);
 
@@ -235,6 +278,20 @@ namespace internal
        * initialize.
        */
       void
+      initialize_faces(
+        const dealii::Triangulation<dim> &                        tria,
+        const std::vector<std::pair<unsigned int, unsigned int>> &cells,
+        const std::vector<FaceToCellTopology<VectorizedArrayType::size()>>
+          &                                       faces,
+        const std::vector<types::fe_index> &      active_fe_index,
+        const dealii::hp::MappingCollection<dim> &mapping);
+
+      /**
+       * @copydoc update_mapping()
+       *
+       * @deprecated Use update_mapping() with the types::fe_index type.
+       */
+      DEAL_II_DEPRECATED_EARLY void
       initialize_faces(
         const dealii::Triangulation<dim> &                        tria,
         const std::vector<std::pair<unsigned int, unsigned int>> &cells,

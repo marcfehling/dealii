@@ -200,12 +200,12 @@ namespace hp
      * collection.
      */
     const T &
-    operator[](const unsigned int index) const;
+    operator[](const types::fe_index index) const;
 
     /**
      * Return the number of objects stored in this container.
      */
-    unsigned int
+    types::fe_index
     size() const;
 
     /**
@@ -254,13 +254,17 @@ namespace hp
   void
   Collection<T>::push_back(const std::shared_ptr<const T> &new_entry)
   {
+    Assert(entries.size() <= std::numeric_limits<types::fe_index>::max() &&
+             entries.size() != numbers::invalid_fe_index,
+           ExcMessage("You reached the maximum possible number of entries."));
+
     entries.push_back(new_entry);
   }
 
 
 
   template <typename T>
-  inline unsigned int
+  inline types::fe_index
   Collection<T>::size() const
   {
     return entries.size();
@@ -270,7 +274,7 @@ namespace hp
 
   template <typename T>
   inline const T &
-  Collection<T>::operator[](const unsigned int index) const
+  Collection<T>::operator[](const types::fe_index index) const
   {
     AssertIndexRange(index, entries.size());
     return *entries[index];

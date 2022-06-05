@@ -1069,10 +1069,10 @@ namespace internal
      */
     inline bool
     compare_faces_for_vectorization(
-      const FaceToCellTopology<1> &    face1,
-      const FaceToCellTopology<1> &    face2,
-      const std::vector<unsigned int> &active_fe_indices,
-      const unsigned int               length)
+      const FaceToCellTopology<1> &       face1,
+      const FaceToCellTopology<1> &       face2,
+      const std::vector<types::fe_index> &active_fe_indices,
+      const unsigned int                  length)
     {
       if (face1.interior_face_no != face2.interior_face_no)
         return false;
@@ -1177,7 +1177,7 @@ namespace internal
       }
 
     private:
-      const std::vector<unsigned int> &active_fe_indices;
+      const std::vector<types::fe_index> &active_fe_indices;
     };
 
 
@@ -1189,7 +1189,7 @@ namespace internal
       const std::vector<bool> &                 hard_vectorization_boundary,
       std::vector<unsigned int> &               face_partition_data,
       std::vector<FaceToCellTopology<vectorization_width>> &faces_out,
-      const std::vector<unsigned int> &                     active_fe_indices)
+      const std::vector<types::fe_index> &                  active_fe_indices)
     {
       FaceToCellTopology<vectorization_width> face_batch;
       std::vector<std::vector<unsigned int>>  faces_type;

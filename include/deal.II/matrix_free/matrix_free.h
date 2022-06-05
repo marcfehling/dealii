@@ -1470,26 +1470,26 @@ public:
   std::pair<unsigned int, unsigned int>
   create_cell_subrange_hp_by_index(
     const std::pair<unsigned int, unsigned int> &range,
-    const unsigned int                           fe_index,
+    const types::fe_index                        fe_index,
     const unsigned int                           dof_handler_index = 0) const;
 
   /**
    * In the hp-adaptive case, return number of active FE indices.
    */
-  unsigned int
+  types::fe_index
   n_active_fe_indices() const;
 
   /**
    * In the hp-adaptive case, return the active FE index of a cell range.
    */
-  unsigned int
+  types::fe_index
   get_cell_active_fe_index(
     const std::pair<unsigned int, unsigned int> range) const;
 
   /**
    * In the hp-adaptive case, return the active FE index of a face range.
    */
-  unsigned int
+  types::fe_index
   get_face_active_fe_index(const std::pair<unsigned int, unsigned int> range,
                            const bool is_interior_face = true) const;
 
@@ -1844,45 +1844,45 @@ public:
    * Return the number of degrees of freedom per cell for a given hp-index.
    */
   unsigned int
-  get_dofs_per_cell(const unsigned int dof_handler_index  = 0,
-                    const unsigned int hp_active_fe_index = 0) const;
+  get_dofs_per_cell(const unsigned int    dof_handler_index  = 0,
+                    const types::fe_index hp_active_fe_index = 0) const;
 
   /**
    * Return the number of quadrature points per cell for a given hp-index.
    */
   unsigned int
-  get_n_q_points(const unsigned int quad_index         = 0,
-                 const unsigned int hp_active_fe_index = 0) const;
+  get_n_q_points(const unsigned int    quad_index         = 0,
+                 const types::fe_index hp_active_fe_index = 0) const;
 
   /**
    * Return the number of degrees of freedom on each face of the cell for
    * given hp-index.
    */
   unsigned int
-  get_dofs_per_face(const unsigned int dof_handler_index  = 0,
-                    const unsigned int hp_active_fe_index = 0) const;
+  get_dofs_per_face(const unsigned int    dof_handler_index  = 0,
+                    const types::fe_index hp_active_fe_index = 0) const;
 
   /**
    * Return the number of quadrature points on each face of the cell for
    * given hp-index.
    */
   unsigned int
-  get_n_q_points_face(const unsigned int quad_index         = 0,
-                      const unsigned int hp_active_fe_index = 0) const;
+  get_n_q_points_face(const unsigned int    quad_index         = 0,
+                      const types::fe_index hp_active_fe_index = 0) const;
 
   /**
    * Return the quadrature rule for given hp-index.
    */
   const Quadrature<dim> &
-  get_quadrature(const unsigned int quad_index         = 0,
-                 const unsigned int hp_active_fe_index = 0) const;
+  get_quadrature(const unsigned int    quad_index         = 0,
+                 const types::fe_index hp_active_fe_index = 0) const;
 
   /**
    * Return the quadrature rule for given hp-index.
    */
   const Quadrature<dim - 1> &
-  get_face_quadrature(const unsigned int quad_index         = 0,
-                      const unsigned int hp_active_fe_index = 0) const;
+  get_face_quadrature(const unsigned int    quad_index         = 0,
+                      const types::fe_index hp_active_fe_index = 0) const;
 
   /**
    * Return the category the current batch range of cells was assigned to.
@@ -2012,11 +2012,11 @@ public:
    * Return the unit cell information for given hp-index.
    */
   const internal::MatrixFreeFunctions::ShapeInfo<VectorizedArrayType> &
-  get_shape_info(const unsigned int dof_handler_index_component = 0,
-                 const unsigned int quad_index                  = 0,
-                 const unsigned int fe_base_element             = 0,
-                 const unsigned int hp_active_fe_index          = 0,
-                 const unsigned int hp_active_quad_index        = 0) const;
+  get_shape_info(const unsigned int    dof_handler_index_component = 0,
+                 const unsigned int    quad_index                  = 0,
+                 const unsigned int    fe_base_element             = 0,
+                 const types::fe_index hp_active_fe_index          = 0,
+                 const types::fe_index hp_active_quad_index        = 0) const;
 
   /**
    * Return the connectivity information of a face.
@@ -2515,7 +2515,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::create_cell_subrange_hp(
         return {range.second, range.second};
     }
 
-  const unsigned int fe_index =
+  const types::fe_index fe_index =
     dof_info[dof_handler_component].fe_index_from_degree(0, degree);
   if (fe_index >= dof_info[dof_handler_component].max_fe_index)
     return {range.second, range.second};
@@ -2543,7 +2543,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::at_irregular_cell(
 
 
 template <int dim, typename Number, typename VectorizedArrayType>
-unsigned int
+types::fe_index
 MatrixFree<dim, Number, VectorizedArrayType>::n_active_fe_indices() const
 {
   return shape_info.size(2);
@@ -2551,7 +2551,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::n_active_fe_indices() const
 
 
 template <int dim, typename Number, typename VectorizedArrayType>
-unsigned int
+types::fe_index
 MatrixFree<dim, Number, VectorizedArrayType>::get_cell_active_fe_index(
   const std::pair<unsigned int, unsigned int> range) const
 {
@@ -2571,7 +2571,7 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_cell_active_fe_index(
 
 
 template <int dim, typename Number, typename VectorizedArrayType>
-unsigned int
+types::fe_index
 MatrixFree<dim, Number, VectorizedArrayType>::get_face_active_fe_index(
   const std::pair<unsigned int, unsigned int> range,
   const bool                                  is_interior_face) const
@@ -2657,8 +2657,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::n_active_entries_per_face_batch(
 template <int dim, typename Number, typename VectorizedArrayType>
 inline unsigned int
 MatrixFree<dim, Number, VectorizedArrayType>::get_dofs_per_cell(
-  const unsigned int dof_handler_index,
-  const unsigned int active_fe_index) const
+  const unsigned int    dof_handler_index,
+  const types::fe_index active_fe_index) const
 {
   return dof_info[dof_handler_index].dofs_per_cell[active_fe_index];
 }
@@ -2668,8 +2668,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_dofs_per_cell(
 template <int dim, typename Number, typename VectorizedArrayType>
 inline unsigned int
 MatrixFree<dim, Number, VectorizedArrayType>::get_n_q_points(
-  const unsigned int quad_index,
-  const unsigned int active_fe_index) const
+  const unsigned int    quad_index,
+  const types::fe_index active_fe_index) const
 {
   AssertIndexRange(quad_index, mapping_info.cell_data.size());
   return mapping_info.cell_data[quad_index]
@@ -2682,8 +2682,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_n_q_points(
 template <int dim, typename Number, typename VectorizedArrayType>
 inline unsigned int
 MatrixFree<dim, Number, VectorizedArrayType>::get_dofs_per_face(
-  const unsigned int dof_handler_index,
-  const unsigned int active_fe_index) const
+  const unsigned int    dof_handler_index,
+  const types::fe_index active_fe_index) const
 {
   return dof_info[dof_handler_index].dofs_per_face[active_fe_index];
 }
@@ -2693,8 +2693,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_dofs_per_face(
 template <int dim, typename Number, typename VectorizedArrayType>
 inline unsigned int
 MatrixFree<dim, Number, VectorizedArrayType>::get_n_q_points_face(
-  const unsigned int quad_index,
-  const unsigned int active_fe_index) const
+  const unsigned int    quad_index,
+  const types::fe_index active_fe_index) const
 {
   AssertIndexRange(quad_index, mapping_info.face_data.size());
   return mapping_info.face_data[quad_index]
@@ -2727,11 +2727,11 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_ghost_set(
 template <int dim, typename Number, typename VectorizedArrayType>
 inline const internal::MatrixFreeFunctions::ShapeInfo<VectorizedArrayType> &
 MatrixFree<dim, Number, VectorizedArrayType>::get_shape_info(
-  const unsigned int dof_handler_index,
-  const unsigned int index_quad,
-  const unsigned int index_fe,
-  const unsigned int active_fe_index,
-  const unsigned int active_quad_index) const
+  const unsigned int    dof_handler_index,
+  const unsigned int    index_quad,
+  const unsigned int    index_fe,
+  const types::fe_index active_fe_index,
+  const types::fe_index active_quad_index) const
 {
   AssertIndexRange(dof_handler_index, dof_info.size());
   const unsigned int ind =
@@ -2770,8 +2770,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_cell_and_face_to_plain_faces()
 template <int dim, typename Number, typename VectorizedArrayType>
 inline const Quadrature<dim> &
 MatrixFree<dim, Number, VectorizedArrayType>::get_quadrature(
-  const unsigned int quad_index,
-  const unsigned int active_fe_index) const
+  const unsigned int    quad_index,
+  const types::fe_index active_fe_index) const
 {
   AssertIndexRange(quad_index, mapping_info.cell_data.size());
   return mapping_info.cell_data[quad_index]
@@ -2784,8 +2784,8 @@ MatrixFree<dim, Number, VectorizedArrayType>::get_quadrature(
 template <int dim, typename Number, typename VectorizedArrayType>
 inline const Quadrature<dim - 1> &
 MatrixFree<dim, Number, VectorizedArrayType>::get_face_quadrature(
-  const unsigned int quad_index,
-  const unsigned int active_fe_index) const
+  const unsigned int    quad_index,
+  const types::fe_index active_fe_index) const
 {
   AssertIndexRange(quad_index, mapping_info.face_data.size());
   return mapping_info.face_data[quad_index]
@@ -4738,7 +4738,7 @@ namespace internal
     cell(const std::pair<unsigned int, unsigned int> &cell_range) override
     {
       if (cell_function != nullptr && cell_range.second > cell_range.first)
-        for (unsigned int i = 0; i < matrix_free.n_active_fe_indices(); ++i)
+        for (types::fe_index i = 0; i < matrix_free.n_active_fe_indices(); ++i)
           {
             const auto cell_subrange =
               matrix_free.create_cell_subrange_hp_by_index(cell_range, i);

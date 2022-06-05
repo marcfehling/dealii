@@ -1309,8 +1309,8 @@ namespace ColorEnriched
       // loop through faces
       for (const auto &cell : dof_handler.active_cell_iterators())
         {
-          const unsigned int           fe_index = cell->active_fe_index();
-          const std::set<unsigned int> fe_set   = fe_sets.at(fe_index);
+          const types::fe_index fe_index             = cell->active_fe_index();
+          const std::set<types::subdomain_id> fe_set = fe_sets.at(fe_index);
           for (const unsigned int face : GeometryInfo<dim>::face_indices())
             {
               // cell shouldn't be at the boundary and

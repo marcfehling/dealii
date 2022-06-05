@@ -1320,11 +1320,11 @@ namespace internal
 
     void
     TaskInfo::make_thread_graph(
-      const std::vector<unsigned int> &cell_active_fe_index,
-      DynamicSparsityPattern &         connectivity,
-      std::vector<unsigned int> &      renumbering,
-      std::vector<unsigned char> &     irregular_cells,
-      const bool                       hp_bool)
+      const std::vector<types::fe_index> &cell_active_fe_index,
+      DynamicSparsityPattern &            connectivity,
+      std::vector<unsigned int> &         renumbering,
+      std::vector<unsigned char> &        irregular_cells,
+      const bool                          hp_bool)
     {
       const unsigned int n_cell_batches = *(cell_partition_data.end() - 2);
       if (n_cell_batches == 0)
@@ -1514,12 +1514,31 @@ namespace internal
 
 
     void
-    TaskInfo::make_thread_graph_partition_partition(
+    TaskInfo::make_thread_graph(
       const std::vector<unsigned int> &cell_active_fe_index,
       DynamicSparsityPattern &         connectivity,
       std::vector<unsigned int> &      renumbering,
       std::vector<unsigned char> &     irregular_cells,
       const bool                       hp_bool)
+    {
+      make_thread_graph(
+        std::vector<types::fe_index>(cell_active_fe_index.begin(),
+                                     cell_active_fe_index.end()),
+        connectivity,
+        renumbering,
+        irregular_cells,
+        hp_bool);
+    }
+
+
+
+    void
+    TaskInfo::make_thread_graph_partition_partition(
+      const std::vector<types::fe_index> &cell_active_fe_index,
+      DynamicSparsityPattern &            connectivity,
+      std::vector<unsigned int> &         renumbering,
+      std::vector<unsigned char> &        irregular_cells,
+      const bool                          hp_bool)
     {
       const unsigned int n_cell_batches = *(cell_partition_data.end() - 2);
       if (n_cell_batches == 0)
@@ -1582,6 +1601,25 @@ namespace internal
 
 
     void
+    TaskInfo::make_thread_graph_partition_partition(
+      const std::vector<unsigned int> &cell_active_fe_index,
+      DynamicSparsityPattern &         connectivity,
+      std::vector<unsigned int> &      renumbering,
+      std::vector<unsigned char> &     irregular_cells,
+      const bool                       hp_bool)
+    {
+      make_thread_graph_partition_partition(
+        std::vector<types::fe_index>(cell_active_fe_index.begin(),
+                                     cell_active_fe_index.end()),
+        connectivity,
+        renumbering,
+        irregular_cells,
+        hp_bool);
+    }
+
+
+
+    void
     TaskInfo::make_connectivity_cells_to_blocks(
       const std::vector<unsigned char> &irregular_cells,
       const DynamicSparsityPattern &    connectivity_cells,
@@ -1627,16 +1665,16 @@ namespace internal
     // partition. Version without preblocking.
     void
     TaskInfo::make_partitioning_within_partitions_post_blocked(
-      const DynamicSparsityPattern &   connectivity,
-      const std::vector<unsigned int> &cell_active_fe_index,
-      const unsigned int               partition,
-      const unsigned int               cluster_size,
-      const bool                       hp_bool,
-      const std::vector<unsigned int> &cell_partition,
-      const std::vector<unsigned int> &partition_list,
-      const std::vector<unsigned int> &partition_size,
-      std::vector<unsigned int> &      partition_partition_list,
-      std::vector<unsigned char> &     irregular_cells)
+      const DynamicSparsityPattern &      connectivity,
+      const std::vector<types::fe_index> &cell_active_fe_index,
+      const unsigned int                  partition,
+      const unsigned int                  cluster_size,
+      const bool                          hp_bool,
+      const std::vector<unsigned int> &   cell_partition,
+      const std::vector<unsigned int> &   partition_list,
+      const std::vector<unsigned int> &   partition_size,
+      std::vector<unsigned int> &         partition_partition_list,
+      std::vector<unsigned char> &        irregular_cells)
     {
       const unsigned int n_cell_batches = *(cell_partition_data.end() - 2);
       const unsigned int n_ghost_slots =
@@ -1653,8 +1691,8 @@ namespace internal
       irregular_cells.back() = 0;
       irregular_cells.resize(n_active_cells + n_ghost_slots);
 
-      unsigned int max_fe_index = 0;
-      for (const unsigned int fe_index : cell_active_fe_index)
+      types::fe_index max_fe_index = 0;
+      for (const types::fe_index fe_index : cell_active_fe_index)
         max_fe_index = std::max(fe_index, max_fe_index);
 
       Assert(!hp_bool || cell_active_fe_index.size() == n_active_cells,
@@ -1750,7 +1788,7 @@ namespace internal
                       missing_macros = 0;
                       std::vector<unsigned int> remaining_per_cell_batch(
                         max_fe_index + 1);
-                      std::vector<std::vector<unsigned int>>
+                      std::vector<std::vector<types::fe_index>>
                                    renumbering_fe_index;
                       unsigned int cell;
                       bool         filled = true;
@@ -1834,7 +1872,7 @@ namespace internal
                                   cell_partition_l2[neighbor->column()] ==
                                     numbers::invalid_unsigned_int)
                                 {
-                                  unsigned int this_index = 0;
+                                  types::fe_index this_index = 0;
                                   if (hp_bool == true)
                                     this_index =
                                       cell_active_fe_index.empty() ?
@@ -1875,7 +1913,7 @@ namespace internal
                                       if (missing_macros == 0)
                                         {
                                           filled = true;
-                                          for (unsigned int fe_ind = 0;
+                                          for (types::fe_index fe_ind = 0;
                                                fe_ind < max_fe_index + 1;
                                                ++fe_ind)
                                             if (remaining_per_cell_batch
@@ -1894,9 +1932,9 @@ namespace internal
                           // index within one partition-partition which was
                           // implicitly assumed above
                           cell = counter - partition_counter;
-                          for (unsigned int j = 0; j < max_fe_index + 1; ++j)
+                          for (types::fe_index j = 0; j < max_fe_index + 1; ++j)
                             {
-                              for (const unsigned int jj :
+                              for (const types::fe_index jj :
                                    renumbering_fe_index[j])
                                 renumbering[cell++] = jj;
                               if (renumbering_fe_index[j].size() %
@@ -1940,6 +1978,35 @@ namespace internal
         {
           partition_partition_list.swap(renumbering);
         }
+    }
+
+
+
+    void
+    TaskInfo::make_partitioning_within_partitions_post_blocked(
+      const DynamicSparsityPattern &   connectivity,
+      const std::vector<unsigned int> &cell_active_fe_index,
+      const unsigned int               partition,
+      const unsigned int               cluster_size,
+      const bool                       hp_bool,
+      const std::vector<unsigned int> &cell_partition,
+      const std::vector<unsigned int> &partition_list,
+      const std::vector<unsigned int> &partition_size,
+      std::vector<unsigned int> &      partition_partition_list,
+      std::vector<unsigned char> &     irregular_cells)
+    {
+      make_partitioning_within_partitions_post_blocked(
+        connectivity,
+        std::vector<types::fe_index>(cell_active_fe_index.begin(),
+                                     cell_active_fe_index.end()),
+        partition,
+        cluster_size,
+        hp_bool,
+        cell_partition,
+        partition_list,
+        partition_size,
+        partition_partition_list,
+        irregular_cells);
     }
 
 

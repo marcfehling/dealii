@@ -396,14 +396,14 @@ public:
    * Return the active FE index for this class for efficient indexing in the
    * hp-case.
    */
-  unsigned int
+  types::fe_index
   get_active_fe_index() const;
 
   /**
    * Return the active quadrature index for this class for efficient indexing in
    * the hp-case.
    */
-  unsigned int
+  types::fe_index
   get_active_quadrature_index() const;
 
   /**
@@ -635,8 +635,8 @@ public:
     const ShapeInfoType *         shape_info;
     const DoFInfo *               dof_info;
     const MappingInfoStorageType *mapping_data;
-    unsigned int                  active_fe_index;
-    unsigned int                  active_quad_index;
+    types::fe_index               active_fe_index;
+    types::fe_index               active_quad_index;
     const typename MappingInfoStorageType::QuadratureDescriptor *descriptor;
   };
 
@@ -708,13 +708,13 @@ protected:
   /**
    * The active FE index for this class for efficient indexing in the hp-case.
    */
-  const unsigned int active_fe_index;
+  const types::fe_index active_fe_index;
 
   /**
    * The active quadrature index for this class for efficient indexing in the
    * hp-case.
    */
-  const unsigned int active_quad_index;
+  const types::fe_index active_quad_index;
 
   /**
    * A pointer to the underlying quadrature formula specified at construction.
@@ -1079,8 +1079,8 @@ inline FEEvaluationData<dim, Number, is_face>::FEEvaluationData(
   , quad_no(numbers::invalid_unsigned_int)
   , n_fe_components(n_fe_components)
   , first_selected_component(first_selected_component)
-  , active_fe_index(numbers::invalid_unsigned_int)
-  , active_quad_index(numbers::invalid_unsigned_int)
+  , active_fe_index(numbers::invalid_fe_index)
+  , active_quad_index(numbers::invalid_fe_index)
   , descriptor(nullptr)
   , n_quadrature_points(
       mapped_geometry->get_data_storage().descriptor[0].n_q_points)
@@ -1501,7 +1501,7 @@ FEEvaluationData<dim, Number, is_face>::get_current_cell_index() const
 
 
 template <int dim, typename Number, bool is_face>
-inline unsigned int
+inline types::fe_index
 FEEvaluationData<dim, Number, is_face>::get_active_fe_index() const
 {
   return active_fe_index;
@@ -1510,7 +1510,7 @@ FEEvaluationData<dim, Number, is_face>::get_active_fe_index() const
 
 
 template <int dim, typename Number, bool is_face>
-inline unsigned int
+inline types::fe_index
 FEEvaluationData<dim, Number, is_face>::get_active_quadrature_index() const
 {
   return active_quad_index;

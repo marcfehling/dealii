@@ -86,7 +86,7 @@ namespace
 
   /*
    * Ensure that the transformation matrix for FiniteElement index
-   * @p fe_index is calculated. If not, calculate it.
+   * @p fe is calculated. If not, calculate it.
    */
   template <int spacedim>
   void
@@ -95,7 +95,7 @@ namespace
     const hp::FECollection<1, spacedim> &          fe_collection,
     const hp::QCollection<1> &                     q_collection,
     const Table<1, Tensor<1, 1>> &                 k_vectors,
-    const unsigned int                             fe,
+    const types::fe_index                          fe,
     const unsigned int                             component,
     std::vector<FullMatrix<std::complex<double>>> &fourier_transform_matrices)
   {
@@ -277,7 +277,7 @@ namespace FESeries
   void
   Fourier<dim, spacedim>::calculate(
     const Vector<Number> &       local_dof_values,
-    const unsigned int           cell_active_fe_index,
+    const types::fe_index        cell_active_fe_index,
     Table<dim, CoefficientType> &fourier_coefficients)
   {
     for (unsigned int d = 0; d < dim; ++d)

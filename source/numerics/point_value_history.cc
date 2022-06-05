@@ -221,8 +221,9 @@ PointValueHistory<dim>::add_point(const Point<dim> &location)
   // consistent in case they are actually
   // chosen
   typename DoFHandler<dim>::active_cell_iterator current_cell = cell;
-  std::vector<unsigned int>                      current_fe_index(n_components,
-                                             0); // need one index per component
+  std::vector<types::fe_index>                   current_fe_index(
+    n_components,
+    0); // need one index per component
   fe_values.reinit(cell);
   std::vector<Point<dim>> current_points(n_components, Point<dim>());
   for (unsigned int support_point = 0; support_point < n_support_points;
@@ -369,8 +370,8 @@ PointValueHistory<dim>::add_points(const std::vector<Point<dim>> &locations)
     locations.size(), cell);
 
   fe_values.reinit(cell);
-  std::vector<Point<dim>>   temp_points(n_components, Point<dim>());
-  std::vector<unsigned int> temp_fe_index(n_components, 0);
+  std::vector<Point<dim>>      temp_points(n_components, Point<dim>());
+  std::vector<types::fe_index> temp_fe_index(n_components, 0);
   for (unsigned int support_point = 0; support_point < n_support_points;
        support_point++)
     {
@@ -383,8 +384,8 @@ PointValueHistory<dim>::add_points(const std::vector<Point<dim>> &locations)
     }
   std::vector<std::vector<Point<dim>>> current_points(
     locations.size(), temp_points); // give a valid start point
-  std::vector<std::vector<unsigned int>> current_fe_index(locations.size(),
-                                                          temp_fe_index);
+  std::vector<std::vector<types::fe_index>> current_fe_index(locations.size(),
+                                                             temp_fe_index);
 
   // check each cell to find suitable support
   // points

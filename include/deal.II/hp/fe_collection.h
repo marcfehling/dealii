@@ -78,9 +78,9 @@ namespace hp
        * Once the last element of the @p fe_collection is reached, there is no element on a higher level in
        * the hierarchy and thus we return the last value.
        */
-      static unsigned int
+      static types::fe_index
       next_index(const typename hp::FECollection<dim, spacedim> &fe_collection,
-                 const unsigned int                              fe_index)
+                 const types::fe_index                           fe_index)
       {
         return ((fe_index + 1) < fe_collection.size()) ? fe_index + 1 :
                                                          fe_index;
@@ -92,10 +92,10 @@ namespace hp
        * Once the first element of the @p fe_collection is reached, there is no element on a lower level in
        * the hierarchy and thus we return the first value.
        */
-      static unsigned int
+      static types::fe_index
       previous_index(
         const typename hp::FECollection<dim, spacedim> &fe_collection,
-        const unsigned int                              fe_index)
+        const types::fe_index                           fe_index)
       {
         (void)fe_collection;
         return (fe_index > 0) ? fe_index - 1 : fe_index;
@@ -198,7 +198,7 @@ namespace hp
 
     /**
      * Return the number of vector components of the finite elements in this
-     * collection.  This number must be the same for all elements in the
+     * collection. This number must be the same for all elements in the
      * collection.
      *
      * This function calls FiniteElement::n_components.  See

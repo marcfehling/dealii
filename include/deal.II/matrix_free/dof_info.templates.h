@@ -130,7 +130,7 @@ namespace internal
       Assert(dofs_per_cell.size() == 1 ||
                cell_number < cell_active_fe_index.size(),
              ExcInternalError());
-      const unsigned int fe_index =
+      const types::fe_index fe_index =
         dofs_per_cell.size() == 1 ? 0 : cell_active_fe_index[cell_number];
       const unsigned int dofs_this_cell = dofs_per_cell[fe_index];
       const unsigned int n_components   = start_components.back();

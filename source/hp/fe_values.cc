@@ -37,7 +37,7 @@ namespace hp
     {
       std::vector<QCollection<q_dim>> q_collections;
 
-      for (unsigned int q = 0; q < q_collection.size(); ++q)
+      for (types::fe_index q = 0; q < q_collection.size(); ++q)
         q_collections.emplace_back(q_collection[q]);
 
       return q_collections;
@@ -150,11 +150,12 @@ namespace hp
     // now it just contains nullptrs. Create copies of the objects that
     // `other.fe_values_table` stores
     Threads::TaskGroup<> task_group;
-    for (unsigned int fe_index = 0; fe_index < other.fe_values_table.size(0);
+    for (types::fe_index fe_index = 0; fe_index < other.fe_values_table.size(0);
          ++fe_index)
-      for (unsigned int m_index = 0; m_index < other.fe_values_table.size(1);
+      for (types::fe_index m_index = 0; m_index < other.fe_values_table.size(1);
            ++m_index)
-        for (unsigned int q_index = 0; q_index < other.fe_values_table.size(2);
+        for (types::fe_index q_index = 0;
+             q_index < other.fe_values_table.size(2);
              ++q_index)
           if (other.fe_values_table[fe_index][m_index][q_index].get() !=
               nullptr)
@@ -174,9 +175,9 @@ namespace hp
   template <int dim, int q_dim, class FEValuesType>
   FEValuesType &
   FEValuesBase<dim, q_dim, FEValuesType>::select_fe_values(
-    const unsigned int fe_index,
-    const unsigned int mapping_index,
-    const unsigned int q_index)
+    const types::fe_index fe_index,
+    const types::fe_index mapping_index,
+    const types::fe_index q_index)
   {
     AssertIndexRange(fe_index, fe_collection->size());
     AssertIndexRange(mapping_index, mapping_collection->size());
@@ -204,9 +205,9 @@ namespace hp
   template <int dim, int q_dim, class FEValuesType>
   void
   FEValuesBase<dim, q_dim, FEValuesType>::precalculate_fe_values(
-    const std::vector<unsigned int> &fe_indices,
-    const std::vector<unsigned int> &mapping_indices,
-    const std::vector<unsigned int> &q_indices)
+    const std::vector<types::fe_index> &fe_indices,
+    const std::vector<types::fe_index> &mapping_indices,
+    const std::vector<types::fe_index> &q_indices)
   {
     AssertDimension(fe_indices.size(), mapping_indices.size());
     AssertDimension(fe_indices.size(), q_indices.size());
@@ -214,9 +215,9 @@ namespace hp
     Threads::TaskGroup<> task_group;
     for (unsigned int i = 0; i < fe_indices.size(); ++i)
       {
-        const unsigned int fe_index      = fe_indices[i],
-                           mapping_index = mapping_indices[i],
-                           q_index       = q_indices[i];
+        const types::fe_index fe_index      = fe_indices[i],
+                              mapping_index = mapping_indices[i],
+                              q_index       = q_indices[i];
 
         AssertIndexRange(fe_index, fe_collection->size());
         AssertIndexRange(mapping_index, mapping_collection->size());
@@ -240,21 +241,36 @@ namespace hp
 
   template <int dim, int q_dim, class FEValuesType>
   void
+  FEValuesBase<dim, q_dim, FEValuesType>::precalculate_fe_values(
+    const std::vector<unsigned int> &fe_indices,
+    const std::vector<unsigned int> &mapping_indices,
+    const std::vector<unsigned int> &q_indices)
+  {
+    precalculate_fe_values(
+      std::vector<types::fe_index>(fe_indices.begin(), fe_indices.end()),
+      std::vector<types::fe_index>(mapping_indices.begin(),
+                                   mapping_indices.end()),
+      std::vector<types::fe_index>(q_indices.begin(), q_indices.end()));
+  }
+
+
+
+  template <int dim, int q_dim, class FEValuesType>
+  void
   FEValuesBase<dim, q_dim, FEValuesType>::precalculate_fe_values()
   {
-    const unsigned int        size = fe_collection->size();
-    std::vector<unsigned int> indices(size);
+    const types::fe_index        size = fe_collection->size();
+    std::vector<types::fe_index> indices(size);
     std::iota(indices.begin(), indices.end(), 0);
 
-    precalculate_fe_values(/*fe_indices=*/indices,
-                           /*mapping_indices=*/
-                           (mapping_collection->size() > 1) ?
-                             indices :
-                             std::vector<unsigned int>(size, 0),
-                           /*q_indices=*/
-                           (q_collections.size() > 1) ?
-                             indices :
-                             std::vector<unsigned int>(size, 0));
+    precalculate_fe_values(
+      /*fe_indices=*/indices,
+      /*mapping_indices=*/
+      (mapping_collection->size() > 1) ? indices :
+                                         std::vector<types::fe_index>(size, 0),
+      /*q_indices=*/
+      (q_collections.size() > 1) ? indices.begin() :
+                                   std::vector<types::fe_index>(size, 0));
   }
 } // namespace hp
 
@@ -293,15 +309,15 @@ namespace hp
   void
   FEValues<dim, spacedim>::reinit(
     const TriaIterator<DoFCellAccessor<dim, spacedim, lda>> &cell,
-    const unsigned int                                       q_index,
-    const unsigned int                                       mapping_index,
-    const unsigned int                                       fe_index)
+    const types::fe_index                                    q_index,
+    const types::fe_index                                    mapping_index,
+    const types::fe_index                                    fe_index)
   {
     // determine which indices we should actually use
-    unsigned int real_q_index = q_index, real_mapping_index = mapping_index,
-                 real_fe_index = fe_index;
+    types::fe_index real_q_index = q_index, real_mapping_index = mapping_index,
+                    real_fe_index = fe_index;
 
-    if (real_q_index == numbers::invalid_unsigned_int)
+    if (real_q_index == numbers::invalid_fe_index)
       {
         if (this->q_collections.size() > 1)
           real_q_index = cell->active_fe_index();
@@ -309,7 +325,7 @@ namespace hp
           real_q_index = 0;
       }
 
-    if (real_mapping_index == numbers::invalid_unsigned_int)
+    if (real_mapping_index == numbers::invalid_fe_index)
       {
         if (this->mapping_collection->size() > 1)
           real_mapping_index = cell->active_fe_index();
@@ -317,7 +333,7 @@ namespace hp
           real_mapping_index = 0;
       }
 
-    if (real_fe_index == numbers::invalid_unsigned_int)
+    if (real_fe_index == numbers::invalid_fe_index)
       real_fe_index = cell->active_fe_index();
 
     // some checks
@@ -336,21 +352,21 @@ namespace hp
   void
   FEValues<dim, spacedim>::reinit(
     const typename Triangulation<dim, spacedim>::cell_iterator &cell,
-    const unsigned int                                          q_index,
-    const unsigned int                                          mapping_index,
-    const unsigned int                                          fe_index)
+    const types::fe_index                                       q_index,
+    const types::fe_index                                       mapping_index,
+    const types::fe_index                                       fe_index)
   {
     // determine which indices we should actually use
-    unsigned int real_q_index = q_index, real_mapping_index = mapping_index,
-                 real_fe_index = fe_index;
+    types::fe_index real_q_index = q_index, real_mapping_index = mapping_index,
+                    real_fe_index = fe_index;
 
-    if (real_q_index == numbers::invalid_unsigned_int)
+    if (real_q_index == numbers::invalid_fe_index)
       real_q_index = 0;
 
-    if (real_mapping_index == numbers::invalid_unsigned_int)
+    if (real_mapping_index == numbers::invalid_fe_index)
       real_mapping_index = 0;
 
-    if (real_fe_index == numbers::invalid_unsigned_int)
+    if (real_fe_index == numbers::invalid_fe_index)
       real_fe_index = 0;
 
     // some checks
@@ -424,16 +440,16 @@ namespace hp
   FEFaceValues<dim, spacedim>::reinit(
     const TriaIterator<DoFCellAccessor<dim, spacedim, lda>> &cell,
     const unsigned int                                       face_no,
-    const unsigned int                                       q_index,
-    const unsigned int                                       mapping_index,
-    const unsigned int                                       fe_index)
+    const types::fe_index                                    q_index,
+    const types::fe_index                                    mapping_index,
+    const types::fe_index                                    fe_index)
   {
     // determine which indices we
     // should actually use
-    unsigned int real_q_index = q_index, real_mapping_index = mapping_index,
-                 real_fe_index = fe_index;
+    types::fe_index real_q_index = q_index, real_mapping_index = mapping_index,
+                    real_fe_index = fe_index;
 
-    if (real_q_index == numbers::invalid_unsigned_int)
+    if (real_q_index == numbers::invalid_fe_index)
       {
         if (this->q_collections.size() > 1)
           real_q_index = cell->active_fe_index();
@@ -441,7 +457,7 @@ namespace hp
           real_q_index = 0;
       }
 
-    if (real_mapping_index == numbers::invalid_unsigned_int)
+    if (real_mapping_index == numbers::invalid_fe_index)
       {
         if (this->mapping_collection->size() > 1)
           real_mapping_index = cell->active_fe_index();
@@ -449,7 +465,7 @@ namespace hp
           real_mapping_index = 0;
       }
 
-    if (real_fe_index == numbers::invalid_unsigned_int)
+    if (real_fe_index == numbers::invalid_fe_index)
       real_fe_index = cell->active_fe_index();
 
     // some checks
@@ -470,9 +486,9 @@ namespace hp
   FEFaceValues<dim, spacedim>::reinit(
     const TriaIterator<DoFCellAccessor<dim, spacedim, lda>> &   cell,
     const typename Triangulation<dim, spacedim>::face_iterator &face,
-    const unsigned int                                          q_index,
-    const unsigned int                                          mapping_index,
-    const unsigned int                                          fe_index)
+    const types::fe_index                                       q_index,
+    const types::fe_index                                       mapping_index,
+    const types::fe_index                                       fe_index)
   {
     const auto face_n = cell->face_iterator_to_index(face);
     reinit(cell, face_n, q_index, mapping_index, fe_index);
@@ -485,22 +501,22 @@ namespace hp
   FEFaceValues<dim, spacedim>::reinit(
     const typename Triangulation<dim, spacedim>::cell_iterator &cell,
     const unsigned int                                          face_no,
-    const unsigned int                                          q_index,
-    const unsigned int                                          mapping_index,
-    const unsigned int                                          fe_index)
+    const types::fe_index                                       q_index,
+    const types::fe_index                                       mapping_index,
+    const types::fe_index                                       fe_index)
   {
     // determine which indices we
     // should actually use
-    unsigned int real_q_index = q_index, real_mapping_index = mapping_index,
-                 real_fe_index = fe_index;
+    types::fe_index real_q_index = q_index, real_mapping_index = mapping_index,
+                    real_fe_index = fe_index;
 
-    if (real_q_index == numbers::invalid_unsigned_int)
+    if (real_q_index == numbers::invalid_fe_index)
       real_q_index = 0;
 
-    if (real_mapping_index == numbers::invalid_unsigned_int)
+    if (real_mapping_index == numbers::invalid_fe_index)
       real_mapping_index = 0;
 
-    if (real_fe_index == numbers::invalid_unsigned_int)
+    if (real_fe_index == numbers::invalid_fe_index)
       real_fe_index = 0;
 
     // some checks
@@ -520,9 +536,9 @@ namespace hp
   FEFaceValues<dim, spacedim>::reinit(
     const typename Triangulation<dim, spacedim>::cell_iterator &cell,
     const typename Triangulation<dim, spacedim>::face_iterator &face,
-    const unsigned int                                          q_index,
-    const unsigned int                                          mapping_index,
-    const unsigned int                                          fe_index)
+    const types::fe_index                                       q_index,
+    const types::fe_index                                       mapping_index,
+    const types::fe_index                                       fe_index)
   {
     const auto face_n = cell->face_iterator_to_index(face);
     reinit(cell, face_n, q_index, mapping_index, fe_index);
@@ -565,15 +581,15 @@ namespace hp
     const TriaIterator<DoFCellAccessor<dim, spacedim, lda>> &cell,
     const unsigned int                                       face_no,
     const unsigned int                                       subface_no,
-    const unsigned int                                       q_index,
-    const unsigned int                                       mapping_index,
-    const unsigned int                                       fe_index)
+    const types::fe_index                                    q_index,
+    const types::fe_index                                    mapping_index,
+    const types::fe_index                                    fe_index)
   {
     // determine which indices we should actually use
-    unsigned int real_q_index = q_index, real_mapping_index = mapping_index,
-                 real_fe_index = fe_index;
+    types::fe_index real_q_index = q_index, real_mapping_index = mapping_index,
+                    real_fe_index = fe_index;
 
-    if (real_q_index == numbers::invalid_unsigned_int)
+    if (real_q_index == numbers::invalid_fe_index)
       {
         if (this->q_collections.size() > 1)
           real_q_index = cell->active_fe_index();
@@ -581,7 +597,7 @@ namespace hp
           real_q_index = 0;
       }
 
-    if (real_mapping_index == numbers::invalid_unsigned_int)
+    if (real_mapping_index == numbers::invalid_fe_index)
       {
         if (this->mapping_collection->size() > 1)
           real_mapping_index = cell->active_fe_index();
@@ -589,7 +605,7 @@ namespace hp
           real_mapping_index = 0;
       }
 
-    if (real_fe_index == numbers::invalid_unsigned_int)
+    if (real_fe_index == numbers::invalid_fe_index)
       real_fe_index = cell->active_fe_index();
 
     // some checks
@@ -610,21 +626,21 @@ namespace hp
     const typename Triangulation<dim, spacedim>::cell_iterator &cell,
     const unsigned int                                          face_no,
     const unsigned int                                          subface_no,
-    const unsigned int                                          q_index,
-    const unsigned int                                          mapping_index,
-    const unsigned int                                          fe_index)
+    const types::fe_index                                       q_index,
+    const types::fe_index                                       mapping_index,
+    const types::fe_index                                       fe_index)
   {
     // determine which indices we should actually use
-    unsigned int real_q_index = q_index, real_mapping_index = mapping_index,
-                 real_fe_index = fe_index;
+    types::fe_index real_q_index = q_index, real_mapping_index = mapping_index,
+                    real_fe_index = fe_index;
 
-    if (real_q_index == numbers::invalid_unsigned_int)
+    if (real_q_index == numbers::invalid_fe_index)
       real_q_index = 0;
 
-    if (real_mapping_index == numbers::invalid_unsigned_int)
+    if (real_mapping_index == numbers::invalid_fe_index)
       real_mapping_index = 0;
 
-    if (real_fe_index == numbers::invalid_unsigned_int)
+    if (real_fe_index == numbers::invalid_fe_index)
       real_fe_index = 0;
 
     // some checks

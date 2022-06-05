@@ -1823,7 +1823,7 @@ namespace internal
       // TODO: replace with std::all_of once FECellection supports range-based
       // iterations
       const auto all_of = [](const auto &fe_collection, const auto &fu) {
-        for (unsigned int i = 0; i < fe_collection.size(); ++i)
+        for (types::fe_index i = 0; i < fe_collection.size(); ++i)
           if (fu(fe_collection[i]) == false)
             return false;
 

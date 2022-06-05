@@ -487,7 +487,7 @@ namespace VectorTools
     const hp::FECollection<dim, spacedim> &fe_collection =
       dof_handler.get_fe_collection();
     hp::MappingCollection<dim, spacedim> mapping_collection;
-    for (unsigned int i = 0; i < fe_collection.size(); ++i)
+    for (types::fe_index i = 0; i < fe_collection.size(); ++i)
       mapping_collection.push_back(mapping);
 
     // TODO: the implementation makes the assumption that all faces have the
@@ -499,7 +499,7 @@ namespace VectorTools
     // it with a quadrature formula with the support points on faces for each
     // FE
     hp::QCollection<dim - 1> face_quadrature_collection;
-    for (unsigned int i = 0; i < fe_collection.size(); ++i)
+    for (types::fe_index i = 0; i < fe_collection.size(); ++i)
       {
         const std::vector<Point<dim - 1>> &unit_support_points =
           fe_collection[i].get_unit_face_support_points(face_no);
@@ -1080,7 +1080,7 @@ namespace VectorTools
     const hp::FECollection<dim, spacedim> &fe_collection =
       dof_handler.get_fe_collection();
     hp::MappingCollection<dim, spacedim> mapping_collection;
-    for (unsigned int i = 0; i < fe_collection.size(); ++i)
+    for (types::fe_index i = 0; i < fe_collection.size(); ++i)
       mapping_collection.push_back(mapping);
 
     // TODO: the implementation makes the assumption that all faces have the
@@ -1092,7 +1092,7 @@ namespace VectorTools
     // it with a quadrature formula with the support points on faces for each
     // FE
     hp::QCollection<dim - 1> face_quadrature_collection;
-    for (unsigned int i = 0; i < fe_collection.size(); ++i)
+    for (types::fe_index i = 0; i < fe_collection.size(); ++i)
       {
         const std::vector<Point<dim - 1>> &unit_support_points =
           fe_collection[i].get_unit_face_support_points(face_no);

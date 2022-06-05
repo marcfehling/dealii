@@ -291,7 +291,7 @@ namespace NonMatching
     /**
      * Active fe index of the last cell that reinit was called with.
      */
-    unsigned int active_fe_index;
+    types::fe_index active_fe_index;
 
     /**
      * The update flags passed to the constructor.
@@ -611,7 +611,7 @@ namespace NonMatching
     /**
      * Active fe index of the last cell that reinit was called with.
      */
-    unsigned int active_fe_index;
+    types::fe_index active_fe_index;
 
     /**
      * The update flags passed to the constructor.

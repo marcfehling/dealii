@@ -187,7 +187,7 @@ namespace parallel
 
     // Determine which FiniteElement object will be present on this cell after
     // refinement and will thus specify the number of degrees of freedom.
-    unsigned int fe_index = numbers::invalid_unsigned_int;
+    types::fe_index fe_index = numbers::invalid_fe_index;
     switch (status)
       {
         case Triangulation<dim, spacedim>::CELL_PERSIST:

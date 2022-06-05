@@ -74,8 +74,8 @@ namespace internal
                                            const unsigned int         cell,
                                            const bool apply_constraints) const
     {
-      const unsigned int n_fe_components = start_components.back();
-      const unsigned int fe_index =
+      const unsigned int    n_fe_components = start_components.back();
+      const types::fe_index fe_index =
         dofs_per_cell.size() == 1 ? 0 : cell_active_fe_index[cell];
       const unsigned int dofs_this_cell = dofs_per_cell[fe_index];
 
@@ -228,7 +228,7 @@ namespace internal
                 {
                   bool has_hanging_nodes = false;
 
-                  const unsigned int fe_index =
+                  const types::fe_index fe_index =
                     (cell_active_fe_index.size() == 0 ||
                      dofs_per_cell.size() == 1) ?
                       0 :
@@ -298,7 +298,7 @@ namespace internal
       const bool have_hp = dofs_per_cell.size() > 1;
       if (cell_active_fe_index.size() > 0)
         {
-          std::vector<unsigned int> new_active_fe_index;
+          std::vector<types::fe_index> new_active_fe_index;
           new_active_fe_index.reserve(task_info.cell_partition_data.back());
           unsigned int position_cell = 0;
           for (unsigned int cell = 0;
@@ -311,9 +311,9 @@ namespace internal
 
               // take maximum FE index among the ones present (we might have
               // lumped some lower indices into higher ones)
-              unsigned int fe_index =
+              types::fe_index fe_index =
                 cell_active_fe_index[renumbering[position_cell]];
-              for (unsigned int j = 1; j < n_comp; ++j)
+              for (types::fe_index j = 1; j < n_comp; ++j)
                 fe_index = std::max(
                   fe_index,
                   cell_active_fe_index[renumbering[position_cell + j]]);
@@ -875,7 +875,7 @@ namespace internal
               if (dof_indices[i] >= part.local_size())
                 ghost_indices.push_back(part.local_to_global(dof_indices[i]));
 
-            const unsigned int fe_index =
+            const types::fe_index fe_index =
               dofs_per_cell.size() == 1 ? 0 :
                                           cell_active_fe_index[cell / n_lanes];
             const unsigned int dofs_this_cell = dofs_per_cell[fe_index];

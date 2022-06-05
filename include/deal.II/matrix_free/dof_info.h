@@ -169,7 +169,7 @@ namespace internal
        * mode, this function always returns index 0. If an index is not found
        * in hp-mode, it returns numbers::invalid_unsigned_int.
        */
-      unsigned int
+      types::fe_index
       fe_index_from_degree(const unsigned int first_selected_component,
                            const unsigned int fe_degree) const;
 
@@ -720,13 +720,13 @@ namespace internal
       /**
        * Stores the index of the active finite element in the hp-case.
        */
-      std::vector<unsigned int> cell_active_fe_index;
+      std::vector<types::fe_index> cell_active_fe_index;
 
       /**
        * Stores the maximum degree of different finite elements for the hp-
        * case.
        */
-      unsigned int max_fe_index;
+      types::fe_index max_fe_index;
 
       /**
        * To each of the slots in an hp-adaptive case, the inner vector stores
@@ -787,17 +787,17 @@ namespace internal
 #ifndef DOXYGEN
 
 
-    inline unsigned int
+    inline types::fe_index
     DoFInfo::fe_index_from_degree(const unsigned int first_selected_component,
                                   const unsigned int fe_degree) const
     {
       const unsigned int n_indices = fe_index_conversion.size();
       if (n_indices <= 1)
         return 0;
-      for (unsigned int i = 0; i < n_indices; ++i)
+      for (types::fe_index i = 0; i < n_indices; ++i)
         if (fe_index_conversion[i][first_selected_component] == fe_degree)
           return i;
-      return numbers::invalid_unsigned_int;
+      return numbers::invalid_fe_index;
     }
 
 #endif // ifndef DOXYGEN

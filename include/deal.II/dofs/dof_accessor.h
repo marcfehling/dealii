@@ -567,7 +567,7 @@ public:
    * finite element or not. If it is an edge in 3d, the possible return value
    * may be one or any other value larger than that.
    */
-  unsigned int
+  types::fe_index
   n_active_fe_indices() const;
 
   /**
@@ -577,8 +577,8 @@ public:
    * n_active_fe_indices() active finite elements, and this function can be
    * queried for their indices.
    */
-  unsigned int
-  nth_active_fe_index(const unsigned int n) const;
+  types::fe_index
+  nth_active_fe_index(const types::fe_index n) const;
 
   /**
    * Returns all active FE indices on this object.
@@ -1074,7 +1074,7 @@ public:
    * calculated, this method just raises an exception and only exists to
    * enable dimension-independent programming.
    */
-  unsigned int
+  types::fe_index
   n_active_fe_indices() const;
 
   /**
@@ -1084,8 +1084,8 @@ public:
    * calculated, this method just raises an exception and only exists to
    * enable dimension-independent programming.
    */
-  unsigned int
-  nth_active_fe_index(const unsigned int n) const;
+  types::fe_index
+  nth_active_fe_index(const types::fe_index n) const;
 
   /**
    * Return true if the finite element with given index is active on the

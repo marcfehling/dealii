@@ -239,7 +239,7 @@ namespace NonMatching
          * Return the index of the element in the FECollection that we associate
          * with the level set function on the incoming cell.
          */
-        virtual unsigned int
+        virtual types::fe_index
         active_fe_index(const typename Triangulation<dim>::active_cell_iterator
                           &cell) const = 0;
 

@@ -164,7 +164,7 @@ namespace DoFTools
     // Convert the dof_mask to bool_dof_mask so we can pass it
     // to constraints.add_entries_local_to_global()
     std::vector<Table<2, bool>> bool_dof_mask(fe_collection.size());
-    for (unsigned int f = 0; f < fe_collection.size(); ++f)
+    for (types::fe_index f = 0; f < fe_collection.size(); ++f)
       {
         bool_dof_mask[f].reinit(
           TableIndices<2>(fe_collection[f].n_dofs_per_cell(),
@@ -187,8 +187,8 @@ namespace DoFTools
            (subdomain_id == cell->subdomain_id())) &&
           cell->is_locally_owned())
         {
-          const unsigned int fe_index = cell->active_fe_index();
-          const unsigned int dofs_per_cell =
+          const types::fe_index fe_index = cell->active_fe_index();
+          const unsigned int    dofs_per_cell =
             fe_collection[fe_index].n_dofs_per_cell();
 
           dofs_on_this_cell.resize(dofs_per_cell);

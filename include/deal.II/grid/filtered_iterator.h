@@ -280,13 +280,23 @@ namespace IteratorFilters
      * Constructor. Store the active FE index which iterators shall have to be
      * evaluated to true and state if the iterator must be locally owned.
      */
-    ActiveFEIndexEqualTo(const unsigned int active_fe_index,
-                         const bool         only_locally_owned = false);
+    ActiveFEIndexEqualTo(const types::fe_index active_fe_index,
+                         const bool            only_locally_owned = false);
 
     /**
      * Constructor. Store a collection of active FE indices which iterators
      * shall have to be evaluated to true and state if the iterator must be
      * locally owned.
+     */
+    ActiveFEIndexEqualTo(const std::set<types::fe_index> &active_fe_indices,
+                         const bool only_locally_owned = false);
+
+    /**
+     * Constructor. Store a collection of active FE indices which iterators
+     * shall have to be evaluated to true and state if the iterator must be
+     * locally owned.
+     *
+     * @deprecated Use the constructor with the types::fe_index type.
      */
     ActiveFEIndexEqualTo(const std::set<unsigned int> &active_fe_indices,
                          const bool only_locally_owned = false);
@@ -304,7 +314,7 @@ namespace IteratorFilters
     /**
      * Stored value to compare the material id with.
      */
-    const std::set<unsigned int> active_fe_indices;
+    const std::set<types::fe_index> active_fe_indices;
     /**
      * Flag stating whether only locally owned cells must return true.
      */
@@ -1477,9 +1487,18 @@ namespace IteratorFilters
 
   // ---------------- IteratorFilters::ActiveFEIndexEqualTo ---------
   inline ActiveFEIndexEqualTo::ActiveFEIndexEqualTo(
-    const unsigned int active_fe_index,
-    const bool         only_locally_owned)
+    const types::fe_index active_fe_index,
+    const bool            only_locally_owned)
     : active_fe_indices{active_fe_index}
+    , only_locally_owned(only_locally_owned)
+  {}
+
+
+
+  inline ActiveFEIndexEqualTo::ActiveFEIndexEqualTo(
+    const std::set<types::fe_index> &active_fe_indices,
+    const bool                       only_locally_owned)
+    : active_fe_indices(active_fe_indices)
     , only_locally_owned(only_locally_owned)
   {}
 
@@ -1488,8 +1507,9 @@ namespace IteratorFilters
   inline ActiveFEIndexEqualTo::ActiveFEIndexEqualTo(
     const std::set<unsigned int> &active_fe_indices,
     const bool                    only_locally_owned)
-    : active_fe_indices(active_fe_indices)
-    , only_locally_owned(only_locally_owned)
+    : ActiveFEIndexEqualTo(std::set<types::fe_index>(active_fe_indices.begin(),
+                                                     active_fe_indices.end()),
+                           only_locally_owned)
   {}
 
 

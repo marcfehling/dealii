@@ -237,7 +237,7 @@ namespace internal
       static const auto has_fe_with_reference_cell =
         [](const dealii::hp::FECollection<dim, spacedim> &fe_collection,
            const dealii::ReferenceCell &                  reference_cell) {
-          for (unsigned int i = 0; i < fe_collection.size(); ++i)
+          for (types::fe_index i = 0; i < fe_collection.size(); ++i)
             if (fe_collection[i].reference_cell() == reference_cell)
               return true;
           return false;

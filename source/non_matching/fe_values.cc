@@ -105,7 +105,7 @@ namespace NonMatching
   FEValues<dim>::initialize(const hp::QCollection<dim> &q_collection)
   {
     current_cell_location = LocationToLevelSet::unassigned;
-    active_fe_index       = numbers::invalid_unsigned_int;
+    active_fe_index       = numbers::invalid_fe_index;
 
     Assert(fe_collection->size() > 0,
            ExcMessage("Incoming hp::FECollection can not be empty."));
@@ -126,12 +126,12 @@ namespace NonMatching
     // on the non-intersected cells.
     fe_values_inside_full_quadrature.resize(fe_collection->size());
     fe_values_outside_full_quadrature.resize(fe_collection->size());
-    for (unsigned int fe_index = 0; fe_index < fe_collection->size();
+    for (types::fe_index fe_index = 0; fe_index < fe_collection->size();
          ++fe_index)
       {
-        const unsigned int mapping_index =
+        const types::fe_index mapping_index =
           mapping_collection->size() > 1 ? fe_index : 0;
-        const unsigned int q_index = q_collection.size() > 1 ? fe_index : 0;
+        const types::fe_index q_index = q_collection.size() > 1 ? fe_index : 0;
 
         fe_values_inside_full_quadrature[fe_index].emplace(
           (*mapping_collection)[mapping_index],
@@ -333,7 +333,7 @@ namespace NonMatching
     const hp::QCollection<dim - 1> &q_collection)
   {
     current_face_location = LocationToLevelSet::unassigned;
-    active_fe_index       = numbers::invalid_unsigned_int;
+    active_fe_index       = numbers::invalid_fe_index;
 
     Assert(fe_collection->size() > 0,
            ExcMessage("Incoming hp::FECollection can not be empty."));
@@ -356,12 +356,12 @@ namespace NonMatching
     // objects to use on the non-intersected cells.
     fe_values_inside_full_quadrature.resize(fe_collection->size());
     fe_values_outside_full_quadrature.resize(fe_collection->size());
-    for (unsigned int fe_index = 0; fe_index < fe_collection->size();
+    for (types::fe_index fe_index = 0; fe_index < fe_collection->size();
          ++fe_index)
       {
-        const unsigned int mapping_index =
+        const types::fe_index mapping_index =
           mapping_collection->size() > 1 ? fe_index : 0;
-        const unsigned int q_index = q_collection.size() > 1 ? fe_index : 0;
+        const types::fe_index q_index = q_collection.size() > 1 ? fe_index : 0;
 
         fe_values_inside_full_quadrature[fe_index].emplace(
           (*mapping_collection)[mapping_index],

@@ -302,7 +302,7 @@ namespace VectorTools
       // create an FEValues object with it.
 
       hp::QCollection<dim> support_quadrature;
-      for (unsigned int fe_index = 0; fe_index < fe.size(); ++fe_index)
+      for (types::fe_index fe_index = 0; fe_index < fe.size(); ++fe_index)
         {
           const auto &points = fe[fe_index].get_generalized_support_points();
           support_quadrature.push_back(Quadrature<dim>(points));
@@ -329,7 +329,7 @@ namespace VectorTools
           if (!cell->is_locally_owned())
             continue;
 
-          const unsigned int fe_index = cell->active_fe_index();
+          const types::fe_index fe_index = cell->active_fe_index();
 
           // Do nothing if there are no local degrees of freedom.
           if (fe[fe_index].n_dofs_per_cell() == 0)

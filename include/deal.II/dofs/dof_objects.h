@@ -92,7 +92,7 @@ namespace internal
       void
       set_dof_index(const dealii::DoFHandler<dh_dim, spacedim> &dof_handler,
                     const unsigned int                          obj_index,
-                    const unsigned int                          fe_index,
+                    const types::fe_index                       fe_index,
                     const unsigned int                          local_index,
                     const types::global_dof_index               global_index);
 
@@ -112,7 +112,7 @@ namespace internal
       types::global_dof_index
       get_dof_index(const dealii::DoFHandler<dh_dim, spacedim> &dof_handler,
                     const unsigned int                          obj_index,
-                    const unsigned int                          fe_index,
+                    const types::fe_index                       fe_index,
                     const unsigned int local_index) const;
 
       /**
@@ -135,7 +135,7 @@ namespace internal
       fe_index_is_active(
         const dealii::DoFHandler<dh_dim, spacedim> &dof_handler,
         const types::global_dof_index               index,
-        const unsigned int                          fe_index) const;
+        const types::fe_index                       fe_index) const;
 
       /**
        * Determine an estimate for the memory consumption (in bytes) of this
@@ -182,7 +182,7 @@ namespace internal
     DoFObjects<dim>::fe_index_is_active(
       const dealii::DoFHandler<dh_dim, spacedim> &,
       const types::global_dof_index,
-      const unsigned int fe_index) const
+      const types::fe_index fe_index) const
     {
       (void)fe_index;
       Assert((fe_index ==
@@ -200,7 +200,7 @@ namespace internal
     DoFObjects<dim>::get_dof_index(
       const dealii::DoFHandler<dh_dim, spacedim> &dof_handler,
       const unsigned int                          obj_index,
-      const unsigned int                          fe_index,
+      const types::fe_index                       fe_index,
       const unsigned int                          local_index) const
     {
       (void)fe_index;

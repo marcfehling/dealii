@@ -199,7 +199,7 @@ namespace internal
      * collections.
      */
     void
-    resize(const unsigned int active_fe_index);
+    resize(const types::fe_index active_fe_index);
   };
 
 
@@ -265,7 +265,7 @@ namespace internal
   template <int dim, int spacedim, typename number>
   void
   ParallelData<dim, spacedim, number>::resize(
-    const unsigned int active_fe_index)
+    const types::fe_index active_fe_index)
   {
     const unsigned int n_q_points   = face_quadratures[active_fe_index].size();
     const unsigned int n_components = finite_element.n_components();

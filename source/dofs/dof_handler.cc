@@ -809,7 +809,7 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<1>>
           &,
         const unsigned int            obj_index,
-        const unsigned int            fe_index,
+        const types::fe_index         fe_index,
         const unsigned int            local_index,
         const types::global_dof_index global_index,
         const std::integral_constant<int, 1>)
@@ -833,7 +833,7 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<2>>
           &                           mg_faces,
         const unsigned int            obj_index,
-        const unsigned int            fe_index,
+        const types::fe_index         fe_index,
         const unsigned int            local_index,
         const types::global_dof_index global_index,
         const std::integral_constant<int, 1>)
@@ -857,7 +857,7 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<2>>
           &,
         const unsigned int            obj_index,
-        const unsigned int            fe_index,
+        const types::fe_index         fe_index,
         const unsigned int            local_index,
         const types::global_dof_index global_index,
         const std::integral_constant<int, 2>)
@@ -881,7 +881,7 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<3>>
           &                           mg_faces,
         const unsigned int            obj_index,
-        const unsigned int            fe_index,
+        const types::fe_index         fe_index,
         const unsigned int            local_index,
         const types::global_dof_index global_index,
         const std::integral_constant<int, 1>)
@@ -905,7 +905,7 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<3>>
           &                           mg_faces,
         const unsigned int            obj_index,
-        const unsigned int            fe_index,
+        const types::fe_index         fe_index,
         const unsigned int            local_index,
         const types::global_dof_index global_index,
         const std::integral_constant<int, 2>)
@@ -929,7 +929,7 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<3>>
           &,
         const unsigned int            obj_index,
-        const unsigned int            fe_index,
+        const types::fe_index         fe_index,
         const unsigned int            local_index,
         const types::global_dof_index global_index,
         const std::integral_constant<int, 3>)
@@ -1026,7 +1026,7 @@ namespace internal
             if (locally_used_vertices[v] == true)
               if (dof_handler.tria->vertex_used(v) == true)
                 {
-                  unsigned int fe = 0;
+                  types::fe_index fe = 0;
                   for (; fe < dof_handler.fe_collection.size(); ++fe)
                     if (vertex_fe_association[fe][v] == true)
                       break;
@@ -1055,7 +1055,7 @@ namespace internal
 
               if (dof_handler.tria->vertex_used(v) && locally_used_vertices[v])
                 {
-                  for (unsigned int fe = 0;
+                  for (types::fe_index fe = 0;
                        fe < dof_handler.fe_collection.size();
                        ++fe)
                     if (vertex_fe_association[fe][v] == true)
@@ -1077,7 +1077,8 @@ namespace internal
           for (unsigned int v = 0; v < dof_handler.tria->n_vertices(); ++v)
             if (dof_handler.tria->vertex_used(v) && locally_used_vertices[v])
               {
-                for (unsigned int fe = 0; fe < dof_handler.fe_collection.size();
+                for (types::fe_index fe = 0;
+                     fe < dof_handler.fe_collection.size();
                      ++fe)
                   if (vertex_fe_association[fe][v] == true)
                     {
@@ -1343,8 +1344,8 @@ namespace internal
                            (cell->active_fe_index() ==
                             cell->neighbor(face)->active_fe_index())))
                         {
-                          const unsigned int fe = cell->active_fe_index();
-                          const unsigned int n_dofs =
+                          const types::fe_index fe = cell->active_fe_index();
+                          const unsigned int    n_dofs =
                             dof_handler.get_fe(fe)
                               .template n_dofs_per_object<dim - 1>(face);
                           const unsigned int offset =
@@ -1555,7 +1556,8 @@ namespace internal
                                            false);
             for (unsigned int line = 0; line < dof_handler.tria->n_raw_lines();
                  ++line)
-              for (unsigned int fe = 0; fe < dof_handler.fe_collection.size();
+              for (types::fe_index fe = 0;
+                   fe < dof_handler.fe_collection.size();
                    ++fe)
                 if (line_fe_association[fe][line] == true)
                   {
@@ -1586,7 +1588,7 @@ namespace internal
 
                 if (line_is_used[line] == true)
                   {
-                    for (unsigned int fe = 0;
+                    for (types::fe_index fe = 0;
                          fe < dof_handler.fe_collection.size();
                          ++fe)
                       if (line_fe_association[fe][line] == true)
@@ -1613,7 +1615,7 @@ namespace internal
                  ++line)
               if (line_is_used[line] == true)
                 {
-                  for (unsigned int fe = 0;
+                  for (types::fe_index fe = 0;
                        fe < dof_handler.fe_collection.size();
                        ++fe)
                     if (line_fe_association[fe][line] == true)

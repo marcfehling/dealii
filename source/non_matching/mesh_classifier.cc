@@ -103,7 +103,7 @@ namespace NonMatching
          * Return the active FE index of the DoFCellAccessor associated with the
          * DoFHandler and the incoming cell in the triangulation.
          */
-        unsigned int
+        types::fe_index
         active_fe_index(const typename Triangulation<dim>::active_cell_iterator
                           &cell) const override;
 
@@ -180,7 +180,7 @@ namespace NonMatching
 
 
       template <int dim, class VectorType>
-      unsigned int
+      types::fe_index
       DiscreteLevelSetDescription<dim, VectorType>::active_fe_index(
         const typename Triangulation<dim>::active_cell_iterator &cell) const
       {
@@ -220,7 +220,7 @@ namespace NonMatching
          * Returns 0, since there is always a single element in the
          * FECollection.
          */
-        unsigned int
+        types::fe_index
         active_fe_index(const typename Triangulation<dim>::active_cell_iterator
                           &cell) const override;
 
@@ -299,7 +299,7 @@ namespace NonMatching
 
 
       template <int dim>
-      unsigned int
+      types::fe_index
       AnalyticLevelSetDescription<dim>::active_fe_index(
         const typename Triangulation<dim>::active_cell_iterator &) const
       {
@@ -324,7 +324,7 @@ namespace NonMatching
 #ifdef DEAL_II_WITH_LAPACK
     const hp::FECollection<dim> &fe_collection =
       dof_handler.get_fe_collection();
-    for (unsigned int i = 0; i < fe_collection.size(); i++)
+    for (types::fe_index i = 0; i < fe_collection.size(); i++)
       {
         // The level set function must be scalar.
         AssertDimension(fe_collection[i].n_components(), 1);
@@ -410,7 +410,8 @@ namespace NonMatching
 
     // Determine the location by changing basis to FE_Bernstein and checking
     // the signs of the dofs.
-    const unsigned int fe_index = level_set_description->active_fe_index(cell);
+    const types::fe_index fe_index =
+      level_set_description->active_fe_index(cell);
     const unsigned int n_local_dofs =
       lagrange_to_bernstein_face[fe_index][face_index].m();
 
@@ -472,7 +473,7 @@ namespace NonMatching
 
     lagrange_to_bernstein_face.resize(fe_collection.size());
 
-    for (unsigned int i = 0; i < fe_collection.size(); i++)
+    for (types::fe_index i = 0; i < fe_collection.size(); i++)
       {
         const FiniteElement<dim> &element = fe_collection[i];
         const FE_Q<dim> *fe_q = dynamic_cast<const FE_Q<dim> *>(&element);

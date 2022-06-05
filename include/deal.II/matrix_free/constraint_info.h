@@ -102,7 +102,7 @@ namespace internal
 
       std::vector<ShapeInfo<Number>>          shape_infos;
       std::vector<compressed_constraint_kind> hanging_node_constraint_masks;
-      std::vector<unsigned int>               active_fe_indices;
+      std::vector<types::fe_index>            active_fe_indices;
 
     private:
       inline const typename Number::value_type *

@@ -342,7 +342,7 @@ namespace MGTools
     for (const auto &cell : dofs.cell_iterators_on_level(level))
       {
         const FiniteElement<dim> &fe       = cell->get_fe();
-        const unsigned int        fe_index = cell->active_fe_index();
+        const types::fe_index     fe_index = cell->active_fe_index();
 
 
         // TODO: This assumes that the dofs per face on all faces coincide!

@@ -813,7 +813,7 @@ namespace DoFRenumbering
     // to the first vector component to
     // which it belongs
     std::vector<std::vector<unsigned int>> component_list(fe_collection.size());
-    for (unsigned int f = 0; f < fe_collection.size(); ++f)
+    for (types::fe_index f = 0; f < fe_collection.size(); ++f)
       {
         const FiniteElement<dim, spacedim> &fe = fe_collection[f];
         const unsigned int dofs_per_cell       = fe.n_dofs_per_cell();
@@ -1099,7 +1099,7 @@ namespace DoFRenumbering
     // should go.
     std::vector<std::vector<types::global_dof_index>> block_list(
       fe_collection.size());
-    for (unsigned int f = 0; f < fe_collection.size(); ++f)
+    for (types::fe_index f = 0; f < fe_collection.size(); ++f)
       {
         const FiniteElement<dim, spacedim> &fe = fe_collection[f];
         block_list[f].resize(fe.n_dofs_per_cell());
@@ -1800,7 +1800,7 @@ namespace DoFRenumbering
         Assert(fe_collection[0].has_support_points(),
                typename FiniteElement<dim>::ExcFEHasNoSupportPoints());
         hp::QCollection<dim> quadrature_collection;
-        for (unsigned int comp = 0; comp < fe_collection.size(); ++comp)
+        for (types::fe_index comp = 0; comp < fe_collection.size(); ++comp)
           {
             Assert(fe_collection[comp].has_support_points(),
                    typename FiniteElement<dim>::ExcFEHasNoSupportPoints());

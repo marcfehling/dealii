@@ -121,7 +121,7 @@ namespace FESeries
     template <typename Number>
     void
     calculate(const dealii::Vector<Number> &local_dof_values,
-              const unsigned int            cell_active_fe_index,
+              const types::fe_index         cell_active_fe_index,
               Table<dim, CoefficientType> & fourier_coefficients);
 
     /**
@@ -291,7 +291,7 @@ namespace FESeries
     template <typename Number>
     void
     calculate(const dealii::Vector<Number> &local_dof_values,
-              const unsigned int            cell_active_fe_index,
+              const types::fe_index         cell_active_fe_index,
               Table<dim, CoefficientType> & legendre_coefficients);
 
     /**

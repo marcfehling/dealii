@@ -295,7 +295,7 @@ namespace SmoothnessEstimator
       // finite element, the smoothness estimation algorithm tends to produce
       // stable results.
       std::vector<unsigned int> n_coefficients_per_direction;
-      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+      for (types::fe_index i = 0; i < fe_collection.size(); ++i)
         n_coefficients_per_direction.push_back(fe_collection[i].degree + 2);
 
       // Default quadrature collection.
@@ -314,7 +314,7 @@ namespace SmoothnessEstimator
       // We start with the zeroth Legendre polynomial which is just a constant,
       // so the highest Legendre polynomial will be of order (n_modes - 1).
       hp::QCollection<dim> q_collection;
-      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+      for (types::fe_index i = 0; i < fe_collection.size(); ++i)
         {
           const QGauss<dim>  quadrature(n_coefficients_per_direction[i]);
           const QSorted<dim> quadrature_sorted(quadrature);
@@ -584,7 +584,7 @@ namespace SmoothnessEstimator
       // element, the smoothness estimation algorithm tends to produce stable
       // results.
       std::vector<unsigned int> n_coefficients_per_direction;
-      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+      for (types::fe_index i = 0; i < fe_collection.size(); ++i)
         n_coefficients_per_direction.push_back(fe_collection[i].degree + 2);
 
       // Default quadrature collection.
@@ -603,7 +603,7 @@ namespace SmoothnessEstimator
       // number is k = n_modes - 1.
       const QGauss<1>      base_quadrature(5);
       hp::QCollection<dim> q_collection;
-      for (unsigned int i = 0; i < fe_collection.size(); ++i)
+      for (types::fe_index i = 0; i < fe_collection.size(); ++i)
         {
           const QIterated<dim> quadrature(base_quadrature,
                                           n_coefficients_per_direction[i] - 1);
