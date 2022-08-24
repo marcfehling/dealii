@@ -340,23 +340,23 @@ namespace hp
      * from `fe_index` to `dof_index`, which is conceptually of course
      * equivalent to a `std::set` of pairs, but in practice is easier to query.
      */
-    std::vector<std::map<unsigned int, unsigned int>>
-    hp_vertex_dof_identities(const std::set<unsigned int> &fes) const;
+    std::vector<std::map<types::fe_index, unsigned int>>
+    hp_vertex_dof_identities(const std::set<types::fe_index> &fes) const;
 
     /**
      * Same as hp_vertex_dof_indices(), except that the function treats degrees
      * of freedom on lines.
      */
-    std::vector<std::map<unsigned int, unsigned int>>
-    hp_line_dof_identities(const std::set<unsigned int> &fes) const;
+    std::vector<std::map<types::fe_index, unsigned int>>
+    hp_line_dof_identities(const std::set<types::fe_index> &fes) const;
 
     /**
      * Same as hp_vertex_dof_indices(), except that the function treats degrees
      * of freedom on quads.
      */
-    std::vector<std::map<unsigned int, unsigned int>>
-    hp_quad_dof_identities(const std::set<unsigned int> &fes,
-                           const unsigned int            face_no = 0) const;
+    std::vector<std::map<types::fe_index, unsigned int>>
+    hp_quad_dof_identities(const std::set<types::fe_index> &fes,
+                           const unsigned int               face_no = 0) const;
 
 
     /**
@@ -380,9 +380,9 @@ namespace hp
      * subspace and specifies that it is subject to this comparison. See
      * FiniteElement::compare_for_domination() for more information.
      */
-    std::set<unsigned int>
-    find_common_fes(const std::set<unsigned int> &fes,
-                    const unsigned int            codim = 0) const;
+    std::set<types::fe_index>
+    find_common_fes(const std::set<types::fe_index> &fes,
+                    const unsigned int               codim = 0) const;
 
     /**
      * Return the indices of finite elements in this FECollection that are
@@ -405,9 +405,9 @@ namespace hp
      * subspace and specifies that it is subject to this comparison. See
      * FiniteElement::compare_for_domination() for more information.
      */
-    std::set<unsigned int>
-    find_enclosing_fes(const std::set<unsigned int> &fes,
-                       const unsigned int            codim = 0) const;
+    std::set<types::fe_index>
+    find_enclosing_fes(const std::set<types::fe_index> &fes,
+                       const unsigned int               codim = 0) const;
 
     /**
      * Return the index of a finite element from the provided set of indices @p fes
@@ -441,9 +441,9 @@ namespace hp
      * subspace and specifies that it is subject to this comparison. See
      * FiniteElement::compare_for_domination() for more information.
      */
-    unsigned int
-    find_dominating_fe(const std::set<unsigned int> &fes,
-                       const unsigned int            codim = 0) const;
+    types::fe_index
+    find_dominating_fe(const std::set<types::fe_index> &fes,
+                       const unsigned int               codim = 0) const;
 
     /**
      * Return the index of a finite element from the provided set of indices @p fes
@@ -477,9 +477,9 @@ namespace hp
      * subspace and specifies that it is subject to this comparison. See
      * FiniteElement::compare_for_domination() for more information.
      */
-    unsigned int
-    find_dominated_fe(const std::set<unsigned int> &fes,
-                      const unsigned int            codim = 0) const;
+    types::fe_index
+    find_dominated_fe(const std::set<types::fe_index> &fes,
+                      const unsigned int               codim = 0) const;
 
     /**
      * Return the index of a finite element from the provided set of indices @p fes
@@ -504,9 +504,9 @@ namespace hp
      * subspace and specifies that it is subject to this comparison. See
      * FiniteElement::compare_for_domination() for more information.
      */
-    unsigned int
-    find_dominating_fe_extended(const std::set<unsigned int> &fes,
-                                const unsigned int            codim = 0) const;
+    types::fe_index
+    find_dominating_fe_extended(const std::set<types::fe_index> &fes,
+                                const unsigned int codim = 0) const;
 
     /**
      * Return the index of a finite element from the provided set of indices @p fes
@@ -530,9 +530,9 @@ namespace hp
      * subspace and specifies that it is subject to this comparison. See
      * FiniteElement::compare_for_domination() for more information.
      */
-    unsigned int
-    find_dominated_fe_extended(const std::set<unsigned int> &fes,
-                               const unsigned int            codim = 0) const;
+    types::fe_index
+    find_dominated_fe_extended(const std::set<types::fe_index> &fes,
+                               const unsigned int codim = 0) const;
 
     /**
      * @}
@@ -559,12 +559,12 @@ namespace hp
      * range of this collection, i.e. within [0, size()).
      */
     void
-    set_hierarchy(const std::function<unsigned int(
+    set_hierarchy(const std::function<types::fe_index(
                     const typename hp::FECollection<dim, spacedim> &,
-                    const unsigned int)> &next,
-                  const std::function<unsigned int(
+                    const types::fe_index)> &next,
+                  const std::function<types::fe_index(
                     const typename hp::FECollection<dim, spacedim> &,
-                    const unsigned int)> &prev);
+                    const types::fe_index)> &prev);
 
     /**
      * Set the default hierarchy corresponding to the index of each finite
@@ -595,8 +595,8 @@ namespace hp
      * container equals the number of elements of this object, i.e.,
      * FECollection::size().
      */
-    std::vector<unsigned int>
-    get_hierarchy_sequence(const unsigned int fe_index = 0) const;
+    std::vector<types::fe_index>
+    get_hierarchy_sequence(const types::fe_index fe_index = 0) const;
 
     /**
      * %Function returning the index of the finite element following the given
@@ -607,8 +607,8 @@ namespace hp
      * A custom hierarchy can be supplied via the member function
      * set_hierarchy().
      */
-    unsigned int
-    next_in_hierarchy(const unsigned int fe_index) const;
+    types::fe_index
+    next_in_hierarchy(const types::fe_index fe_index) const;
 
     /**
      * %Function returning the index of the finite element preceding the given
@@ -619,8 +619,8 @@ namespace hp
      * A custom hierarchy can be supplied via the member function
      * set_hierarchy().
      */
-    unsigned int
-    previous_in_hierarchy(const unsigned int fe_index) const;
+    types::fe_index
+    previous_in_hierarchy(const types::fe_index fe_index) const;
 
     /**
      * @}
