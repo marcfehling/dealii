@@ -1368,17 +1368,14 @@ namespace DoFTools
   template <int dim, int spacedim>
   void
   get_active_fe_indices(const DoFHandler<dim, spacedim> &dof_handler,
-                        std::vector<unsigned int> &      active_fe_indices_)
+                        std::vector<unsigned int> &      active_fe_indices)
   {
     AssertDimension(active_fe_indices.size(),
                     dof_handler.get_triangulation().n_active_cells());
 
-    std::vector<types::fe_index> active_fe_indices =
-      dof_handler.get_active_fe_indices();
+    std::vector<types::fe_index> indices = dof_handler.get_active_fe_indices();
 
-    std::copy(active_fe_indices.begin(),
-              active_fe_indices.end(),
-              active_fe_indices_.begin());
+    active_fe_indices.assign(indices.begin(), indices.end());
   }
 
   template <int dim, int spacedim>
