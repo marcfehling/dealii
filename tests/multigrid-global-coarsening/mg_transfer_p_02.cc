@@ -34,7 +34,7 @@
 
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/logstream.h>
-#include <deal.II/base/mpi.h>
+#include <deal.II/base/mpi.templates.h>
 #include <deal.II/base/quadrature_lib.h>
 
 #include <deal.II/distributed/tria.h>
@@ -102,8 +102,9 @@ do_test()
             {
               if (cell->is_locally_owned())
                 cell->set_active_fe_index(
-                  std::max(((cell)->active_fe_index() + 1) / 2 /*bisection*/,
-                           1u) -
+                  std::max<types::fe_index>((cell->active_fe_index() + 1) /
+                                              2 /*bisection*/,
+                                            1) -
                   1);
             }
         }
@@ -115,9 +116,9 @@ do_test()
           {
             if (cell->is_locally_owned())
               cell->set_active_fe_index(
-                std::max(((cell_other)->active_fe_index() + 1) /
-                           2 /*bisection*/,
-                         1u) -
+                std::max<types::fe_index>((cell_other->active_fe_index() + 1) /
+                                            2 /*bisection*/,
+                                          1) -
                 1);
             cell_other++;
           }
@@ -151,7 +152,7 @@ do_test()
 
       // break if all cells on coarse level have active_fe_index=0
       {
-        unsigned int min = 0;
+        types::fe_index min = 0;
 
         for (auto &cell : dof_handler_coarse.active_cell_iterators())
           {
