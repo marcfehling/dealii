@@ -944,12 +944,14 @@ namespace Step75
     // such a hierarchy that only works on finite elements with polynomial
     // degrees in the proposed range <code>[min_p_degree, max_p_degree]</code>.
     const types::fe_index min_fe_index = prm.min_p_degree - 1;
+    const types::fe_index max_fe_index = fe_collection.size() - 1;
     fe_collection.set_hierarchy(
       /*next_index=*/
-      [](const typename hp::FECollection<dim> &fe_collection,
-         const types::fe_index                 fe_index) -> types::fe_index {
-        return ((fe_index + 1) < fe_collection.size()) ? fe_index + 1 :
-                                                         fe_index;
+      [max_fe_index](const typename hp::FECollection<dim> &,
+                     const types::fe_index fe_index) -> types::fe_index {
+        Assert(fe_index <= max_fe_index,
+               ExcMessage("Finite element is not part of hierarchy!"));
+        return (fe_index < max_fe_index) ? fe_index + 1 : fe_index;
       },
       /*previous_index=*/
       [min_fe_index](const typename hp::FECollection<dim> &,
