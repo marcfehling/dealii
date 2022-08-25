@@ -158,6 +158,20 @@ namespace hp
 
 
   template <int dim, int spacedim>
+  std::set<unsigned int>
+  FECollection<dim, spacedim>::find_common_fes(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    const std::set<types::fe_index> common_fes =
+      find_common_fes(std::set<types::fe_index>(fes.begin(), fes.end()), codim);
+
+    return std::set<unsigned int>(common_fes.begin(), common_fes.end());
+  }
+
+
+
+  template <int dim, int spacedim>
   std::set<types::fe_index>
   FECollection<dim, spacedim>::find_enclosing_fes(
     const std::set<types::fe_index> &fes,
@@ -194,6 +208,21 @@ namespace hp
           dominated_fes.insert(current_fe);
       }
     return dominated_fes;
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::set<unsigned int>
+  FECollection<dim, spacedim>::find_enclosing_fes(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    const std::set<types::fe_index> enclosing_fes =
+      find_enclosing_fes(std::set<types::fe_index>(fes.begin(), fes.end()),
+                         codim);
+
+    return std::set<unsigned int>(enclosing_fes.begin(), enclosing_fes.end());
   }
 
 
@@ -246,6 +275,18 @@ namespace hp
 
 
   template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominating_fe(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return find_dominating_fe(std::set<types::fe_index>(fes.begin(), fes.end()),
+                              codim);
+  }
+
+
+
+  template <int dim, int spacedim>
   types::fe_index
   FECollection<dim, spacedim>::find_dominated_fe(
     const std::set<types::fe_index> &fes,
@@ -293,6 +334,18 @@ namespace hp
 
 
   template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominated_fe(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return find_dominated_fe(std::set<types::fe_index>(fes.begin(), fes.end()),
+                             codim);
+  }
+
+
+
+  template <int dim, int spacedim>
   types::fe_index
   FECollection<dim, spacedim>::find_dominating_fe_extended(
     const std::set<types::fe_index> &fes,
@@ -313,6 +366,19 @@ namespace hp
 
 
   template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominating_fe_extended(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return find_dominating_fe_extended(std::set<types::fe_index>(fes.begin(),
+                                                                 fes.end()),
+                                       codim);
+  }
+
+
+
+  template <int dim, int spacedim>
   types::fe_index
   FECollection<dim, spacedim>::find_dominated_fe_extended(
     const std::set<types::fe_index> &fes,
@@ -328,6 +394,19 @@ namespace hp
       }
 
     return fe_index;
+  }
+
+
+
+  template <int dim, int spacedim>
+  unsigned int
+  FECollection<dim, spacedim>::find_dominated_fe_extended(
+    const std::set<unsigned int> &fes,
+    const unsigned int            codim) const
+  {
+    return find_dominated_fe_extended(std::set<types::fe_index>(fes.begin(),
+                                                                fes.end()),
+                                      codim);
   }
 
 
@@ -547,6 +626,26 @@ namespace hp
 
 
   template <int dim, int spacedim>
+  std::vector<std::map<unsigned int, unsigned int>>
+  FECollection<dim, spacedim>::hp_vertex_dof_identities(
+    const std::set<unsigned int> &fes) const
+  {
+    const std::vector<std::map<types::fe_index, unsigned int>> identities =
+      hp_vertex_dof_identities(
+        std::set<types::fe_index>(fes.begin(), fes.end()));
+
+    std::vector<std::map<unsigned int, unsigned int>> converted_identities;
+    converted_identities.reserve(identities.size());
+    for (const auto &map : identities)
+      converted_identities.emplace_back(
+        std::map<unsigned int, unsigned int>(map.begin(), map.end()));
+
+    return converted_identities;
+  }
+
+
+
+  template <int dim, int spacedim>
   std::vector<std::map<types::fe_index, unsigned int>>
   FECollection<dim, spacedim>::hp_line_dof_identities(
     const std::set<types::fe_index> &fes) const
@@ -556,6 +655,25 @@ namespace hp
       return (*this)[fe_index_1].hp_line_dof_identities((*this)[fe_index_2]);
     };
     return compute_hp_dof_identities(fes, query_line_dof_identities);
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::vector<std::map<unsigned int, unsigned int>>
+  FECollection<dim, spacedim>::hp_line_dof_identities(
+    const std::set<unsigned int> &fes) const
+  {
+    const std::vector<std::map<types::fe_index, unsigned int>> identities =
+      hp_line_dof_identities(std::set<types::fe_index>(fes.begin(), fes.end()));
+
+    std::vector<std::map<unsigned int, unsigned int>> converted_identities;
+    converted_identities.reserve(identities.size());
+    for (const auto &map : identities)
+      converted_identities.emplace_back(
+        std::map<unsigned int, unsigned int>(map.begin(), map.end()));
+
+    return converted_identities;
   }
 
 
@@ -573,6 +691,27 @@ namespace hp
                                                           face_no);
       };
     return compute_hp_dof_identities(fes, query_quad_dof_identities);
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::vector<std::map<unsigned int, unsigned int>>
+  FECollection<dim, spacedim>::hp_quad_dof_identities(
+    const std::set<unsigned int> &fes,
+    const unsigned int            face_no) const
+  {
+    const std::vector<std::map<types::fe_index, unsigned int>> identities =
+      hp_quad_dof_identities(std::set<types::fe_index>(fes.begin(), fes.end()),
+                             face_no);
+
+    std::vector<std::map<unsigned int, unsigned int>> converted_identities;
+    converted_identities.reserve(identities.size());
+    for (const auto &map : identities)
+      converted_identities.emplace_back(
+        std::map<unsigned int, unsigned int>(map.begin(), map.end()));
+
+    return converted_identities;
   }
 
 
@@ -647,6 +786,19 @@ namespace hp
     }
 
     return {sequence.begin(), sequence.end()};
+  }
+
+
+
+  template <int dim, int spacedim>
+  std::vector<unsigned int>
+  FECollection<dim, spacedim>::get_hierarchy_sequence(
+    const unsigned int fe_index) const
+  {
+    const std::vector<types::fe_index> hierarchy =
+      get_hierarchy_sequence(static_cast<types::fe_index>(fe_index));
+
+    return std::vector<unsigned int>(hierarchy.begin(), hierarchy.end());
   }
 
 

@@ -78,12 +78,12 @@ namespace hp
        * Once the last element of the @p fe_collection is reached, there is no element on a higher level in
        * the hierarchy and thus we return the last value.
        */
-      static unsigned int
+      static types::fe_index
       next_index(const typename hp::FECollection<dim, spacedim> &fe_collection,
-                 const unsigned int                              fe_index)
+                 const types::fe_index                           fe_index)
       {
-        return ((fe_index + 1) < fe_collection.size()) ? fe_index + 1 :
-                                                         fe_index;
+        return ((fe_index + 1u) < fe_collection.size()) ? fe_index + 1u :
+                                                          fe_index;
       }
 
       /**
@@ -92,12 +92,10 @@ namespace hp
        * Once the first element of the @p fe_collection is reached, there is no element on a lower level in
        * the hierarchy and thus we return the first value.
        */
-      static unsigned int
-      previous_index(
-        const typename hp::FECollection<dim, spacedim> &fe_collection,
-        const unsigned int                              fe_index)
+      static types::fe_index
+      previous_index(const typename hp::FECollection<dim, spacedim> &,
+                     const types::fe_index fe_index)
       {
-        (void)fe_collection;
         return (fe_index > 0) ? fe_index - 1 : fe_index;
       }
     };
@@ -344,11 +342,27 @@ namespace hp
     hp_vertex_dof_identities(const std::set<types::fe_index> &fes) const;
 
     /**
+     * @copydoc hp_vertex_dof_identities()
+     *
+     * @deprecated Use hp_vertex_dof_identities() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<std::map<unsigned int, unsigned int>>
+    hp_vertex_dof_identities(const std::set<unsigned int> &fes) const;
+
+    /**
      * Same as hp_vertex_dof_indices(), except that the function treats degrees
      * of freedom on lines.
      */
     std::vector<std::map<types::fe_index, unsigned int>>
     hp_line_dof_identities(const std::set<types::fe_index> &fes) const;
+
+    /**
+     * @copydoc hp_line_dof_identities()
+     *
+     * @deprecated Use hp_line_dof_identities() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<std::map<unsigned int, unsigned int>>
+    hp_line_dof_identities(const std::set<unsigned int> &fes) const;
 
     /**
      * Same as hp_vertex_dof_indices(), except that the function treats degrees
@@ -358,6 +372,14 @@ namespace hp
     hp_quad_dof_identities(const std::set<types::fe_index> &fes,
                            const unsigned int               face_no = 0) const;
 
+    /**
+     * @copydoc hp_quad_dof_identities()
+     *
+     * @deprecated Use hp_quad_dof_identities() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<std::map<unsigned int, unsigned int>>
+    hp_quad_dof_identities(const std::set<unsigned int> &fes,
+                           const unsigned int            face_no = 0) const;
 
     /**
      * Return the indices of finite elements in this FECollection that dominate
@@ -385,6 +407,15 @@ namespace hp
                     const unsigned int               codim = 0) const;
 
     /**
+     * @copydoc find_common_fes()
+     *
+     * @deprecated Use find_common_fes() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY std::set<unsigned int>
+                             find_common_fes(const std::set<unsigned int> &fes,
+                                             const unsigned int            codim = 0) const;
+
+    /**
      * Return the indices of finite elements in this FECollection that are
      * dominated by all elements associated with the provided set of indices @p fes.
      *
@@ -408,6 +439,15 @@ namespace hp
     std::set<types::fe_index>
     find_enclosing_fes(const std::set<types::fe_index> &fes,
                        const unsigned int               codim = 0) const;
+
+    /**
+     * @copydoc find_enclosing_fes()
+     *
+     * @deprecated Use find_enclosing_fes() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY std::set<unsigned int>
+    find_enclosing_fes(const std::set<unsigned int> &fes,
+                       const unsigned int            codim = 0) const;
 
     /**
      * Return the index of a finite element from the provided set of indices @p fes
@@ -446,6 +486,15 @@ namespace hp
                        const unsigned int               codim = 0) const;
 
     /**
+     * @copydoc find_dominating_fe()
+     *
+     * @deprecated Use find_dominating_fe() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominating_fe(const std::set<unsigned int> &fes,
+                       const unsigned int            codim = 0) const;
+
+    /**
      * Return the index of a finite element from the provided set of indices @p fes
      * that is dominated by all other elements of this very set.
      *
@@ -482,6 +531,15 @@ namespace hp
                       const unsigned int               codim = 0) const;
 
     /**
+     * @copydoc find_dominated_fe()
+     *
+     * @deprecated Use find_dominated_fe() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominated_fe(const std::set<unsigned int> &fes,
+                      const unsigned int            codim = 0) const;
+
+    /**
      * Return the index of a finite element from the provided set of indices @p fes
      * that dominates all other elements of this very set. If we do not succeed,
      * we extend our search on the whole collection by picking the least
@@ -509,6 +567,15 @@ namespace hp
                                 const unsigned int codim = 0) const;
 
     /**
+     * @copydoc find_dominating_fe_extended()
+     *
+     * @deprecated Use find_dominating_fe_extended() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominating_fe_extended(const std::set<unsigned int> &fes,
+                                const unsigned int            codim = 0) const;
+
+    /**
      * Return the index of a finite element from the provided set of indices @p fes
      * that is dominated by all other elements of this very set. If we do not
      * succeed, we extend our search on the whole collection by picking the most
@@ -533,6 +600,15 @@ namespace hp
     types::fe_index
     find_dominated_fe_extended(const std::set<types::fe_index> &fes,
                                const unsigned int codim = 0) const;
+
+    /**
+     * @copydoc find_dominated_fe_extended()
+     *
+     * @deprecated Use find_dominated_fe_extended() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY unsigned int
+    find_dominated_fe_extended(const std::set<unsigned int> &fes,
+                               const unsigned int            codim = 0) const;
 
     /**
      * @}
@@ -597,6 +673,14 @@ namespace hp
      */
     std::vector<types::fe_index>
     get_hierarchy_sequence(const types::fe_index fe_index = 0) const;
+
+    /**
+     * @copydoc get_hierarchy_sequence()
+     *
+     * @deprecated Use get_hierarchy_sequence() with the datatype types::fe_index.
+     */
+    DEAL_II_DEPRECATED_EARLY std::vector<unsigned int>
+    get_hierarchy_sequence(const unsigned int fe_index = 0) const;
 
     /**
      * %Function returning the index of the finite element following the given
