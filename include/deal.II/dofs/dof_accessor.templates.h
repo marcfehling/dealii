@@ -1393,9 +1393,9 @@ namespace internal
           &mg_level,
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<dim>>
           &,
-        const unsigned int obj_index,
-        const unsigned int fe_index,
-        const unsigned int local_index,
+        const unsigned int    obj_index,
+        const types::fe_index fe_index,
+        const unsigned int    local_index,
         const std::integral_constant<int, dim>)
       {
         Assert(dof_handler.hp_capability_enabled == false,
@@ -1417,10 +1417,10 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFLevel<dim>>
           &,
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<dim>>
-          &                mg_faces,
-        const unsigned int obj_index,
-        const unsigned int fe_index,
-        const unsigned int local_index,
+          &                   mg_faces,
+        const unsigned int    obj_index,
+        const types::fe_index fe_index,
+        const unsigned int    local_index,
         const std::integral_constant<int, 1>)
       {
         return mg_faces->lines.access_dof_index(
@@ -1439,10 +1439,10 @@ namespace internal
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFLevel<3>>
           &,
         const std::unique_ptr<internal::DoFHandlerImplementation::DoFFaces<3>>
-          &                mg_faces,
-        const unsigned int obj_index,
-        const unsigned int fe_index,
-        const unsigned int local_index,
+          &                   mg_faces,
+        const unsigned int    obj_index,
+        const types::fe_index fe_index,
+        const unsigned int    local_index,
         const std::integral_constant<int, 2>)
       {
         Assert(dof_handler.hp_capability_enabled == false,

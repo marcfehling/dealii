@@ -1777,8 +1777,7 @@ public:
   distribute_local_to_global_by_interpolation(
     const Vector<number> &local_values,
     OutputVector &        values,
-    const unsigned int    fe_index =
-      DoFHandler<dimension_, space_dimension_>::invalid_fe_index) const;
+    const types::fe_index fe_index = numbers::invalid_fe_index) const;
 
   /**
    * Distribute a local (cell based) vector to a global one by mapping the

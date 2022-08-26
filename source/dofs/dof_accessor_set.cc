@@ -294,7 +294,7 @@ DoFCellAccessor<dim, spacedim, lda>::
   distribute_local_to_global_by_interpolation(
     const Vector<number> &local_values,
     OutputVector &        values,
-    const unsigned int    fe_index_) const
+    const types::fe_index fe_index_) const
 {
   internal::process_by_interpolation<dim, spacedim, lda, OutputVector, number>(
     *this,

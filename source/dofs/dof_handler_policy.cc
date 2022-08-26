@@ -165,23 +165,23 @@ namespace internal
                 {
                   case 0:
                     {
-                      complete_identities =
-                        fes.hp_vertex_dof_identities({fe_index_1, fe_index_2});
+                      complete_identities = fes.hp_vertex_dof_identities(
+                        std::set<types::fe_index>{fe_index_1, fe_index_2});
                       break;
                     }
 
                   case 1:
                     {
-                      complete_identities =
-                        fes.hp_line_dof_identities({fe_index_1, fe_index_2});
+                      complete_identities = fes.hp_line_dof_identities(
+                        std::set<types::fe_index>{fe_index_1, fe_index_2});
                       break;
                     }
 
                   case 2:
                     {
-                      complete_identities =
-                        fes.hp_quad_dof_identities({fe_index_1, fe_index_2},
-                                                   face_no);
+                      complete_identities = fes.hp_quad_dof_identities(
+                        std::set<types::fe_index>{fe_index_1, fe_index_2},
+                        face_no);
                       break;
                     }
 
