@@ -1018,8 +1018,8 @@ namespace internal
                            (cell->active_fe_index() ==
                             cell->neighbor(face)->active_fe_index())))
                         {
-                          const unsigned int fe = cell->active_fe_index();
-                          const unsigned int n_dofs =
+                          const types::fe_index fe = cell->active_fe_index();
+                          const unsigned int    n_dofs =
                             dof_handler.get_fe(fe)
                               .template n_dofs_per_object<dim - 1>(face);
                           const unsigned int offset =

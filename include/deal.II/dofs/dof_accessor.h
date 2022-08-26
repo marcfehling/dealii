@@ -576,7 +576,7 @@ public:
    * n_active_fe_indices() active finite elements, and this function can be
    * queried for their indices.
    */
-  unsigned int
+  types::fe_index
   nth_active_fe_index(const unsigned int n) const;
 
   /**
@@ -1083,7 +1083,7 @@ public:
    * calculated, this method just raises an exception and only exists to
    * enable dimension-independent programming.
    */
-  unsigned int
+  types::fe_index
   nth_active_fe_index(const unsigned int n) const;
 
   /**

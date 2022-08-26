@@ -1556,7 +1556,7 @@ DoFAccessor<structdim, dim, spacedim, level_dof_access>::n_active_fe_indices()
 
 
 template <int structdim, int dim, int spacedim, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFAccessor<structdim, dim, spacedim, level_dof_access>::nth_active_fe_index(
   const unsigned int n) const
 {
@@ -1982,7 +1982,7 @@ DoFAccessor<0, 1, spacedim, level_dof_access>::n_active_fe_indices() const
 
 
 template <int spacedim, bool level_dof_access>
-inline unsigned int
+inline types::fe_index
 DoFAccessor<0, 1, spacedim, level_dof_access>::nth_active_fe_index(
   const unsigned int /*n*/) const
 {

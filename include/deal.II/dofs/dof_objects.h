@@ -90,7 +90,7 @@ namespace internal
       types::global_dof_index &
       access_dof_index(const dealii::DoFHandler<dh_dim, spacedim> &dof_handler,
                        const unsigned int                          obj_index,
-                       const unsigned int                          fe_index,
+                       const types::fe_index                       fe_index,
                        const unsigned int                          local_index);
 
       /**
@@ -178,7 +178,7 @@ namespace internal
     DoFObjects<dim>::access_dof_index(
       const dealii::DoFHandler<dh_dim, spacedim> &dof_handler,
       const unsigned int                          obj_index,
-      const unsigned int                          fe_index,
+      const types::fe_index                       fe_index,
       const unsigned int                          local_index)
     {
       (void)fe_index;

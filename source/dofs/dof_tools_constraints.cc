@@ -1907,8 +1907,8 @@ namespace DoFTools
       // that is left is to match the corresponding DoFs of both faces.
       //
 
-      const unsigned int face_1_index = face_1->nth_active_fe_index(0);
-      const unsigned int face_2_index = face_2->nth_active_fe_index(0);
+      const types::fe_index face_1_index = face_1->nth_active_fe_index(0);
+      const types::fe_index face_2_index = face_2->nth_active_fe_index(0);
       Assert(face_1->get_fe(face_1_index) == face_2->get_fe(face_2_index),
              ExcMessage(
                "Matching periodic cells need to use the same finite element"));
