@@ -1310,11 +1310,9 @@ namespace DoFTools
                         // Note that the last solution covers the first two
                         // scenarios, thus we stick with it assuming that we
                         // won't lose much time/efficiency.
-                        // TODO: Change set to types::fe_index
                         const types::fe_index dominating_fe_index =
                           fe_collection.find_dominating_fe_extended(
-                            {fe_ind_face_subface.begin(),
-                             fe_ind_face_subface.end()},
+                            fe_ind_face_subface,
                             /*codim=*/1);
 
                         AssertThrow(
@@ -1622,10 +1620,9 @@ namespace DoFTools
                             const dealii::hp::FECollection<dim, spacedim>
                               &fe_collection = dof_handler.get_fe_collection();
 
-                            // TODO: Change set to types::fe_index
                             const types::fe_index dominating_fe_index =
                               fe_collection.find_dominating_fe_extended(
-                                {fes.begin(), fes.end()}, /*codim=*/1);
+                                fes, /*codim=*/1);
 
                             AssertThrow(
                               dominating_fe_index != numbers::invalid_fe_index,

@@ -92,35 +92,30 @@ namespace internal
           // exists
           if (identities.get() == nullptr)
             {
-              // TODO: Change to
-              // std::vector<std::map<types::fe_index, unsigned int>>
-              std::vector<std::map<unsigned int, unsigned int>>
+              std::vector<std::map<types::fe_index, unsigned int>>
                 complete_identities;
 
               switch (structdim)
                 {
                   case 0:
                     {
-                      // TODO: Change set to types::fe_index
-                      complete_identities = fes.hp_vertex_dof_identities(
-                        std::set<unsigned int>{fe_index_1, fe_index_2});
+                      complete_identities =
+                        fes.hp_vertex_dof_identities({fe_index_1, fe_index_2});
                       break;
                     }
 
                   case 1:
                     {
-                      // TODO: Change set to types::fe_index
-                      complete_identities = fes.hp_line_dof_identities(
-                        std::set<unsigned int>{fe_index_1, fe_index_2});
+                      complete_identities =
+                        fes.hp_line_dof_identities({fe_index_1, fe_index_2});
                       break;
                     }
 
                   case 2:
                     {
-                      // TODO: Change set to types::fe_index
-                      complete_identities = fes.hp_quad_dof_identities(
-                        std::set<unsigned int>{fe_index_1, fe_index_2},
-                        face_no);
+                      complete_identities =
+                        fes.hp_quad_dof_identities({fe_index_1, fe_index_2},
+                                                   face_no);
                       break;
                     }
 
@@ -248,15 +243,13 @@ namespace internal
 
                     // find out which is the most dominating finite
                     // element of the ones that are used on this vertex
-                    // TODO: Change set to types::fe_index
                     types::fe_index most_dominating_fe_index =
                       dof_handler.get_fe_collection().find_dominating_fe(
-                        {fe_indices.begin(), fe_indices.end()},
+                        fe_indices,
                         /*codim*/ dim);
 
                     // if we haven't found a dominating finite element,
                     // choose the very first one to be dominant
-                    // TODO: Change assert to numbers::invalid_fe_index
                     if (most_dominating_fe_index == numbers::invalid_fe_index)
                       most_dominating_fe_index =
                         dealii::internal::DoFAccessorImplementation::
@@ -492,11 +485,9 @@ namespace internal
                                     const std::set<types::fe_index> fe_indices{
                                       fe_index_1, fe_index_2};
 
-                                    // TODO: Change set to types::fe_index
                                     types::fe_index dominating_fe_index =
                                       dof_handler.get_fe_collection()
-                                        .find_dominating_fe({fe_indices.begin(),
-                                                             fe_indices.end()},
+                                        .find_dominating_fe(fe_indices,
                                                             /*codim=*/dim - 1);
                                     types::fe_index other_fe_index =
                                       numbers::invalid_fe_index;
@@ -629,10 +620,9 @@ namespace internal
 
                       // find out which is the most dominating finite element of
                       // the ones that are used on this line
-                      // TODO: Change set to types::fe_index
                       const types::fe_index most_dominating_fe_index =
                         dof_handler.get_fe_collection().find_dominating_fe(
-                          {fe_indices.begin(), fe_indices.end()},
+                          fe_indices,
                           /*codim=*/dim - 1);
 
                       // if we found the most dominating element, then use this
@@ -781,10 +771,9 @@ namespace internal
 
                   // find out which is the most dominating finite
                   // element of the ones that are used on this quad
-                  // TODO: Change set to types::fe_index
                   const types::fe_index most_dominating_fe_index =
                     dof_handler.get_fe_collection().find_dominating_fe(
-                      {fe_indices.begin(), fe_indices.end()},
+                      fe_indices,
                       /*codim=*/dim - 2);
 
                   const unsigned int most_dominating_fe_index_face_no =
@@ -1084,10 +1073,9 @@ namespace internal
 
                     // find out which is the most dominating finite
                     // element of the ones that are used on this vertex
-                    // TODO: Change set to types::fe_index
                     types::fe_index most_dominating_fe_index =
                       dof_handler.get_fe_collection().find_dominating_fe(
-                        {fe_indices.begin(), fe_indices.end()},
+                        fe_indices,
                         /*codim=*/dim);
 
                     // if we haven't found a dominating finite element,
@@ -1304,11 +1292,9 @@ namespace internal
                                     const std::set<types::fe_index> fe_indices{
                                       fe_index_1, fe_index_2};
 
-                                    // TODO: Change set to types::fe_index
                                     types::fe_index dominating_fe_index =
                                       dof_handler.get_fe_collection()
-                                        .find_dominating_fe({fe_indices.begin(),
-                                                             fe_indices.end()},
+                                        .find_dominating_fe(fe_indices,
                                                             /*codim*/ dim - 1);
                                     types::fe_index other_fe_index =
                                       numbers::invalid_fe_index;
@@ -1381,10 +1367,9 @@ namespace internal
 
                       // find out which is the most dominating finite element of
                       // the ones that are used on this line
-                      // TODO: Change set to types::fe_index
                       const types::fe_index most_dominating_fe_index =
                         dof_handler.get_fe_collection().find_dominating_fe(
-                          {fe_indices.begin(), fe_indices.end()},
+                          fe_indices,
                           /*codim=*/dim - 1);
 
                       // if we found the most dominating element, then use this
@@ -1517,10 +1502,9 @@ namespace internal
 
                   // find out which is the most dominating finite
                   // element of the ones that are used on this quad
-                  // TODO: Change set to types::fe_index
                   const types::fe_index most_dominating_fe_index =
                     dof_handler.get_fe_collection().find_dominating_fe(
-                      {fe_indices.begin(), fe_indices.end()},
+                      fe_indices,
                       /*codim=*/dim - 2);
 
                   const types::fe_index most_dominating_fe_index_face_no =
