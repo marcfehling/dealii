@@ -44,7 +44,7 @@ template <int dim>
 void
 test()
 {
-  std::set<unsigned int> fes;
+  std::set<types::fe_index> fes;
   fes.insert(2);
   fes.insert(3);
 

@@ -9,6 +9,16 @@ Some of them have been deprecated, some are replaced because we imagine them onl
 <ul>
   <li> DoFHandler::set_active_fe_indices() (deprecated)
   <li> DoFHandler::get_active_fe_indices() (deprecated)
+  <li> hp::FECollection::hp_vertex_dof_identities()
+  <li> hp::FECollection::hp_line_dof_identities()
+  <li> hp::FECollection::hp_quad_dof_identities()
+  <li> hp::FECollection::find_common_fes()
+  <li> hp::FECollection::find_enclosing_fes()
+  <li> hp::FECollection::find_dominating_fe()
+  <li> hp::FECollection::find_dominated_fe()
+  <li> hp::FECollection::find_dominating_fe_extended()
+  <li> hp::FECollection::find_dominated_fe_extended()
+  <li> hp::FECollection::get_hierarchy_sequence()
 </ul>
 Further, the serialization of parallel::distributed::Triangulation objects is also affected by this change
 as we write FE indices to disk. Thus, the version in the serialization metafile has been bumped to `5`.
