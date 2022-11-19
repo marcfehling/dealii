@@ -226,6 +226,14 @@ namespace PETScWrappers
              const MPI_Comm &             communicator);
 
       /**
+       * Initialize the vector given to the parallel partitioning described in
+       * @p partitioner using the function above.
+       */
+      void
+      reinit(
+        const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner);
+
+      /**
        * Change the number of blocks to <tt>num_blocks</tt>. The individual
        * blocks will get initialized with zero size, so it is assumed that the
        * user resizes the individual blocks by herself in an appropriate way,
@@ -439,6 +447,17 @@ namespace PETScWrappers
         block(i).reinit(parallel_partitioning[i],
                         ghost_entries[i],
                         communicator);
+    }
+
+
+
+    inline void
+    BlockVector::reinit(
+      const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner)
+    {
+      this->reinit(partitioner->locally_owned_range(),
+                   partitioner->ghost_indices(),
+                   partitioner->get_mpi_communicator());
     }
 
 

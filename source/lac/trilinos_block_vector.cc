@@ -123,6 +123,19 @@ namespace TrilinosWrappers
 
 
     void
+    BlockVector::reinit(
+      const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner,
+      const bool                                                vector_writable)
+    {
+      this->reinit(partitioner->locally_owned_range(),
+                   partitioner->ghost_indices(),
+                   partitioner->get_mpi_communicator(),
+                   vector_writable);
+    }
+
+
+
+    void
     BlockVector::reinit(const BlockVector &v, const bool omit_zeroing_entries)
     {
       block_indices = v.get_block_indices();

@@ -215,6 +215,14 @@ namespace TrilinosWrappers
              const MPI_Comm &             communicator    = MPI_COMM_WORLD,
              const bool                   vector_writable = false);
 
+      /**
+       * Initialize the vector given to the parallel partitioning described in
+       * @p partitioner using the function above.
+       */
+      void
+      reinit(
+        const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner,
+        const bool vector_writable = false);
 
       /**
        * Change the dimension to that of the vector <tt>V</tt>. The same
