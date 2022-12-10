@@ -865,9 +865,6 @@ namespace Step75
     hp::QCollection<dim>       quadrature_collection;
     hp::QCollection<dim - 1>   face_quadrature_collection;
 
-    IndexSet locally_owned_dofs;
-    IndexSet locally_relevant_dofs;
-
     AffineConstraints<double> constraints;
 
     LaplaceOperator<dim, double>               laplace_operator;
@@ -1106,14 +1103,12 @@ namespace Step75
 
     dof_handler.distribute_dofs(fe_collection);
 
-    locally_owned_dofs = dof_handler.locally_owned_dofs();
-    locally_relevant_dofs =
-      DoFTools::extract_locally_relevant_dofs(dof_handler);
+    const IndexSet locally_relevant_dofs =
+          DoFTools::extract_locally_relevant_dofs(dof_handler);
 
-    locally_relevant_solution.reinit(locally_owned_dofs,
+    locally_relevant_solution.reinit(dof_handler.locally_owned_dofs(),
                                      locally_relevant_dofs,
                                      mpi_communicator);
-    system_rhs.reinit(locally_owned_dofs, mpi_communicator);
 
     constraints.clear();
     constraints.reinit(locally_relevant_dofs);
