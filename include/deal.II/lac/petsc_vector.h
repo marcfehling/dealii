@@ -344,13 +344,12 @@ namespace PETScWrappers
        * Initialize the vector given to the parallel partitioning described in
        * @p partitioner.
        *
-       * You can decide whether your vector will contain ghost elements with
-       * @p make_ghosted.
+       * It will contain ghost elements only if the @p partitioner provides
+       * ghost indices.
        */
       void
       reinit(
-        const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner,
-        const bool make_ghosted = true);
+        const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner);
 
       /**
        * Return a reference to the MPI communicator object in use with this

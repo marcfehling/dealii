@@ -236,15 +236,10 @@ namespace PETScWrappers
 
     void
     Vector::reinit(
-      const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner,
-      const bool                                                make_ghosted)
+      const std::shared_ptr<const Utilities::MPI::Partitioner> &partitioner)
     {
-      if (make_ghosted)
+      if (partitioner->ghost_indices_initialized())
         {
-          Assert(partitioner->ghost_indices_initialized(),
-                 ExcMessage("You asked to create a ghosted vector, but the "
-                            "partitioner does not provide ghost indices."));
-
           this->reinit(partitioner->locally_owned_range(),
                        partitioner->ghost_indices(),
                        partitioner->get_mpi_communicator());
