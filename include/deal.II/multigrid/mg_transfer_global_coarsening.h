@@ -96,7 +96,8 @@ namespace MGTransferGlobalCoarseningTools
   std::vector<unsigned int>
   create_polynomial_coarsening_sequence(
     const unsigned int                      max_degree,
-    const PolynomialCoarseningSequenceType &p_sequence);
+    const PolynomialCoarseningSequenceType &p_sequence,
+    const unsigned int                      min_degree = 1);
 
   /**
    * For a given triangulation @p tria, determine the geometric coarsening

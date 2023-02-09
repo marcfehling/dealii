@@ -43,11 +43,12 @@ namespace MGTransferGlobalCoarseningTools
   std::vector<unsigned int>
   create_polynomial_coarsening_sequence(
     const unsigned int                      max_degree,
-    const PolynomialCoarseningSequenceType &p_sequence)
+    const PolynomialCoarseningSequenceType &p_sequence,
+    const unsigned int                      min_degree)
   {
     std::vector<unsigned int> degrees{max_degree};
 
-    while (degrees.back() > 1)
+    while (degrees.back() > min_degree)
       degrees.push_back(
         create_next_polynomial_coarsening_degree(degrees.back(), p_sequence));
 
