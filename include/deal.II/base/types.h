@@ -57,7 +57,7 @@ namespace types
   /**
    * The type in which we store the active and future FE indices.
    */
-  using fe_index = unsigned short int;
+  using fe_index = std::uint8_t;
 
   /**
    * The type used to denote the global index of degrees of freedom. This
