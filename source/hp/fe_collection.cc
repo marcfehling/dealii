@@ -16,6 +16,8 @@
 
 #include <deal.II/base/memory_consumption.h>
 
+#include <deal.II/fe/fe_tools.h>
+
 #include <deal.II/hp/fe_collection.h>
 #include <deal.II/hp/mapping_collection.h>
 
@@ -118,36 +120,12 @@ namespace hp
     const std::set<unsigned int> &fes,
     const unsigned int            codim) const
   {
-#ifdef DEBUG
-    // Validate user inputs.
-    Assert(codim <= dim, ExcImpossibleInDim(dim));
-    Assert(this->size() > 0, ExcEmptyObject());
-    for (const auto &fe : fes)
-      AssertIndexRange(fe, this->size());
-#endif
+    const std::set<types::fe_index> fe_indices(fes.begin(), fes.end());
 
-    // Check if any element of this FECollection is able to dominate all
-    // elements of @p fes. If one was found, we add it to the set of
-    // dominating elements.
-    std::set<unsigned int> dominating_fes;
-    for (unsigned int current_fe = 0; current_fe < this->size(); ++current_fe)
-      {
-        // Check if current_fe can dominate all elements in @p fes.
-        FiniteElementDomination::Domination domination =
-          FiniteElementDomination::no_requirements;
-        for (const auto &other_fe : fes)
-          domination =
-            domination &
-            this->operator[](current_fe)
-              .compare_for_domination(this->operator[](other_fe), codim);
+    std::set<types::fe_index> common_fes =
+      FETools::find_common_fes(*this, fe_indices, codim);
 
-        // If current_fe dominates, add it to the set.
-        if ((domination == FiniteElementDomination::this_element_dominates) ||
-            (domination == FiniteElementDomination::either_element_can_dominate
-             /*covers cases like {Q2,Q3,Q1,Q1} with fes={2,3}*/))
-          dominating_fes.insert(current_fe);
-      }
-    return dominating_fes;
+    return std::set<unsigned int>(common_fes.begin(), common_fes.end());
   }
 
 
@@ -158,36 +136,12 @@ namespace hp
     const std::set<unsigned int> &fes,
     const unsigned int            codim) const
   {
-#ifdef DEBUG
-    // Validate user inputs.
-    Assert(codim <= dim, ExcImpossibleInDim(dim));
-    Assert(this->size() > 0, ExcEmptyObject());
-    for (const auto &fe : fes)
-      AssertIndexRange(fe, this->size());
-#endif
+    const std::set<types::fe_index> fe_indices(fes.begin(), fes.end());
 
-    // Check if any element of this FECollection is dominated by all
-    // elements of @p fes. If one was found, we add it to the set of
-    // dominated elements.
-    std::set<unsigned int> dominated_fes;
-    for (unsigned int current_fe = 0; current_fe < this->size(); ++current_fe)
-      {
-        // Check if current_fe is dominated by all other elements in @p fes.
-        FiniteElementDomination::Domination domination =
-          FiniteElementDomination::no_requirements;
-        for (const auto &other_fe : fes)
-          domination =
-            domination &
-            this->operator[](current_fe)
-              .compare_for_domination(this->operator[](other_fe), codim);
+    std::set<types::fe_index> enclosing_fes =
+      FETools::find_enclosing_fes(*this, fe_indices, codim);
 
-        // If current_fe is dominated, add it to the set.
-        if ((domination == FiniteElementDomination::other_element_dominates) ||
-            (domination == FiniteElementDomination::either_element_can_dominate
-             /*covers cases like {Q2,Q3,Q1,Q1} with fes={2,3}*/))
-          dominated_fes.insert(current_fe);
-      }
-    return dominated_fes;
+    return std::set<unsigned int>(enclosing_fes.begin(), enclosing_fes.end());
   }
 
 
@@ -198,43 +152,9 @@ namespace hp
     const std::set<unsigned int> &fes,
     const unsigned int            codim) const
   {
-    // If the set of elements contains only a single element,
-    // then this very element is considered to be the dominating one.
-    if (fes.size() == 1)
-      return *fes.begin();
+    const std::set<types::fe_index> fe_indices(fes.begin(), fes.end());
 
-#ifdef DEBUG
-    // Validate user inputs.
-    Assert(codim <= dim, ExcImpossibleInDim(dim));
-    Assert(this->size() > 0, ExcEmptyObject());
-    for (const auto &fe : fes)
-      AssertIndexRange(fe, this->size());
-#endif
-
-    // There may also be others, in which case we'll check if any of these
-    // elements is able to dominate all others. If one was found, we stop
-    // looking further and return the dominating element.
-    for (const auto &current_fe : fes)
-      {
-        // Check if current_fe can dominate all elements in @p fes.
-        FiniteElementDomination::Domination domination =
-          FiniteElementDomination::no_requirements;
-        for (const auto &other_fe : fes)
-          if (current_fe != other_fe)
-            domination =
-              domination &
-              this->operator[](current_fe)
-                .compare_for_domination(this->operator[](other_fe), codim);
-
-        // If current_fe dominates, return its index.
-        if ((domination == FiniteElementDomination::this_element_dominates) ||
-            (domination == FiniteElementDomination::either_element_can_dominate
-             /*covers cases like {Q2,Q3,Q1,Q1} with fes={2,3}*/))
-          return current_fe;
-      }
-
-    // If we couldn't find the dominating object, return an invalid one.
-    return numbers::invalid_fe_index;
+    return FETools::find_dominating_fe(*this, fe_indices, codim);
   }
 
 
@@ -245,43 +165,9 @@ namespace hp
     const std::set<unsigned int> &fes,
     const unsigned int            codim) const
   {
-    // If the set of elements contains only a single element,
-    // then this very element is considered to be the dominated one.
-    if (fes.size() == 1)
-      return *fes.begin();
+    const std::set<types::fe_index> fe_indices(fes.begin(), fes.end());
 
-#ifdef DEBUG
-    // Validate user inputs.
-    Assert(codim <= dim, ExcImpossibleInDim(dim));
-    Assert(this->size() > 0, ExcEmptyObject());
-    for (const auto &fe : fes)
-      AssertIndexRange(fe, this->size());
-#endif
-
-    // There may also be others, in which case we'll check if any of these
-    // elements is dominated by all others. If one was found, we stop
-    // looking further and return the dominated element.
-    for (const auto &current_fe : fes)
-      {
-        // Check if current_fe is dominated by all other elements in @p fes.
-        FiniteElementDomination::Domination domination =
-          FiniteElementDomination::no_requirements;
-        for (const auto &other_fe : fes)
-          if (current_fe != other_fe)
-            domination =
-              domination &
-              this->operator[](current_fe)
-                .compare_for_domination(this->operator[](other_fe), codim);
-
-        // If current_fe is dominated, return its index.
-        if ((domination == FiniteElementDomination::other_element_dominates) ||
-            (domination == FiniteElementDomination::either_element_can_dominate
-             /*covers cases like {Q2,Q3,Q1,Q1} with fes={2,3}*/))
-          return current_fe;
-      }
-
-    // If we couldn't find the dominated object, return an invalid one.
-    return numbers::invalid_fe_index;
+    return FETools::find_dominated_fe(*this, fe_indices, codim);
   }
 
 
@@ -292,16 +178,9 @@ namespace hp
     const std::set<unsigned int> &fes,
     const unsigned int            codim) const
   {
-    unsigned int fe_index = find_dominating_fe(fes, codim);
+    const std::set<types::fe_index> fe_indices(fes.begin(), fes.end());
 
-    if (fe_index == numbers::invalid_fe_index)
-      {
-        const std::set<unsigned int> dominating_fes =
-          find_common_fes(fes, codim);
-        fe_index = find_dominated_fe(dominating_fes, codim);
-      }
-
-    return fe_index;
+    return FETools::find_dominating_fe_extended(*this, fe_indices, codim);
   }
 
 
@@ -312,16 +191,9 @@ namespace hp
     const std::set<unsigned int> &fes,
     const unsigned int            codim) const
   {
-    unsigned int fe_index = find_dominated_fe(fes, codim);
+    const std::set<types::fe_index> fe_indices(fes.begin(), fes.end());
 
-    if (fe_index == numbers::invalid_fe_index)
-      {
-        const std::set<unsigned int> dominated_fes =
-          find_enclosing_fes(fes, codim);
-        fe_index = find_dominating_fe(dominated_fes, codim);
-      }
-
-    return fe_index;
+    return FETools::find_dominated_fe_extended(*this, fe_indices, codim);
   }
 
 

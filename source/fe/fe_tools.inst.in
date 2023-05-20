@@ -171,6 +171,42 @@ for (deal_II_dimension : DIMENSIONS; deal_II_space_dimension : SPACE_DIMENSIONS)
         const Quadrature<deal_II_dimension> &,
         const Quadrature<deal_II_dimension> &,
         FullMatrix<double> &);
+
+      template std::set<types::fe_index>
+      find_common_fes(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &,
+        const std::set<types::fe_index> &,
+        const unsigned int);
+
+      template std::set<types::fe_index>
+      find_enclosing_fes(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &,
+        const std::set<types::fe_index> &,
+        const unsigned int);
+
+      template types::fe_index
+      find_dominating_fe(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &,
+        const std::set<types::fe_index> &,
+        const unsigned int);
+
+      template types::fe_index
+      find_dominated_fe(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &,
+        const std::set<types::fe_index> &,
+        const unsigned int);
+
+      template types::fe_index
+      find_dominating_fe_extended(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &,
+        const std::set<types::fe_index> &,
+        const unsigned int);
+
+      template types::fe_index
+      find_dominated_fe_extended(
+        const hp::FECollection<deal_II_dimension, deal_II_space_dimension> &,
+        const std::set<types::fe_index> &,
+        const unsigned int);
 #endif
 
 #if deal_II_dimension == deal_II_space_dimension

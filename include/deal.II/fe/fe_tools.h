@@ -54,6 +54,11 @@ template <int dim>
 class FiniteElementData;
 template <typename number>
 class AffineConstraints;
+namespace hp
+{
+  template <int dim, int spacedim>
+  class FECollection;
+}
 #endif
 
 
@@ -865,6 +870,212 @@ namespace FETools
     OutVector &                                              z2);
 
   /** @} */
+
+  /**
+   * @name Functions to support hp-adaptivity
+   */
+
+  /**
+   * @{
+   */
+
+  /**
+   * Return the indices of finite elements in the @p fe_collection that
+   * dominate all elements associated with the provided set of @p fe_indices.
+   *
+   * You may find information about the domination behavior of finite elements
+   * in their respective class documentation or in the implementation of their
+   * inherited member function FiniteElement::compare_for_domination().
+   * Consider that a finite element may or may not dominate itself (e.g.
+   * FE_Nothing elements).
+   *
+   * For example, if a FECollection consists of
+   * `{FE_Q(1),FE_Q(2),FE_Q(3),FE_Q(4)}` elements and we are looking for the
+   * finite elements that dominate the middle elements of this
+   * collection (i.e., @p fe_indices is `{1,2}`), then the answer is
+   * `{FE_Q(1),FE_Q(2)` and therefore this function will return their indices in
+   * the FECollection, namely `{0,1}`.
+   *
+   * The @p codim parameter describes the codimension of the investigated
+   * subspace and specifies that it is subject to this comparison. See
+   * FiniteElement::compare_for_domination() for more information.
+   */
+  template <int dim, int spacedim>
+  std::set<types::fe_index>
+  find_common_fes(const hp::FECollection<dim, spacedim> &fe_collection,
+                  const std::set<types::fe_index> &      fe_indices,
+                  const unsigned int                     codim = 0);
+
+  /**
+   * Return the indices of finite elements in the @p fe_collection that are
+   * dominated by all elements associated with the provided set of
+   * @p fe_indices.
+   *
+   * You may find information about the domination behavior of finite elements
+   * in their respective class documentation or in the implementation of their
+   * inherited member function FiniteElement::compare_for_domination().
+   * Consider that a finite element may or may not dominate itself (e.g.
+   * FE_Nothing elements).
+   *
+   * For example, if a FECollection consists of
+   * `{FE_Q(1),FE_Q(2),FE_Q(3),FE_Q(4)}` elements and we are looking for the
+   * finite elements that are dominated by the middle elements of this
+   * collection (i.e., @p fe_indices is `{1,2}`), then the answer is
+   * `{FE_Q(3),FE_Q(4)` and therefore this function will return their indices in
+   * the FECollection, namely `{2,3}`.
+   *
+   * The @p codim parameter describes the codimension of the investigated
+   * subspace and specifies that it is subject to this comparison. See
+   * FiniteElement::compare_for_domination() for more information.
+   */
+  template <int dim, int spacedim>
+  std::set<types::fe_index>
+  find_enclosing_fes(const hp::FECollection<dim, spacedim> &fe_collection,
+                     const std::set<types::fe_index> &      fe_indices,
+                     const unsigned int                     codim = 0);
+
+  /**
+   * Return the index of a finite element in the @p fe_collection from the
+   * provided set of @p fe_indices that dominates all other elements of this
+   * very set.
+   *
+   * You may find information about the domination behavior of finite elements
+   * in their respective class documentation or in the implementation of their
+   * inherited member function FiniteElement::compare_for_domination().
+   * Consider that a finite element may or may not dominate itself (e.g.
+   * FE_Nothing elements).
+   *
+   * If this set consists of exactly one element, we consider it to be
+   * the dominating one and return its corresponding index. Further, if the
+   * function is not able to find a finite element at all, it returns
+   * numbers::invalid_fe_index.
+   *
+   * For example, if a FECollection consists of
+   * `{FE_Q(1),FE_Q(2),FE_Q(3),FE_Q(4)}` elements and we are looking for the
+   * dominating finite element among the middle elements of this
+   * collection (i.e., @p fe_indices is `{1,2}`), then the answer is FE_Q(2)
+   * and therefore this function will return its index in the
+   * FECollection, namely `1`.
+   *
+   * It is of course possible that there is more than one element that
+   * dominates all selected elements. For example, if the collection consists
+   * of `{FE_Q(1),FE_Q(1),FE_Q(2),FE_Q(2)}` and `fes` covers all indices,
+   * then one could return zero or one.  In that case, the function returns
+   * either `0` or `1` since there is no tie-breaker between the two.
+   *
+   * The @p codim parameter describes the codimension of the investigated
+   * subspace and specifies that it is subject to this comparison. See
+   * FiniteElement::compare_for_domination() for more information.
+   */
+  template <int dim, int spacedim>
+  types::fe_index
+  find_dominating_fe(const hp::FECollection<dim, spacedim> &fe_collection,
+                     const std::set<types::fe_index> &      fe_indices,
+                     const unsigned int                     codim = 0);
+
+  /**
+   * Return the index of a finite element in the @p fe_collection from the
+   * provided set of @p fe_indices that is dominated by all other elements of
+   * this very set.
+   *
+   * You may find information about the domination behavior of finite elements
+   * in their respective class documentation or in the implementation of their
+   * inherited member function FiniteElement::compare_for_domination().
+   * Consider that a finite element may or may not dominate itself (e.g.
+   * FE_Nothing elements).
+   *
+   * If this set consists of exactly one element, we consider it to be
+   * the dominated one and return its corresponding index. Further, if the
+   * function is not able to find a finite element at all, it returns
+   * numbers::invalid_fe_index.
+   *
+   * For example, if a FECollection consists of
+   * `{FE_Q(1),FE_Q(2),FE_Q(3),FE_Q(4)}` elements and we are looking for the
+   * dominated finite element among the middle elements of this
+   * collection (i.e., @p fe_indices is `{1,2}`), then the answer is FE_Q(3)
+   * and therefore this function will return its index in the
+   * FECollection, namely `2`.
+   *
+   * It is of course possible that there is more than one element that is
+   * dominated by all selected elements. For example, if the collection
+   * consists of `{FE_Q(1),FE_Q(1),FE_Q(2),FE_Q(2)}` and `fes` covers all
+   * indices, then one could return two or three.  In that case, the function
+   * returns either `2` or `3` since there is no tie-breaker between the two.
+   *
+   * The @p codim parameter describes the codimension of the investigated
+   * subspace and specifies that it is subject to this comparison. See
+   * FiniteElement::compare_for_domination() for more information.
+   */
+  template <int dim, int spacedim>
+  types::fe_index
+  find_dominated_fe(const hp::FECollection<dim, spacedim> &fe_collection,
+                    const std::set<types::fe_index> &      fe_indices,
+                    const unsigned int                     codim = 0);
+
+  /**
+   * Return the index of a finite element in the @p fe_collection from the
+   * provided set of @p fe_indices that dominates all other elements of this
+   * very set. If we do not succeed, we extend our search on the whole
+   * collection by picking the least dominating one, which is the element that
+   * describes the largest finite element space of which all of the finite
+   * elements of the provided set @p fe_indices are part of.
+   *
+   * You may find information about the domination behavior of finite elements
+   * in their respective class documentation or in the implementation of their
+   * inherited member function FiniteElement::compare_for_domination().
+   * Consider that a finite element may or may not dominate itself (e.g.
+   * FE_Nothing elements).
+   *
+   * If this set consists of exactly one element, we consider it to be
+   * the dominated one and return its corresponding index. Further, if the
+   * function is not able to find a finite element at all, it returns
+   * numbers::invalid_fe_index.
+   *
+   * The @p codim parameter describes the codimension of the investigated
+   * subspace and specifies that it is subject to this comparison. See
+   * FiniteElement::compare_for_domination() for more information.
+   */
+  template <int dim, int spacedim>
+  types::fe_index
+  find_dominating_fe_extended(
+    const hp::FECollection<dim, spacedim> &fe_collection,
+    const std::set<types::fe_index> &      fe_indices,
+    const unsigned int                     codim = 0);
+
+  /**
+   * Return the index of a finite element in the @p fe_collection from the
+   * provided set of @p fe_indices that is dominated by all other elements of
+   * this very set. If we do not succeed, we extend our search on the whole
+   * collection by picking the most dominated one, which is the element that
+   * describes the smallest finite element space which includes all finite
+   * elements of the provided set @p fe_indices.
+   *
+   * You may find information about the domination behavior of finite elements
+   * in their respective class documentation or in the implementation of their
+   * inherited member function FiniteElement::compare_for_domination().
+   * Consider that a finite element may or may not dominate itself (e.g.
+   * FE_Nothing elements).
+   *
+   * If this set consists of exactly one element, we consider it to be
+   * the dominating one and return its corresponding index. Further, if the
+   * function is not able to find a finite element at all, it returns
+   * numbers::invalid_fe_index.
+   *
+   * The @p codim parameter describes the codimension of the investigated
+   * subspace and specifies that it is subject to this comparison. See
+   * FiniteElement::compare_for_domination() for more information.
+   */
+  template <int dim, int spacedim>
+  types::fe_index
+  find_dominated_fe_extended(
+    const hp::FECollection<dim, spacedim> &fe_collection,
+    const std::set<types::fe_index> &      fe_indices,
+    const unsigned int                     codim = 0);
+
+  /**
+   * @}
+   */
+
   /**
    * The numbering of the degrees of freedom in continuous finite elements is
    * hierarchic, i.e. in such a way that we first number the vertex dofs, in
