@@ -56,6 +56,13 @@ namespace types
 
   /**
    * The type in which we store the active and future FE indices.
+   *
+   * @note We use an 8-bit integer type, which is the same as the `char` type.
+   * Thus when printing a variable of type `fe_index`, it will be interpreted as
+   * `char`. To print a `fe_index` variable correctly, you have the following
+   * two options:
+   * - use the unary operator, i.e., `cout << +fe_index`
+   * - use static_cast, i.e., `cout << static_cast<unsigned int>(fe_index)`
    */
   using fe_index = std::uint8_t;
 
