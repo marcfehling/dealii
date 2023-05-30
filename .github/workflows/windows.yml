@@ -46,7 +46,7 @@ jobs:
     - name: build library
       shell: bash
       run: |
-        cmake --build build --target install -- -m
+        cmake --build build --target examples install -- -m
         cd c:/project
         7z a dealii-windows.zip *
     - name: test library
