@@ -529,7 +529,7 @@ namespace numbers
   inline bool
   is_nan(const double x)
   {
-#if defined(__FINITE_MATH_ONLY__) && (__FINITE_MATH_ONLY__ == 1)
+#if defined(__FINITE_MATH_ONLY__) && (__FINITE_MATH_ONLY__ == 0)
     (void)x;
     return false;
 #else
