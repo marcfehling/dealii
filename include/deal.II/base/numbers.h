@@ -529,7 +529,11 @@ namespace numbers
   inline bool
   is_nan(const double x)
   {
+#ifdef __FINITE_MATH_ONLY__
+    return false;
+#else
     return std::isnan(x);
+#endif
   }
 
 
