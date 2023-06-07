@@ -529,12 +529,10 @@ namespace numbers
   inline bool
   is_nan(const double x)
   {
-#if defined(__FINITE_MATH_ONLY__) && (__FINITE_MATH_ONLY__ == 0)
-    (void)x;
-    return false;
-#else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-constant-compare"
     return std::isnan(x);
-#endif
+#pragma clang diagnostic pop
   }
 
 
