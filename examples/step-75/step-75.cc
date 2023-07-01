@@ -176,15 +176,15 @@ namespace Step75
   // algorithm.
   struct Parameters
   {
-    unsigned int n_cycles         = 8;
+    unsigned int n_cycles         = 11;
     double       tolerance_factor = 1e-12;
 
     MultigridParameters mg_data;
 
-    unsigned int min_h_level            = 5;
-    unsigned int max_h_level            = 12;
+    unsigned int min_h_level            = 10;
+    unsigned int max_h_level            = 20;
     unsigned int min_p_degree           = 2;
-    unsigned int max_p_degree           = 6;
+    unsigned int max_p_degree           = 7;
     unsigned int max_p_level_difference = 1;
 
     double refine_fraction    = 0.3;
@@ -193,7 +193,7 @@ namespace Step75
     double p_coarsen_fraction = 0.9;
 
     double weighting_factor   = 1.;
-    double weighting_exponent = 1.;
+    double weighting_exponent = 1.9;
   };
 
 
@@ -898,7 +898,10 @@ namespace Step75
   LaplaceProblem<dim>::LaplaceProblem(const Parameters &parameters)
     : mpi_communicator(MPI_COMM_WORLD)
     , prm(parameters)
-    , triangulation(mpi_communicator)
+    , triangulation(mpi_communicator,
+                    typename Triangulation<dim>::MeshSmoothing(
+                      Triangulation<dim>::smoothing_on_refinement |
+                      Triangulation<dim>::smoothing_on_coarsening))
     , dof_handler(triangulation)
     , pcout(std::cout,
             (Utilities::MPI::this_mpi_process(mpi_communicator) == 0))
