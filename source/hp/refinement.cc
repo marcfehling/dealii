@@ -963,13 +963,11 @@ namespace hp
 
             bool children_changed = false;
             for (const auto &child : parent->child_iterators())
-              // We only care about locally owned children. If child is a ghost
-              // cell, its future FE index will be updated on the owning process
-              // and communicated at the next loop iteration.
-              if (child->is_locally_owned() &&
-                  future_levels[child->global_active_cell_index()] !=
+              if (future_levels[child->global_active_cell_index()] !=
                     max_level_children)
                 {
+                  Assert(child->is_locally_owned(), ExcInternalError());
+
                   future_levels[child->global_active_cell_index()] =
                     max_level_children;
                   children_changed = true;
@@ -980,6 +978,30 @@ namespace hp
         return false;
       };
 
+      // --- new
+      std::multimap<line, cell> line_to_cell;
+      for (const auto &cell : dof_handler.active_cell_iterators())
+        if (!cell->is_artificial())
+          {
+            for (const auto& l : cell->line_indices())
+              {
+                auto line = cell->line(l);
+                std::vector<line> lines;
+                // do while until latest children
+
+                while ()
+
+                // if line has children, store children
+                // do recursion
+                this_func()
+                  if (line->has_children)
+                    return this_funct(child[0]) and this_funct(child[1]);
+                  else
+                    return line
+              }
+          }
+
+      // Now do the actual work!
       bool levels_changed = false;
       bool levels_changed_in_cycle;
       do
