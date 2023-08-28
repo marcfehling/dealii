@@ -28,7 +28,7 @@ DEAL:2d::2_2:31: active:2 future:2
 DEAL:2d::2_2:32: active:2 future:2
 DEAL:2d::2_2:33: active:2 future:2
 DEAL:2d::OK
-DEAL:3d::0_0:: active:0 future:0
+DEAL:3d::0_0:: active:0 future:1
 DEAL:3d::1_0:: active:0 future:1
 DEAL:3d::2_1:0: active:2 future:2
 DEAL:3d::2_1:1: active:2 future:2
@@ -42,11 +42,11 @@ DEAL:3d::OK
 DEAL:3d::0_1:0: active:0 future:0
 DEAL:3d::0_1:1: active:0 future:0
 DEAL:3d::0_1:2: active:0 future:0
-DEAL:3d::0_1:3: active:0 future:0
+DEAL:3d::0_1:3: active:0 future:1
 DEAL:3d::0_1:4: active:0 future:0
 DEAL:3d::0_1:5: active:0 future:0
 DEAL:3d::0_1:6: active:0 future:0
-DEAL:3d::0_1:7: active:0 future:0
+DEAL:3d::0_1:7: active:0 future:1
 DEAL:3d::1_1:0: active:0 future:0
 DEAL:3d::1_1:1: active:0 future:1
 DEAL:3d::1_1:2: active:0 future:0

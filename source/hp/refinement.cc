@@ -980,6 +980,112 @@ namespace hp
         return false;
       };
 
+
+      // ============
+      // experimental start
+      // ============
+      std::vector<
+        boost::container::small_vector<std::array<unsigned int, 3>, 6>>
+        line_to_cells;
+
+      const auto &triangulation = dof_handler.get_triangulation();
+
+      if constexpr (dim == 3)
+        {
+          // function body of HangingNodes<3>::setup_line_to_cell()
+          // see include/deal.II/matrix_free/hanging_nodes_internal.h
+
+          // Check if we there are no hanging nodes on the current MPI
+          // process, which we do by checking if the second finest
+          // level holds no active non-artificial cell
+          // THIS CHECK HAS BEEN SKIPPED
+
+          const unsigned int n_raw_lines = triangulation.n_raw_lines();
+          line_to_cells.resize(n_raw_lines);
+
+          // In 3d, we can have DoFs on only an edge being constrained
+          // (e.g. in a cartesian 2x2x2 grid, where only the upper
+          // left 2 cells are refined). This sets up a helper data
+          // structure in the form of a mapping from edges (i.e.
+          // lines) to neighboring cells.
+
+          // Mapping from an edge to which children that share that
+          // edge.
+          const unsigned int line_to_children[12][2] = {{0, 2},
+                                                        {1, 3},
+                                                        {0, 1},
+                                                        {2, 3},
+                                                        {4, 6},
+                                                        {5, 7},
+                                                        {4, 5},
+                                                        {6, 7},
+                                                        {0, 4},
+                                                        {1, 5},
+                                                        {2, 6},
+                                                        {3, 7}};
+
+          std::vector<
+            boost::container::small_vector<std::array<unsigned int, 3>, 6>>
+            line_to_inactive_cells(n_raw_lines);
+
+          // First add active and inactive cells to their lines:
+          for (const auto &cell : triangulation.cell_iterators())
+            {
+              const unsigned int cell_level = cell->level();
+              const unsigned int cell_index = cell->index();
+              for (unsigned int line = 0;
+                   line < GeometryInfo<3>::lines_per_cell;
+                   ++line)
+                {
+                  const unsigned int line_idx = cell->line_index(line);
+                  if (cell->is_active())
+                    line_to_cells[line_idx].push_back(
+                      {{cell_level, cell_index, line}});
+                  else
+                    line_to_inactive_cells[line_idx].push_back(
+                      {{cell_level, cell_index, line}});
+                }
+            }
+
+          // Now, we can access edge-neighboring active cells on same
+          // level to also access of an edge to the edges "children".
+          // These are found from looking at the corresponding edge of
+          // children of inactive edge neighbors.
+          for (unsigned int line_idx = 0; line_idx < n_raw_lines; ++line_idx)
+            {
+              if ((line_to_cells[line_idx].size() > 0) &&
+                  line_to_inactive_cells[line_idx].size() > 0)
+                {
+                  // We now have cells to add (active ones) and edges
+                  // to which they should be added (inactive cells).
+                  const Triangulation<3>::cell_iterator inactive_cell(
+                    &triangulation,
+                    line_to_inactive_cells[line_idx][0][0],
+                    line_to_inactive_cells[line_idx][0][1]);
+                  const unsigned int neighbor_line =
+                    line_to_inactive_cells[line_idx][0][2];
+
+                  for (unsigned int c = 0; c < 2; ++c)
+                    {
+                      const auto &child = inactive_cell->child(
+                        line_to_children[neighbor_line][c]);
+                      const unsigned int child_line_idx =
+                        child->line_index(neighbor_line);
+
+                      AssertThrow(child->is_active(), ExcInternalError());
+
+                      // Now add all active cells
+                      for (const auto &cl : line_to_cells[line_idx])
+                        line_to_cells[child_line_idx].push_back(cl);
+                    }
+                }
+            }
+        }
+      // ============
+      // experimental end
+      // ============
+
+
       bool levels_changed = false;
       bool levels_changed_in_cycle;
       do
@@ -1033,6 +1139,69 @@ namespace hp
                             prepare_level_for_parent(neighbor);
                         }
                     }
+
+
+                // ============
+                // experimental start
+                // ============
+                if constexpr (dim == 3)
+                  {
+                    // now for the new algorithm:
+
+                    // go over all active cells in line_to_cells, create a valid
+                    // dof_iterator for each, and make sure all cells only
+                    // differ by `max_difference` maybe we can even use the
+                    // lambda function `update_neighbor_level` for this
+
+                    for (const auto &cells_sharing_line : line_to_cells)
+                      if (cells_sharing_line.size() > 0)
+                        {
+                          std::vector<typename DoFHandler<dim>::cell_iterator>
+                            cells(cells_sharing_line.size());
+                          for (unsigned int i = 0;
+                               i < cells_sharing_line.size();
+                               ++i)
+                            {
+                              cells[i] =
+                                typename DoFHandler<dim>::cell_iterator(
+                                  &triangulation,
+                                  cells_sharing_line[i][0],
+                                  cells_sharing_line[i][1],
+                                  &dof_handler);
+                              Assert(cells[i]->is_active(), ExcInternalError());
+                            }
+
+                          std::vector<float> line_future_levels;
+                          for (const auto &cell : cells)
+                            if (!cell->is_artificial())
+                              line_future_levels.push_back(
+                                future_levels[cell
+                                                ->global_active_cell_index()]);
+
+                          if (line_future_levels.size() > 0)
+                            {
+                              const float max_fe_index =
+                                *std::max_element(line_future_levels.begin(),
+                                                  line_future_levels.end());
+
+                              for (const auto &cell : cells)
+                                if (!cell->is_artificial() &&
+                                    (max_fe_index - max_difference >
+                                     future_levels
+                                       [cell->global_active_cell_index()]))
+                                  {
+                                    future_levels
+                                      [cell->global_active_cell_index()] =
+                                        max_fe_index - max_difference;
+
+                                    levels_changed_in_cycle |= true;
+                                  }
+                            }
+                        }
+                  }
+                // ============
+                // experimental end
+                // ============
               }
 
           levels_changed_in_cycle =
