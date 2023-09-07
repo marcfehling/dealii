@@ -1139,70 +1139,74 @@ namespace hp
                             prepare_level_for_parent(neighbor);
                         }
                     }
-
-
-                // ============
-                // experimental start
-                // ============
-                if constexpr (dim == 3)
-                  {
-                    // now for the new algorithm:
-
-                    // go over all active cells in line_to_cells, create a valid
-                    // dof_iterator for each, and make sure all cells only
-                    // differ by `max_difference` maybe we can even use the
-                    // lambda function `update_neighbor_level` for this
-
-                    for (const auto &cells_sharing_line : line_to_cells)
-                      if (cells_sharing_line.size() > 0)
-                        {
-                          std::vector<typename DoFHandler<dim>::cell_iterator>
-                            cells(cells_sharing_line.size());
-                          for (unsigned int i = 0;
-                               i < cells_sharing_line.size();
-                               ++i)
-                            {
-                              cells[i] =
-                                typename DoFHandler<dim>::cell_iterator(
-                                  &triangulation,
-                                  cells_sharing_line[i][0],
-                                  cells_sharing_line[i][1],
-                                  &dof_handler);
-                              Assert(cells[i]->is_active(), ExcInternalError());
-                            }
-
-                          std::vector<float> line_future_levels;
-                          for (const auto &cell : cells)
-                            if (!cell->is_artificial())
-                              line_future_levels.push_back(
-                                future_levels[cell
-                                                ->global_active_cell_index()]);
-
-                          if (line_future_levels.size() > 0)
-                            {
-                              const float max_fe_index =
-                                *std::max_element(line_future_levels.begin(),
-                                                  line_future_levels.end());
-
-                              for (const auto &cell : cells)
-                                if (!cell->is_artificial() &&
-                                    (max_fe_index - max_difference >
-                                     future_levels
-                                       [cell->global_active_cell_index()]))
-                                  {
-                                    future_levels
-                                      [cell->global_active_cell_index()] =
-                                        max_fe_index - max_difference;
-
-                                    levels_changed_in_cycle |= true;
-                                  }
-                            }
-                        }
-                  }
-                // ============
-                // experimental end
-                // ============
               }
+
+
+          // ============
+          // experimental start
+          // ============
+          if constexpr (dim == 3)
+            {
+              // now for the new algorithm:
+
+              // go over all active cells in line_to_cells, create a valid
+              // dof_iterator for each, and make sure all cells only
+              // differ by `max_difference` maybe we can even use the
+              // lambda function `update_neighbor_level` for this
+
+              for (const auto &cells_sharing_line : line_to_cells)
+                if (cells_sharing_line.size() > 0)
+                  {
+                    std::vector<typename DoFHandler<dim>::cell_iterator>
+                      cells(cells_sharing_line.size());
+                    for (unsigned int i = 0;
+                         i < cells_sharing_line.size();
+                         ++i)
+                      {
+                        cells[i] =
+                          typename DoFHandler<dim>::cell_iterator(
+                            &triangulation,
+                            cells_sharing_line[i][0],
+                            cells_sharing_line[i][1],
+                            &dof_handler);
+                        AssertThrow(cells[i]->is_active(), ExcInternalError());
+                      }
+
+                    std::vector<float> line_future_levels;
+                    for (const auto &cell : cells)
+                      if (!cell->is_artificial())
+                        line_future_levels.push_back(
+                          future_levels[cell
+                                          ->global_active_cell_index()]);
+
+                    if (line_future_levels.size() > 1)
+                      {
+                        const float max_fe_index =
+                          *std::max_element(line_future_levels.begin(),
+                                            line_future_levels.end());
+                        AssertThrow(max_fe_index != invalid_level, ExcInternalError());
+
+                        for (const auto &cell : cells)
+                          if (!cell->is_artificial() &&
+                              (max_fe_index - max_difference >
+                               future_levels
+                                 [cell->global_active_cell_index()]))
+                            {
+                              future_levels
+                                [cell->global_active_cell_index()] =
+                                  max_fe_index - max_difference;
+
+                              levels_changed_in_cycle |= true;
+
+                              levels_changed_in_cycle |=
+                                prepare_level_for_parent(cell);
+                            }
+                      }
+                  }
+            }
+          // ============
+          // experimental end
+          // ============
 
           levels_changed_in_cycle =
             Utilities::MPI::logical_or(levels_changed_in_cycle,
