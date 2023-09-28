@@ -1208,6 +1208,93 @@ namespace hp
           // experimental end
           // ============
 
+          // ==============
+          // experimental 2 start
+          // ==============
+
+          for (const auto &cell : dof_handler.active_cell_iterators())
+            // if (!cell->is_artificial())
+            if (cell->is_locally_owned())
+              {
+                // possibly_do_not_produce_unrefined_islands
+                const auto fe_level = future_levels[cell->global_active_cell_index()];
+
+                unsigned int n_neighbors = 0;
+                unsigned int n_fine      = 0;
+                unsigned int n_same      = 0;
+                unsigned int n_coarse    = 0;
+                for (const auto f : cell->face_indices())
+                  {
+                    if (cell->face(f)->has_children())
+                      {
+                        for (unsigned int sf = 0;
+                             sf < cell->face(f)->n_children();
+                             ++sf)
+                          {
+                            const auto& neighbor = cell->neighbor_child_on_subface(f, sf);
+
+                            if (neighbor.state() == IteratorState::valid)
+                              {
+                                ++n_neighbors;
+
+                                // TODO: What about refined neighbors?
+
+                                // count number of cells with higher, lower, and equal future FE index
+                                if (future_levels[neighbor->global_active_cell_index()] > fe_level)
+                                  ++n_fine;
+                                else if (future_levels[neighbor->global_active_cell_index()] < fe_level)
+                                  ++n_coarse;
+                                else
+                                  ++n_same;
+                              }
+                          }
+                      }
+                    else
+                      {
+                        const auto& neighbor = cell->neighbor(f);
+
+                        if (neighbor.state() == IteratorState::valid)
+                          {
+                            ++n_neighbors;
+
+                            // TODO: What about refined neighbors?
+
+                            // count number of cells with higher, lower, and equal future FE index
+                            if (future_levels[neighbor->global_active_cell_index()] > fe_level)
+                              ++n_fine;
+                            else if (future_levels[neighbor->global_active_cell_index()] < fe_level)
+                              ++n_coarse;
+                            else
+                              ++n_same;
+                          }
+                      }
+                  }
+
+                const double factor = 0.7;
+                if (n_fine >= factor * n_neighbors)
+                  {
+                    // mark for refinement, i.e., next in hierarchy
+                    ++future_levels[cell->global_active_cell_index()];
+
+                    levels_changed_in_cycle |= true;
+
+                    // TODO: we need boundary checks
+                  }
+//                else if (n_coarse >= factor * n_neighbors)
+//                  {
+//                    // mark for coarsening, i.e., prev in hierarchy
+//                    --future_levels[cell->global_active_cell_index()];
+//
+//                    levels_changed_in_cycle |= true;
+//
+//                    // TODO: we need boundary checks
+//                  }
+              }
+
+          // ==============
+          // experimental 2 end
+          // ==============
+
           levels_changed_in_cycle =
             Utilities::MPI::logical_or(levels_changed_in_cycle,
                                        dof_handler.get_communicator());
