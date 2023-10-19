@@ -54,3 +54,13 @@ jobs:
             VER=master
           push: ${{ github.event_name == 'schedule' }}
           tags: dealii/dealii:master-${{ matrix.ubuntu_version }}
+
+      - name: Create issue about failure
+        if: ${{ failure() && (github.event_name == 'schedule') && (github.repository == 'dealii/dealii')) }}
+        uses: JasonEtco/create-an-issue@v2.9.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/action-issue-template.md
+          update_existing: true
+          search_existing: open
