@@ -19,6 +19,7 @@
 #include <deal.II/base/config.h>
 
 #include <deal.II/base/mpi_compute_index_owner_internal.h>
+#include <deal.II/base/timer.h>
 
 #include <deal.II/dofs/dof_handler.h>
 
@@ -62,7 +63,8 @@ namespace SparseMatrixTools
                                    const SparsityPatternType &sparsity_pattern,
                                    const IndexSet            &requested_is,
                                    SparseMatrixType2         &system_matrix_out,
-                                   SparsityPatternType2 &sparsity_pattern_out);
+                                   SparsityPatternType2 &sparsity_pattern_out,
+                                   TimerOutput          &timer_output);
 
   /**
    * Similar to the above function, but taking two index sets
@@ -86,7 +88,8 @@ namespace SparseMatrixTools
                                    const IndexSet            &index_set_0,
                                    const IndexSet            &index_set_1,
                                    SparseMatrixType2         &system_matrix_out,
-                                   SparsityPatternType2 &sparsity_pattern_out);
+                                   SparsityPatternType2 &sparsity_pattern_out,
+                                   TimerOutput          &timer_output);
 
   /**
    * A restriction operation similar to the above one. However, the operation
@@ -112,7 +115,8 @@ namespace SparseMatrixTools
   restrict_to_cells(const SparseMatrixType          &system_matrix,
                     const SparsityPatternType       &sparsity_pattern,
                     const DoFHandler<dim, spacedim> &dof_handler,
-                    std::vector<FullMatrix<Number>> &blocks);
+                    std::vector<FullMatrix<Number>> &blocks,
+                    TimerOutput                     &timer_output);
 
   /**
    * A restriction operation similar to the above one. However, the indices
@@ -135,7 +139,8 @@ namespace SparseMatrixTools
     const SparseMatrixType                                  &sparse_matrix_in,
     const SparsityPatternType                               &sparsity_pattern,
     const std::vector<std::vector<types::global_dof_index>> &indices,
-    std::vector<FullMatrix<Number>>                         &blocks);
+    std::vector<FullMatrix<Number>>                         &blocks,
+    TimerOutput                                             &timer_output);
 
 
 #ifndef DOXYGEN
@@ -206,8 +211,11 @@ namespace SparseMatrixTools
     extract_remote_rows(const SparseMatrixType    &system_matrix,
                         const SparsityPatternType &sparsity_pattern,
                         const IndexSet            &locally_active_dofs,
-                        const MPI_Comm             comm)
+                        const MPI_Comm             comm,
+                        TimerOutput               &timer_output)
     {
+      TimerOutput::Scope t(timer_output, "extract_remote_rows");
+
       std::vector<unsigned int> dummy(locally_active_dofs.n_elements());
 
       const auto local_size = get_local_size(system_matrix);
@@ -252,13 +260,22 @@ namespace SparseMatrixTools
 
       std::map<unsigned int, T1> data;
 
+      timer_output.enter_subsection("row_to_procs");
+
       for (unsigned int i = 0; i < row_to_procs.size(); ++i)
         {
           if (row_to_procs[i].empty())
-            continue;
+            {
+              timer_output.enter_subsection ("row_to_procs_entry");
+              timer_output.leave_subsection ("row_to_procs_entry");
+              continue;
+            }
 
           const auto row   = locally_owned_dofs.nth_index_in_set(i);
+
+          timer_output.enter_subsection ("row_to_procs_entry");
           auto       entry = system_matrix.begin(row);
+          timer_output.leave_subsection ("row_to_procs_entry");
 
           const unsigned int row_length = sparsity_pattern.row_length(row);
 
@@ -281,6 +298,10 @@ namespace SparseMatrixTools
             data[proc].emplace_back(buffer);
         }
 
+      timer_output.leave_subsection("row_to_procs");
+
+      timer_output.enter_subsection("selector");
+
       dealii::Utilities::MPI::ConsensusAlgorithms::selector<T1>(
         ranks,
         [&](const unsigned int other_rank) { return data[other_rank]; },
@@ -300,6 +321,8 @@ namespace SparseMatrixTools
         },
         comm);
 
+      timer_output.leave_subsection("selector");
+
       return locally_relevant_matrix_entries;
     }
   } // namespace internal
@@ -316,7 +339,8 @@ namespace SparseMatrixTools
                                    const IndexSet            &index_set_0,
                                    const IndexSet            &index_set_1,
                                    SparseMatrixType2         &system_matrix_out,
-                                   SparsityPatternType2 &sparsity_pattern_out)
+                                   SparsityPatternType2 &sparsity_pattern_out,
+                                   TimerOutput          &timer_output)
   {
     Assert(index_set_1.size() == 0 || index_set_0.size() == index_set_1.size(),
            ExcInternalError());
@@ -347,7 +371,8 @@ namespace SparseMatrixTools
         system_matrix,
         sparsity_pattern,
         index_set_union,
-        internal::get_mpi_communicator(system_matrix));
+        internal::get_mpi_communicator(system_matrix),
+        timer_output);
 
 
     // 2) create sparsity pattern
@@ -436,14 +461,16 @@ namespace SparseMatrixTools
                                    const SparsityPatternType &sparsity_pattern,
                                    const IndexSet            &requested_is,
                                    SparseMatrixType2         &system_matrix_out,
-                                   SparsityPatternType2 &sparsity_pattern_out)
+                                   SparsityPatternType2 &sparsity_pattern_out,
+                                   TimerOutput          &timer_output)
   {
     restrict_to_serial_sparse_matrix(system_matrix,
                                      sparsity_pattern,
                                      requested_is,
                                      IndexSet(), // simply pass empty index set
                                      system_matrix_out,
-                                     sparsity_pattern_out);
+                                     sparsity_pattern_out,
+                                     timer_output);
   }
 
 
@@ -456,8 +483,11 @@ namespace SparseMatrixTools
     const SparseMatrixType                                  &system_matrix,
     const SparsityPatternType                               &sparsity_pattern,
     const std::vector<std::vector<types::global_dof_index>> &indices,
-    std::vector<FullMatrix<Number>>                         &blocks)
+    std::vector<FullMatrix<Number>>                         &blocks,
+    TimerOutput                                             &timer_output)
   {
+    TimerOutput::Scope t(timer_output, "restrict_to_full_matrices");
+
     // 0) determine which rows are locally owned and which ones are remote
     const auto local_size = internal::get_local_size(system_matrix);
     const auto prefix_sum = Utilities::MPI::partial_and_total_sum(
@@ -487,7 +517,8 @@ namespace SparseMatrixTools
                                             sparsity_pattern,
                                             locally_active_dofs,
                                             internal::get_mpi_communicator(
-                                              system_matrix));
+                                              system_matrix),
+                                            timer_output);
 
 
     // 2) loop over all cells and "revert" assembly
@@ -563,7 +594,8 @@ namespace SparseMatrixTools
   restrict_to_cells(const SparseMatrixType          &system_matrix,
                     const SparsityPatternType       &sparsity_pattern,
                     const DoFHandler<dim, spacedim> &dof_handler,
-                    std::vector<FullMatrix<Number>> &blocks)
+                    std::vector<FullMatrix<Number>> &blocks,
+                    TimerOutput                     &timer_output)
   {
     std::vector<std::vector<types::global_dof_index>> all_dof_indices;
     all_dof_indices.resize(dof_handler.get_triangulation().n_active_cells());
@@ -578,10 +610,8 @@ namespace SparseMatrixTools
         cell->get_dof_indices(local_dof_indices);
       }
 
-    restrict_to_full_matrices(system_matrix,
-                              sparsity_pattern,
-                              all_dof_indices,
-                              blocks);
+    restrict_to_full_matrices(
+      system_matrix, sparsity_pattern, all_dof_indices, blocks, timer_output);
   }
 #endif
 
