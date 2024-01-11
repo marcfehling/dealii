@@ -327,8 +327,7 @@ namespace Functions
 
       const Point<2> &closest_point = compute_closest_point_ellipse(point);
 
-      const double distance =
-        std::hypot(closest_point[0] - point[0], closest_point[1] - point[1]);
+      const double distance = (closest_point - point).norm();
 
       return evaluate_ellipsoid(point) < 0.0 ? -distance : distance;
     }
