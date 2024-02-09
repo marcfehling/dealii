@@ -219,6 +219,8 @@ namespace Utilities
 
           mem_func("owning_ranks_before");
 
+          pcout << "locally_owned_size: proc0=" << locally_owned_size << " sum=" << sum(locally_owned_size, comm) << std::endl;
+
           actually_owning_ranks.reinit((owned_indices_size_actual *
                                         sparsity_factor) > owned_indices.size(),
                                        owned_indices_size_actual ==
