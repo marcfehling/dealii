@@ -1615,10 +1615,11 @@ namespace internal
 
       mem_func("DofHandlerFineView_BeforeConstruction");
 
-      if (internal::h_transfer_uses_first_child_policy(dof_handler_fine,
-                                                       dof_handler_coarse,
-                                                       mg_level_fine,
-                                                       mg_level_coarse))
+      // if (internal::h_transfer_uses_first_child_policy(dof_handler_fine,
+      //                                                  dof_handler_coarse,
+      //                                                  mg_level_fine,
+      //                                                  mg_level_coarse))
+      if (false)
         {
           pcout << "FirstChildPolicy" << std::endl;
 
