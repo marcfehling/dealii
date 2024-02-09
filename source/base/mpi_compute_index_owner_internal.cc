@@ -15,6 +15,8 @@
 
 #include <deal.II/base/config.h>
 
+#include <deal.II/base/conditional_ostream.h>
+
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/mpi_compute_index_owner_internal.h>
 
@@ -47,16 +49,36 @@ namespace Utilities
                                      const bool        index_range_contiguous,
                                      const std::size_t size)
         {
+          dealii::Utilities::System::MemoryStats stats;
+          double vmpeak, max_vmpeak, sum_vmpeak;
+
+          unsigned int my_rank = this_mpi_process(MPI_COMM_WORLD);
+
+          ConditionalOStream pcout (std::cout, (my_rank == 0));
+
+          const auto mem_func = [&](const std::string name){
+            MPI_Barrier(MPI_COMM_WORLD);
+            dealii::Utilities::System::get_memory_stats(stats);
+            vmpeak = stats.VmPeak/1024.0/1024.0;
+            max_vmpeak = max(vmpeak, MPI_COMM_WORLD);
+            sum_vmpeak = sum(vmpeak, MPI_COMM_WORLD);
+            pcout << name << ". vmpeak (GB): max=" << max_vmpeak << " sum=" << sum_vmpeak << std::endl;
+          };
+
           this->use_vector = use_vector;
           this->size       = size;
 
           data = {};
           data_map.clear();
 
+          mem_func("before_data_resize");
+
           // in case we have contiguous indices, only fill the vector upon
           // first request in `fill`
           if (use_vector && !index_range_contiguous)
             data.resize(size, invalid_index_value);
+
+          mem_func("after_data_resize");
         }
 
 
@@ -167,10 +189,24 @@ namespace Utilities
         void
         Dictionary::reinit(const IndexSet &owned_indices, const MPI_Comm comm)
         {
-          // 1) set up the partition
-          this->partition(owned_indices, comm);
+          dealii::Utilities::System::MemoryStats stats;
+          double vmpeak, max_vmpeak, sum_vmpeak;
 
           unsigned int my_rank = this_mpi_process(comm);
+
+          ConditionalOStream pcout (std::cout, (my_rank == 0));
+
+          const auto mem_func = [&](const std::string name){
+            MPI_Barrier(comm);
+            dealii::Utilities::System::get_memory_stats(stats);
+            vmpeak = stats.VmPeak/1024.0/1024.0;
+            max_vmpeak = max(vmpeak, comm);
+            sum_vmpeak = sum(vmpeak, comm);
+            pcout << name << ". vmpeak (GB): max=" << max_vmpeak << " sum=" << sum_vmpeak << std::endl;
+          };
+
+          // 1) set up the partition
+          this->partition(owned_indices, comm);
 
           types::global_dof_index dic_local_received = 0;
           std::map<unsigned int,
@@ -181,11 +217,15 @@ namespace Utilities
           const auto owned_indices_size_actual =
             Utilities::MPI::sum(owned_indices.n_elements(), comm);
 
+          mem_func("owning_ranks_before");
+
           actually_owning_ranks.reinit((owned_indices_size_actual *
                                         sparsity_factor) > owned_indices.size(),
                                        owned_indices_size_actual ==
                                          owned_indices.size(),
                                        locally_owned_size);
+
+          mem_func("owning_ranks_after");
 
           // 2) collect relevant processes and process local dict entries
           for (auto interval = owned_indices.begin_intervals();
@@ -266,7 +306,6 @@ namespace Utilities
               const int mpi_tag =
                 Utilities::MPI::internal::Tags::dictionary_reinit;
 
-
               // 3) send messages with local dofs to the right dict process
               for (const auto &rank_pair : buffers)
                 {
@@ -338,6 +377,7 @@ namespace Utilities
                       dic_local_received += interval.second - interval.first;
                     }
                 }
+
             }
           else
             {
@@ -346,6 +386,7 @@ namespace Utilities
 
               // 3/4) use a ConsensusAlgorithm to send messages with local
               // dofs to the right dict process
+
 
               using RequestType = std::vector<
                 std::pair<types::global_dof_index, types::global_dof_index>>;
@@ -401,6 +442,7 @@ namespace Utilities
                 },
 
                 comm);
+
             }
 
           std::sort(actually_owning_rank_list.begin(),
@@ -410,6 +452,7 @@ namespace Utilities
             Assert(actually_owning_rank_list[i] >
                      actually_owning_rank_list[i - 1],
                    ExcInternalError());
+
 
           // 5) make sure that all messages have been sent
           if (request.size() > 0)
@@ -469,7 +512,26 @@ namespace Utilities
           , track_index_requests(track_index_requests)
           , owning_ranks(owning_ranks)
         {
+          dealii::Utilities::System::MemoryStats stats;
+          double vmpeak, max_vmpeak, sum_vmpeak;
+
+          ConditionalOStream pcout (std::cout, (my_rank == 0));
+
+          const auto mem_func = [&](const std::string name){
+            MPI_Barrier(comm);
+            dealii::Utilities::System::get_memory_stats(stats);
+            vmpeak = stats.VmPeak/1024.0/1024.0;
+            max_vmpeak = max(vmpeak, comm);
+            sum_vmpeak = sum(vmpeak, comm);
+            pcout << name << ". vmpeak (GB): max=" << max_vmpeak << " sum=" << sum_vmpeak << std::endl;
+          };
+
+          mem_func("before_dict_reinit");
+
           dict.reinit(owned_indices, comm);
+
+          mem_func("after_dict_reinit");
+
           requesters.resize(dict.actually_owning_rank_list.size());
         }
 

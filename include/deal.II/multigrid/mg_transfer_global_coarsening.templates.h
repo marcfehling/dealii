@@ -19,6 +19,7 @@
 
 #include <deal.II/base/config.h>
 
+#include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/mpi_compute_index_owner_internal.h>
 #include <deal.II/base/mpi_consensus_algorithms.h>
 
@@ -789,6 +790,20 @@ namespace internal
            const IndexSet &is_src_locally_owned,
            const bool      check_if_elements_in_is_dst_remote_exist = false)
     {
+      dealii::Utilities::System::MemoryStats stats;
+      double vmpeak, max_vmpeak, sum_vmpeak;
+
+      ConditionalOStream pcout (std::cout, (Utilities::MPI::this_mpi_process(communicator) == 0));
+
+      const auto mem_func = [&](const std::string name){
+        MPI_Barrier(communicator);
+        dealii::Utilities::System::get_memory_stats(stats);
+        vmpeak = stats.VmPeak/1024.0/1024.0;
+        max_vmpeak = dealii::Utilities::MPI::max(vmpeak, communicator);
+        sum_vmpeak = dealii::Utilities::MPI::sum(vmpeak, communicator);
+        pcout << name << ". vmpeak (GB): max=" << max_vmpeak << " sum=" << sum_vmpeak << std::endl;
+      };
+
       IndexSet is_dst_remote = is_dst_remote_input;
 
       if (check_if_elements_in_is_dst_remote_exist)
@@ -802,6 +817,8 @@ namespace internal
             is_dst_remote_potentially_relevant.n_elements());
 
           {
+            mem_func("before_process");
+
             Utilities::MPI::internal::ComputeIndexOwner::
               ConsensusAlgorithmsPayload process(
                 is_dst_locally_owned,
@@ -809,6 +826,8 @@ namespace internal
                 communicator,
                 owning_ranks_of_ghosts,
                 false);
+
+            mem_func("after_process");
 
             Utilities::MPI::ConsensusAlgorithms::Selector<
               std::vector<
@@ -975,6 +994,7 @@ namespace internal
             AssertThrowMPI(ierr_1);
           }
       }
+
 #endif
     }
 
@@ -1141,6 +1161,22 @@ namespace internal
                (mg_level_coarse + 1 == mg_level_fine),
              ExcNotImplemented());
 
+      const auto comm = dof_handler_dst.get_communicator();
+
+      dealii::Utilities::System::MemoryStats stats;
+      double vmpeak, max_vmpeak, sum_vmpeak;
+
+      ConditionalOStream pcout (std::cout, (Utilities::MPI::this_mpi_process(comm) == 0));
+
+      const auto mem_func = [&](const std::string name){
+        MPI_Barrier(comm);
+        dealii::Utilities::System::get_memory_stats(stats);
+        vmpeak = stats.VmPeak/1024.0/1024.0;
+        max_vmpeak = dealii::Utilities::MPI::max(vmpeak, comm);
+        sum_vmpeak = dealii::Utilities::MPI::sum(vmpeak, comm);
+        pcout << name << ". vmpeak (GB): max=" << max_vmpeak << " sum=" << sum_vmpeak << std::endl;
+      };
+
       // get reference to triangulations
       const auto &tria_dst = dof_handler_dst.get_triangulation();
       const auto &tria_src = dof_handler_src.get_triangulation();
@@ -1176,10 +1212,14 @@ namespace internal
                                       mg_level_coarse,
                                       coarse_operation);
 
+      mem_func("before_reinit");
+
       this->reinit(is_dst_locally_owned,
                    is_dst_remote,
                    is_src_locally_owned,
                    true);
+
+      mem_func("after_reinit");
 
       // check if meshes are compatible
       if (mg_level_coarse == numbers::invalid_unsigned_int)
@@ -1549,25 +1589,56 @@ namespace internal
       AssertDimension(constraints_fine.n_inhomogeneities(), 0);
       AssertDimension(constraints_coarse.n_inhomogeneities(), 0);
 
+      const auto comm = dof_handler_fine.get_communicator();
+
+      Assert(comm == dof_handler_coarse.get_communicator(),
+             ExcNotImplemented());
+
+      dealii::Utilities::System::MemoryStats stats;
+      double vmpeak, max_vmpeak, sum_vmpeak;
+
+      ConditionalOStream pcout (std::cout, (Utilities::MPI::this_mpi_process(comm) == 0));
+
+      const auto mem_func = [&](const std::string name){
+        MPI_Barrier(comm);
+        dealii::Utilities::System::get_memory_stats(stats);
+        vmpeak = stats.VmPeak/1024.0/1024.0;
+        max_vmpeak = dealii::Utilities::MPI::max(vmpeak, comm);
+        sum_vmpeak = dealii::Utilities::MPI::sum(vmpeak, comm);
+        pcout << name << ". vmpeak (GB): max=" << max_vmpeak << " sum=" << sum_vmpeak << std::endl;
+      };
+
       transfer.dof_handler_fine = &dof_handler_fine;
       transfer.mg_level_fine    = mg_level_fine;
 
       std::unique_ptr<FineDoFHandlerViewBase<dim>> dof_handler_fine_view;
 
+      mem_func("DofHandlerFineView_BeforeConstruction");
+
       if (internal::h_transfer_uses_first_child_policy(dof_handler_fine,
                                                        dof_handler_coarse,
                                                        mg_level_fine,
                                                        mg_level_coarse))
-        dof_handler_fine_view =
-          std::make_unique<FirstChildPolicyFineDoFHandlerView<dim>>(
-            dof_handler_fine, mg_level_fine);
+        {
+          pcout << "FirstChildPolicy" << std::endl;
+
+          dof_handler_fine_view =
+            std::make_unique<FirstChildPolicyFineDoFHandlerView<dim>>(
+              dof_handler_fine, mg_level_fine);
+        }
       else
-        dof_handler_fine_view =
-          std::make_unique<GlobalCoarseningFineDoFHandlerView<dim>>(
-            dof_handler_fine,
-            dof_handler_coarse,
-            mg_level_fine,
-            mg_level_coarse);
+        {
+          pcout << "GlobalCoarsening" << std::endl;
+
+          dof_handler_fine_view =
+            std::make_unique<GlobalCoarseningFineDoFHandlerView<dim>>(
+              dof_handler_fine,
+              dof_handler_coarse,
+              mg_level_fine,
+              mg_level_coarse);
+        }
+
+      mem_func("DofHandlerFineView_AfterConstruction");
 
       // gather ranges for active FE indices on both fine and coarse dofhandlers
       std::array<unsigned int, 2> min_active_fe_indices = {
@@ -1594,11 +1665,6 @@ namespace internal
             std::max<unsigned int>(max_active_fe_indices[1],
                                    cell->active_fe_index());
         });
-
-      const auto comm = dof_handler_fine.get_communicator();
-
-      Assert(comm == dof_handler_coarse.get_communicator(),
-             ExcNotImplemented());
 
       ArrayView<unsigned int> temp_min(min_active_fe_indices);
       ArrayView<unsigned int> temp_max(max_active_fe_indices);
