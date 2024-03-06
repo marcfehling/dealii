@@ -20,7 +20,7 @@
 #include <deal.II/base/config.h>
 
 #ifndef FE_EVAL_FACTORY_DEGREE_MAX
-#  define FE_EVAL_FACTORY_DEGREE_MAX 6
+#  define FE_EVAL_FACTORY_DEGREE_MAX 14
 #endif
 
 DEAL_II_NAMESPACE_OPEN
