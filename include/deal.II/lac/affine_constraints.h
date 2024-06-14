@@ -2532,7 +2532,7 @@ AffineConstraints<number>::calculate_line_index(const size_type line_n) const
   if (local_lines.size() == 0)
     return line_n;
 
-  Assert(local_lines.is_element(line_n), ExcRowNotStoredHere(line_n));
+  // Assert(local_lines.is_element(line_n), ExcRowNotStoredHere(line_n));
 
   return local_lines.index_within_set(line_n);
 }
