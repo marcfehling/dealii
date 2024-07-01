@@ -327,6 +327,13 @@ namespace internal
       if (locally_relevant_constraints.empty())
         return;
 
+      for(auto & entry: locally_relevant_constraints)
+      std::sort(
+        entry.entries.begin(),
+        entry.entries.end(),
+        [](const auto &l1,
+           const auto &l2) { return l1.first < l2.first; });
+
       std::sort(
         locally_relevant_constraints.begin(),
         locally_relevant_constraints.end(),
@@ -387,7 +394,31 @@ namespace internal
               // merge entries vectors if different, otherwise ignore the
               // second entry
               if (!vectors_are_equal)
-                av.insert(av.end(), bv.begin(), bv.end());
+                {
+                  const auto sizea = av.size();
+                  const auto sizeb = bv.size();
+
+                  // TODO: use "merge" of "merge sort" to prevent quadratic
+                  // complexity
+                  for (unsigned int j = 0; j < sizeb; ++j)
+                  {
+                    bool new_entry = true;
+
+                    for (unsigned int i = 0; i < sizea; ++i)
+                      {
+                        if (av[i].first == bv[j].first)
+                        {
+                          Assert(equal_with_tol(av[i].second, bv[j].second),
+                             ExcInternalError());
+
+                          new_entry = false;
+                        }
+                      }
+
+                    if(new_entry)
+                      av.push_back(bv[j]);
+                  }
+                }
             }
         }
       ++write_ptr;
