@@ -43,11 +43,13 @@ main(int argc, char **argv)
     {
       owned_elements.add_index(0);
       relevant_elements.add_range(0, 3);
+      constraints.reinit(owned_elements, relevant_elements);
     }
   else if (my_proc == 1)
     {
       owned_elements.add_range(1, 3);
       relevant_elements.add_range(0, n_indices);
+      constraints.reinit(owned_elements, relevant_elements);
       constraints.add_line(0);
       constraints.add_entry(0, 1, 0.5);
       constraints.add_entry(0, 2, 0.5);
@@ -58,6 +60,7 @@ main(int argc, char **argv)
     {
       owned_elements.add_range(3, n_indices);
       relevant_elements.add_range(0, n_indices);
+      constraints.reinit(owned_elements, relevant_elements);
       constraints.add_line(0);
       constraints.add_entry(0, 1, 0.5);
       constraints.add_entry(0, 3, 0.5);
