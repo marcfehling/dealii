@@ -62,7 +62,7 @@ jobs:
         ctest --test-dir build --build-config Debug --output-on-failure --extra-verbose
     - name: upload library
       # run only if a PR is merged into master
-      if: ${{ github.ref == 'refs/heads/master' && matrix.os == 'windows-2022' }}
+      if: ${{ matrix.os == 'windows-2022' }}
       uses: actions/upload-artifact@v4
       with:
         name: dealii-${{ matrix.os }}
