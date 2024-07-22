@@ -103,7 +103,7 @@ jobs:
     steps:
     - uses: mpi4py/setup-mpi@v1
       with:
-        mpi: microsoft
+        mpi: intelmpi
     - uses: actions/checkout@v4
     - name: info
       run: |
