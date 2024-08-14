@@ -692,6 +692,302 @@ namespace internal
 
     return locally_relevant_constraints;
   }
+
+
+
+  template <typename number>
+  std::vector<typename dealii::AffineConstraints<number>::ConstraintLine>
+  compute_locally_relevant_constraints_OLDSTYLE(
+    const dealii::AffineConstraints<number> &constraints_in,
+    const IndexSet                          &locally_owned_dofs,
+    const IndexSet                          &locally_relevant_dofs,
+    const MPI_Comm                           mpi_communicator)
+  {
+    // The result vector filled step by step.
+    using ConstraintType =
+      typename dealii::AffineConstraints<number>::ConstraintLine;
+    std::vector<ConstraintType> locally_relevant_constraints;
+
+#ifndef DEAL_II_WITH_MPI
+    AssertThrow(false, ExcNotImplemented()); // one should not come here
+    (void)constraints_in;
+    (void)locally_owned_dofs;
+    (void)locally_relevant_dofs;
+    (void)mpi_communicator;
+#else
+
+    const unsigned int my_rank =
+      Utilities::MPI::this_mpi_process(mpi_communicator);
+
+    // helper function
+    const auto sort_and_make_unique =
+      [](std::vector<ConstraintType> &constraints) {
+        std::sort(constraints.begin(),
+                  constraints.end(),
+                  [](const ConstraintType &l1, const ConstraintType &l2) {
+                    return l1.index < l2.index;
+                  });
+
+        constraints.erase(std::unique(constraints.begin(),
+                                      constraints.end(),
+                                      [](const ConstraintType &l1,
+                                         const ConstraintType &l2) {
+                                        return l1.index == l2.index;
+                                      }),
+                          constraints.end());
+      };
+
+    // 0) collect constrained indices of the current object
+    IndexSet constrained_indices(locally_owned_dofs.size());
+
+    std::vector<types::global_dof_index> constrained_indices_temp;
+    for (const auto &line : constraints_in.get_lines())
+      constrained_indices_temp.push_back(line.index);
+
+    constrained_indices.add_indices(constrained_indices_temp.begin(),
+                                    constrained_indices_temp.end());
+
+    // step 1: identify owners of constraints
+    std::vector<unsigned int> constrained_indices_owners(
+      constrained_indices.n_elements());
+    Utilities::MPI::internal::ComputeIndexOwner::ConsensusAlgorithmsPayload
+      constrained_indices_process(locally_owned_dofs,
+                                  constrained_indices,
+                                  mpi_communicator,
+                                  constrained_indices_owners,
+                                  true);
+
+    Utilities::MPI::ConsensusAlgorithms::Selector<
+      std::vector<std::pair<types::global_dof_index, types::global_dof_index>>,
+      std::vector<unsigned int>>
+      consensus_algorithm;
+    consensus_algorithm.run(constrained_indices_process, mpi_communicator);
+
+    // step 2: collect all locally owned constraints
+    const auto constrained_indices_by_ranks =
+      constrained_indices_process.get_requesters();
+
+    {
+      const unsigned int tag = Utilities::MPI::internal::Tags::
+        affine_constraints_make_consistent_in_parallel_0;
+
+      // ... collect data and sort according to owner
+      std::map<unsigned int, std::vector<ConstraintType>> send_data_temp;
+
+      for (unsigned int i = 0; i < constrained_indices_owners.size(); ++i)
+        {
+          ConstraintType entry;
+
+          const types::global_dof_index index =
+            constrained_indices.nth_index_in_set(i);
+
+          entry.index = index;
+
+          if (constraints_in.is_inhomogeneously_constrained(index))
+            entry.inhomogeneity = constraints_in.get_inhomogeneity(index);
+
+          if (const auto constraints =
+                constraints_in.get_constraint_entries(index))
+            entry.entries = *constraints;
+
+          if (constrained_indices_owners[i] == my_rank)
+            locally_relevant_constraints.push_back(entry);
+          else
+            send_data_temp[constrained_indices_owners[i]].push_back(entry);
+        }
+
+      std::map<unsigned int, std::vector<char>> send_data;
+
+      for (const auto &i : send_data_temp)
+        send_data[i.first] = Utilities::pack(i.second, false);
+
+      std::vector<MPI_Request> requests;
+      requests.reserve(send_data.size());
+
+      // ... send data
+      for (const auto &i : send_data)
+        {
+          if (i.first == my_rank)
+            continue;
+
+          requests.push_back({});
+
+          const int ierr = MPI_Isend(i.second.data(),
+                                     i.second.size(),
+                                     MPI_CHAR,
+                                     i.first,
+                                     tag,
+                                     mpi_communicator,
+                                     &requests.back());
+          AssertThrowMPI(ierr);
+        }
+
+      // ... receive data
+      unsigned int n_rec_ranks = 0;
+
+      for (const auto &i : constrained_indices_by_ranks)
+        if (i.first != my_rank)
+          ++n_rec_ranks;
+
+      for (unsigned int i = 0; i < n_rec_ranks; ++i)
+        {
+          MPI_Status status;
+          int ierr = MPI_Probe(MPI_ANY_SOURCE, tag, mpi_communicator, &status);
+          AssertThrowMPI(ierr);
+
+          int message_length;
+          ierr = MPI_Get_count(&status, MPI_CHAR, &message_length);
+          AssertThrowMPI(ierr);
+
+          std::vector<char> buffer(message_length);
+
+          ierr = MPI_Recv(buffer.data(),
+                          buffer.size(),
+                          MPI_CHAR,
+                          status.MPI_SOURCE,
+                          tag,
+                          mpi_communicator,
+                          MPI_STATUS_IGNORE);
+          AssertThrowMPI(ierr);
+
+          const auto data =
+            Utilities::unpack<std::vector<ConstraintType>>(buffer, false);
+
+          for (const auto &i : data)
+            locally_relevant_constraints.push_back(i);
+        }
+
+      const int ierr =
+        MPI_Waitall(requests.size(), requests.data(), MPI_STATUSES_IGNORE);
+      AssertThrowMPI(ierr);
+
+      sort_and_make_unique(locally_relevant_constraints);
+    }
+
+    // step 3: communicate constraints so that each process know how the
+    // locally locally relevant dofs are constrained
+    {
+      const unsigned int tag = Utilities::MPI::internal::Tags::
+        affine_constraints_make_consistent_in_parallel_1;
+
+      // ... determine owners of locally relevant dofs
+      IndexSet locally_relevant_dofs_non_local = locally_relevant_dofs;
+      locally_relevant_dofs_non_local.subtract_set(locally_owned_dofs);
+
+      std::vector<unsigned int> locally_relevant_dofs_owners(
+        locally_relevant_dofs_non_local.n_elements());
+      Utilities::MPI::internal::ComputeIndexOwner::ConsensusAlgorithmsPayload
+        locally_relevant_dofs_process(locally_owned_dofs,
+                                      locally_relevant_dofs_non_local,
+                                      mpi_communicator,
+                                      locally_relevant_dofs_owners,
+                                      true);
+
+      Utilities::MPI::ConsensusAlgorithms::Selector<
+        std::vector<
+          std::pair<types::global_dof_index, types::global_dof_index>>,
+        std::vector<unsigned int>>
+        consensus_algorithm;
+      consensus_algorithm.run(locally_relevant_dofs_process, mpi_communicator);
+
+      const auto locally_relevant_dofs_by_ranks =
+        locally_relevant_dofs_process.get_requesters();
+
+      std::map<unsigned int, std::vector<char>> send_data;
+
+      std::vector<MPI_Request> requests;
+      requests.reserve(send_data.size());
+
+      // ... send data
+      for (const auto &rank_and_indices : locally_relevant_dofs_by_ranks)
+        {
+          Assert(rank_and_indices.first != my_rank, ExcInternalError());
+
+          std::vector<ConstraintType> data;
+
+          for (const auto index : rank_and_indices.second)
+            {
+              // note: at this stage locally_relevant_constraints still
+              // contains only locally owned constraints
+              const auto ptr =
+                std::find_if(locally_relevant_constraints.begin(),
+                             locally_relevant_constraints.end(),
+                             [index](const auto &a) {
+                               return a.index == index;
+                             });
+              if (ptr != locally_relevant_constraints.end())
+                data.push_back(*ptr);
+            }
+
+          send_data[rank_and_indices.first] = Utilities::pack(data, false);
+
+          requests.push_back({});
+
+          const int ierr = MPI_Isend(send_data[rank_and_indices.first].data(),
+                                     send_data[rank_and_indices.first].size(),
+                                     MPI_CHAR,
+                                     rank_and_indices.first,
+                                     tag,
+                                     mpi_communicator,
+                                     &requests.back());
+          AssertThrowMPI(ierr);
+        }
+
+      // ... receive data
+      const unsigned int n_rec_ranks = [&]() {
+        // count number of ranks from where data will be received from
+        // by looping locally_relevant_dofs_owners and identifying unique
+        // rank (ignoring the current rank)
+
+        std::set<unsigned int> rec_ranks;
+
+        for (const unsigned int rank : locally_relevant_dofs_owners)
+          if (rank != my_rank)
+            rec_ranks.insert(rank);
+
+        return rec_ranks.size();
+      }();
+
+      for (unsigned int counter = 0; counter < n_rec_ranks; ++counter)
+        {
+          MPI_Status status;
+          int ierr = MPI_Probe(MPI_ANY_SOURCE, tag, mpi_communicator, &status);
+          AssertThrowMPI(ierr);
+
+          int message_length;
+          ierr = MPI_Get_count(&status, MPI_CHAR, &message_length);
+          AssertThrowMPI(ierr);
+
+          std::vector<char> buffer(message_length);
+
+          ierr = MPI_Recv(buffer.data(),
+                          buffer.size(),
+                          MPI_CHAR,
+                          status.MPI_SOURCE,
+                          tag,
+                          mpi_communicator,
+                          MPI_STATUS_IGNORE);
+          AssertThrowMPI(ierr);
+
+          const auto received_locally_relevant_constrain =
+            Utilities::unpack<std::vector<ConstraintType>>(buffer, false);
+
+          for (const auto &locally_relevant_constrain :
+               received_locally_relevant_constrain)
+            locally_relevant_constraints.push_back(locally_relevant_constrain);
+        }
+
+      const int ierr =
+        MPI_Waitall(requests.size(), requests.data(), MPI_STATUSES_IGNORE);
+      AssertThrowMPI(ierr);
+
+      sort_and_make_unique(locally_relevant_constraints);
+    }
+
+#endif
+
+    return locally_relevant_constraints;
+  }
 } // namespace internal
 
 
@@ -743,6 +1039,105 @@ AffineConstraints<number>::make_consistent_in_parallel(
       // 1) Get all locally relevant constraints ("temporal constraint matrix").
       const auto temporal_constraint_matrix =
         internal::compute_locally_relevant_constraints(
+          *this,
+          locally_owned_dofs,
+          constraints_to_make_consistent,
+          mpi_communicator);
+
+      // 2) Add untracked DoFs to the index sets.
+      constrained_indices.clear();
+      for (const auto &line : temporal_constraint_matrix)
+        {
+          constrained_indices.push_back(line.index);
+          for (const auto &entry : line.entries)
+            constrained_indices.push_back(entry.first);
+        }
+      std::sort(constrained_indices.begin(), constrained_indices.end());
+
+      locally_stored_constraints = this->local_lines;
+      locally_stored_constraints.add_indices(constrained_indices.begin(),
+                                             constrained_indices.end());
+
+      constraints_made_consistent = constraints_to_make_consistent;
+      constraints_to_make_consistent.add_indices(constrained_indices.begin(),
+                                                 constrained_indices.end());
+
+      // 3) Clear and refill this constraint matrix.
+      this->reinit(locally_owned_dofs, locally_stored_constraints);
+      for (const auto &line : temporal_constraint_matrix)
+        this->add_constraint(line.index, line.entries, line.inhomogeneity);
+
+      // 4) Stop loop if converged.
+      const auto constraints_converged =
+        Utilities::MPI::min(static_cast<unsigned int>(
+                              constraints_to_make_consistent ==
+                              constraints_made_consistent),
+                            mpi_communicator);
+      if (constraints_converged)
+        break;
+    }
+
+  AssertThrow(iteration_count < max_iterations,
+              ExcMessage(
+                "make_consistent_in_parallel() did not converge after " +
+                Utilities::to_string(max_iterations) + " iterations."));
+
+  Assert(this->is_consistent_in_parallel(
+           Utilities::MPI::all_gather(mpi_communicator, locally_owned_dofs),
+           constraints_to_make_consistent,
+           mpi_communicator),
+         ExcInternalError());
+}
+
+
+
+template <typename number>
+void
+AffineConstraints<number>::make_consistent_in_parallel_OLDSTYLE(
+  const IndexSet &locally_owned_dofs,
+  const IndexSet &constraints_to_make_consistent_,
+  const MPI_Comm  mpi_communicator)
+{
+  if (Utilities::MPI::n_mpi_processes(mpi_communicator) == 1)
+    return; // Nothing to do, since serial.
+
+  Assert(sorted == false, ExcMatrixIsClosed());
+
+  Assert(this->local_lines.is_empty() == false,
+         ExcMessage(
+           "This functionality requires that the AffineConstraints object "
+           "knows for which degrees of freedom it can store constraints. "
+           "Please initialize this object with the corresponding index sets."));
+
+  // Container for indices that are constrained or that other indices are
+  // constrained against. Generously reserve memory for it, assuming the worst
+  // case that each constraint line involves two distinct DoF indices.
+  std::vector<types::global_dof_index> constrained_indices;
+  constrained_indices.reserve(2 * n_constraints());
+
+  // This IndexSet keeps track of the locally stored constraints on this
+  // AffineConstraints object: If we have received constrained indices that we
+  // don't know of, we need to expand our playing field.
+  IndexSet locally_stored_constraints;
+
+  // This IndexSet contains those DoFs about which we want to know all
+  // constraints. We will receive constraints for these DoFs against other DoFs,
+  // which might be constrained themselves. To successfully resolve all chains
+  // of constraints, we need to know the constraints of all these DoFs, and we
+  // keep track of the relevant DoFs here.
+  IndexSet constraints_to_make_consistent = constraints_to_make_consistent_;
+
+  // This IndexSet stores DoFs from the previous iteration. If the old and new
+  // index sets match, we have converged.
+  IndexSet constraints_made_consistent;
+
+  const unsigned int max_iterations  = 10;
+  unsigned int       iteration_count = 0;
+  for (; iteration_count < max_iterations; ++iteration_count)
+    {
+      // 1) Get all locally relevant constraints ("temporal constraint matrix").
+      const auto temporal_constraint_matrix =
+        internal::compute_locally_relevant_constraints_OLDSTYLE(
           *this,
           locally_owned_dofs,
           constraints_to_make_consistent,

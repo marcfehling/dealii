@@ -2024,6 +2024,12 @@ public:
                               const IndexSet &constraints_to_make_consistent,
                               const MPI_Comm  mpi_communicator);
 
+  void
+  make_consistent_in_parallel_OLDSTYLE(
+    const IndexSet &locally_owned_dofs,
+    const IndexSet &constraints_to_make_consistent,
+    const MPI_Comm  mpi_communicator);
+
   /**
    * Exception
    *
