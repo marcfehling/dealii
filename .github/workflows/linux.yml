@@ -26,7 +26,7 @@ jobs:
     # simple serial release build using g++
 
     name: linux release serial
-    runs-on: [ubuntu-22.04]
+    runs-on: ubuntu-24.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -81,7 +81,7 @@ jobs:
     # simple parallel debug build using g++
 
     name: linux debug parallel
-    runs-on: [ubuntu-22.04]
+    runs-on: ubuntu-24.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -147,7 +147,7 @@ jobs:
     # simple parallel debug build using g++ and trilinos+tpetra
 
     name: linux debug parallel tpetra
-    runs-on: [ubuntu-22.04]
+    runs-on: ubuntu-24.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -217,7 +217,7 @@ jobs:
     # For a list of Intel packages see https://oneapi-src.github.io/oneapi-ci/#linux-apt
 
     name: linux debug intel oneapi
-    runs-on: [ubuntu-22.04]
+    runs-on: ubuntu-24.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -284,7 +284,7 @@ jobs:
     # simple parallel debug build using cuda-11
 
     name: linux debug cuda-11
-    runs-on: [ubuntu-20.04]
+    runs-on: ubuntu-22.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -337,7 +337,6 @@ jobs:
         # deleting 15GB
         rm -rf /usr/share/dotnet/
         df -h
-    - uses: lukka/get-cmake@v3.27.9
     - name: info
       run: |
         mpicc -v
@@ -397,7 +396,7 @@ jobs:
     # simple parallel debug build using cuda-11 and clang
 
     name: linux debug cuda-11 clang
-    runs-on: [ubuntu-20.04]
+    runs-on: ubuntu-22.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -429,7 +428,6 @@ jobs:
             numdiff \
             openmpi-bin \
             libboost-all-dev
-    - uses: lukka/get-cmake@v3.27.9
     - name: info
       run: |
         mpicc -v
