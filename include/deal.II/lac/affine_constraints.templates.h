@@ -375,7 +375,12 @@ namespace internal
                   Assert(equal_with_tol(b.inhomogeneity,
                                         constraints_in.get_inhomogeneity(
                                           b.index)),
-                         ExcInternalError());
+                         ExcMessage(
+                           "Inhomogeneities for index " +
+                           Utilities::to_string(a.index) + " don't match: " +
+                           Utilities::to_string(b.inhomogeneity) + " vs " +
+                           Utilities::to_string(
+                             constraints_in.get_inhomogeneity(b.index))));
                   a.inhomogeneity = b.inhomogeneity;
                 }
 
@@ -389,7 +394,11 @@ namespace internal
                     vectors_are_equal = false;
                   else
                     Assert(equal_with_tol(av[i].second, bv[i].second),
-                           ExcInternalError());
+                           ExcMessage(
+                             "Entries for index " +
+                             Utilities::to_string(a.index) + " don't match: " +
+                             Utilities::to_string(av[i].second) + " vs " +
+                             Utilities::to_string(bv[i].second)));
                 }
 
               // merge entries vectors if different, otherwise ignore the
