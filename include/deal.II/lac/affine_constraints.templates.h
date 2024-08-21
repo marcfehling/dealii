@@ -1077,6 +1077,10 @@ AffineConstraints<number>::make_consistent_in_parallel(
         break;
     }
 
+  if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+    std::cout << "  make consistent iterations NEWSTYLE: "
+              << (iteration_count + 1) << std::endl;
+
   AssertThrow(iteration_count < max_iterations,
               ExcMessage(
                 "make_consistent_in_parallel() did not converge after " +
@@ -1175,6 +1179,10 @@ AffineConstraints<number>::make_consistent_in_parallel_OLDSTYLE(
       if (constraints_converged)
         break;
     }
+
+  if (Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
+    std::cout << "  make consistent iterations OLDSTYLE: "
+              << (iteration_count + 1) << std::endl;
 
   AssertThrow(iteration_count < max_iterations,
               ExcMessage(
