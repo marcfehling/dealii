@@ -277,14 +277,14 @@ jobs:
         ctest --output-on-failure -j2 -VV
 
   #######################
-  # linux-debug-cuda-11 #
+  # linux-debug-cuda-12 #
   #######################
 
-  linux-debug-cuda-11:
-    # simple parallel debug build using cuda-11
+  linux-debug-cuda-12:
+    # simple parallel debug build using cuda-12
 
-    name: linux debug cuda-11
-    runs-on: [ubuntu-20.04]
+    name: linux debug cuda-12
+    runs-on: [ubuntu-24.04]
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -294,29 +294,22 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
-    env:
-      CUDA_ROOT: /usr/local/cuda
-
     steps:
     - uses: actions/checkout@v4
     - name: modules
       run: |
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
-        sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
-        sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
-        sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:ginggs/deal.ii-9.4.0-backports
+        # sudo apt-get install -y software-properties-common
+        # sudo add-apt-repository ppa:ginggs/deal.ii-9.6.0-backports
         sudo apt-get update
         sudo apt-get install -yq --no-install-recommends \
-            cuda-toolkit-11-8 \
+            libboost-all-dev \
             libp4est-dev \
             libopenmpi-dev \
             numdiff \
-            openmpi-bin \
-            libboost-all-dev
-    # https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
+            nvidia-cuda-toolkit \
+            openmpi-bin
     - name: remove unused large packages
+      # https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
       run : |
         echo "=============================================================================="
         echo "Freeing up disk space on CI system"
@@ -329,7 +322,7 @@ jobs:
         sudo apt-get remove -y '^dotnet-.*'
         sudo apt-get remove -y '^llvm-.*'
         sudo apt-get remove -y 'php.*'
-        sudo apt-get remove -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell mono-devel
+        sudo apt-get remove -y azure-cli google-chrome-stable firefox mono-devel
         sudo apt-get autoremove -y
         sudo apt-get clean
         df -h
@@ -337,7 +330,6 @@ jobs:
         # deleting 15GB
         rm -rf /usr/share/dotnet/
         df -h
-    - uses: lukka/get-cmake@v3.27.9
     - name: info
       run: |
         mpicc -v
@@ -377,7 +369,8 @@ jobs:
               -D DEAL_II_COMPONENT_EXAMPLES="ON" \
               ..
     - name: print detailed.log
-      run: cat build/detailed.log
+      run: |
+        cat build/detailed.log
     - name: build deal.II
       run: |
         cd build
@@ -390,14 +383,14 @@ jobs:
         make -j2 compile_test_executables
 
   #############################
-  # linux-debug-cuda-11-clang #
+  # linux-debug-cuda-12-clang #
   #############################
 
   linux-debug-cuda-11-clang:
-    # simple parallel debug build using cuda-11 and clang
+    # simple parallel debug build using cuda-12 and clang
 
-    name: linux debug cuda-11 clang
-    runs-on: [ubuntu-22.04]
+    name: linux debug cuda-12 clang
+    runs-on: [ubuntu-24.04]
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -407,31 +400,21 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
-    env:
-      CUDA_ROOT: /usr/local/cuda
-
     steps:
     - uses: actions/checkout@v4
     - name: modules
       run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh 18
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
-        sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
-        sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
-        sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:ginggs/deal.ii-9.4.0-backports
+        # sudo apt-get install -y software-properties-common
+        # sudo add-apt-repository ppa:ginggs/deal.ii-9.6.0-backports
         sudo apt-get update
         sudo apt-get install -yq --no-install-recommends \
-            cuda-toolkit-11-8 \
+            clang-18 \
+            libboost-all-dev \
             libp4est-dev \
             libopenmpi-dev \
             numdiff \
-            openmpi-bin \
-            libboost-all-dev
-    - uses: lukka/get-cmake@v3.27.9
+            nvidia-cuda-toolkit \
+            openmpi-bin
     - name: info
       run: |
         mpicc -v
@@ -460,8 +443,7 @@ jobs:
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_COMPILER=clang++-18 \
-              -D DEAL_II_FORCE_BUNDLED_BOOST=ON \
-              -D DEAL_II_CXX_FLAGS="-std=c++17" \
+              -D DEAL_II_CXX_FLAGS='-std=c++17 -Werror -Wno-non-template-friend' \
               -D DEAL_II_EARLY_DEPRECATIONS=ON \
               -D DEAL_II_WITH_KOKKOS="ON" \
               -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
@@ -470,7 +452,9 @@ jobs:
               -D DEAL_II_WITH_P4EST="ON" \
               -D DEAL_II_COMPONENT_EXAMPLES="ON" \
               ..
-        cat detailed.log
+    - name: print detailed.log
+      run: |
+        cat build/detailed.log
     - name: archive detailed.log
       uses: actions/upload-artifact@v4
       with:
