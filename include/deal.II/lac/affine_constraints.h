@@ -23,6 +23,7 @@
 #include <deal.II/base/table.h>
 #include <deal.II/base/template_constraints.h>
 #include <deal.II/base/thread_local_storage.h>
+#include <deal.II/base/timer.h>
 
 #include <deal.II/lac/sparsity_pattern_base.h>
 #include <deal.II/lac/vector.h>
@@ -2051,7 +2052,8 @@ public:
   void
   make_consistent_in_parallel(const IndexSet &locally_owned_dofs,
                               const IndexSet &constraints_to_make_consistent,
-                              const MPI_Comm  mpi_communicator);
+                              const MPI_Comm  mpi_communicator,
+                              TimerOutput    &timer);
 
   /**
    * Exception
