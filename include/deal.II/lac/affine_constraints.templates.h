@@ -350,8 +350,11 @@ namespace internal
     const dealii::AffineConstraints<number> &constraints_in,
     const IndexSet                          &locally_owned_dofs,
     const IndexSet                          &locally_relevant_dofs,
-    const MPI_Comm                           mpi_communicator)
+    const MPI_Comm                           mpi_communicator,
+    TimerOutput                             &timer)
   {
+    TimerOutput::Scope t(timer, "1) compute_locally_relevant_constraints");
+
     // The result vector filled step by step.
     using ConstraintLine =
       typename dealii::AffineConstraints<number>::ConstraintLine;
@@ -369,6 +372,7 @@ namespace internal
       Utilities::MPI::this_mpi_process(mpi_communicator);
 
     // step 0: Collect the indices of constrained DoFs we know of:
+    timer.enter_subsection("step 0");
     IndexSet my_constraint_indices(locally_owned_dofs.size());
     {
       std::vector<types::global_dof_index> indices;
@@ -379,9 +383,11 @@ namespace internal
       std::sort(indices.begin(), indices.end());
       my_constraint_indices.add_indices(indices.begin(), indices.end());
     }
+    timer.leave_subsection();
 
     // step 1: Identify the owners of DoFs we know to be constrained but do
     //         not own.
+    timer.enter_subsection("step 1");
     std::vector<unsigned int> owners_of_my_constraints(
       my_constraint_indices.n_elements());
     Utilities::MPI::internal::ComputeIndexOwner::ConsensusAlgorithmsPayload
@@ -396,10 +402,12 @@ namespace internal
       std::vector<unsigned int>>
       consensus_algorithm;
     consensus_algorithm.run(constrained_indices_process, mpi_communicator);
+    timer.leave_subsection();
 
     // step 2: Collect all locally owned constraints into a data structure
     //         that we can send to other processes that want to know
     //         about them.
+    timer.enter_subsection("step 2");
     const std::map<unsigned int, IndexSet> constrained_indices_by_ranks =
       constrained_indices_process.get_requesters();
     {
@@ -447,11 +455,14 @@ namespace internal
 
       sort_and_make_unique<number>(locally_relevant_constraints);
     }
+    timer.leave_subsection();
 
     // step 3: communicate constraints so that each process knows how the
     // locally relevant dofs are constrained
+    timer.enter_subsection("step 3");
     {
       // ... determine owners of locally relevant dofs
+      timer.enter_subsection("step 3: determine owners");
       IndexSet locally_relevant_dofs_non_local = locally_relevant_dofs;
       locally_relevant_dofs_non_local.subtract_set(locally_owned_dofs);
 
@@ -473,7 +484,9 @@ namespace internal
 
       const auto locally_relevant_dofs_by_ranks =
         locally_relevant_dofs_process.get_requesters();
+      timer.leave_subsection();
 
+      timer.enter_subsection("step 3: loop rank_and_indices");
       std::map<unsigned int, std::vector<ConstraintLine>> send_data;
 
       for (const auto &[destination, indices] : locally_relevant_dofs_by_ranks)
@@ -481,6 +494,8 @@ namespace internal
           Assert(destination != my_rank, ExcInternalError());
 
           std::vector<ConstraintLine> data;
+
+          timer.enter_subsection("step 3: loop rank_and_indices: find_if");
 
           auto i = indices.begin();
 
@@ -510,20 +525,28 @@ namespace internal
                 }
             }
 
+          timer.leave_subsection();
+
           send_data[destination] = std::move(data);
         }
+      timer.leave_subsection();
 
+      timer.enter_subsection("step 3: some_to_some");
       const std::map<unsigned int, std::vector<ConstraintLine>> received_data =
         Utilities::MPI::some_to_some(mpi_communicator, send_data);
+      timer.leave_subsection();
 
       // Finally collate everything into one array, sort, and make it unique:
+      timer.enter_subsection("step 3: collate");
       for (const auto &[sender, constraints] : received_data)
         locally_relevant_constraints.insert(locally_relevant_constraints.end(),
                                             constraints.begin(),
                                             constraints.end());
 
       sort_and_make_unique<number>(locally_relevant_constraints);
+      timer.leave_subsection();
     }
+    timer.leave_subsection();
 
 #endif
 
@@ -538,8 +561,11 @@ void
 AffineConstraints<number>::make_consistent_in_parallel(
   const IndexSet &locally_owned_dofs,
   const IndexSet &constraints_to_make_consistent_,
-  const MPI_Comm  mpi_communicator)
+  const MPI_Comm  mpi_communicator,
+  TimerOutput    &timer)
 {
+  TimerOutput::Scope t(timer, "make_consistent_in_parallel");
+
   // We need to resolve chains of constraints in this function, and that
   // is exactly what close() does. So call this function at the beginning
   // to make sure we start working with constraints that are already
@@ -590,9 +616,11 @@ AffineConstraints<number>::make_consistent_in_parallel(
           *this,
           locally_owned_dofs,
           constraints_to_make_consistent,
-          mpi_communicator);
+          mpi_communicator,
+          timer);
 
       // 2) Add untracked DoFs to the index sets.
+      timer.enter_subsection("2)");
       constrained_indices.clear();
       for (const auto &line : imported_constraints)
         {
@@ -609,19 +637,24 @@ AffineConstraints<number>::make_consistent_in_parallel(
       constraints_made_consistent = constraints_to_make_consistent;
       constraints_to_make_consistent.add_indices(constrained_indices.begin(),
                                                  constrained_indices.end());
+      timer.leave_subsection();
 
       // 3) Clear and refill this constraint matrix. Also resolve chains:
+      timer.enter_subsection("3)");
       this->reinit(locally_owned_dofs, locally_stored_constraints);
       for (const auto &line : imported_constraints)
         this->add_constraint(line.index, line.entries, line.inhomogeneity);
       this->close();
+      timer.leave_subsection();
 
       // 4) Stop loop if converged.
+      timer.enter_subsection("4)");
       const bool constraints_converged =
         (Utilities::MPI::min(
            (constraints_to_make_consistent == constraints_made_consistent ? 1 :
                                                                             0),
            mpi_communicator) == 1);
+      timer.leave_subsection();
       if (constraints_converged)
         break;
     }
