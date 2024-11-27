@@ -15,10 +15,17 @@ repos:
         (?x)(
             \.output|
             \.run_only|
+            \.diff|
             ^bundled/
         )
   - id: no-commit-to-branch
     args: [--branch,master]
+  - id: trailing-whitespace
+    files: |
+        (?x)(
+            \.(cc|h$|html|doc|txt)
+        )
+    exclude: ^bundled/
 - repo: https://github.com/gitleaks/gitleaks
   rev: v8.16.3
   hooks:
