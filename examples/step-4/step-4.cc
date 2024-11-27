@@ -39,7 +39,7 @@
 #include <fstream>
 #include <iostream>
 
-// The final step, as in previous programs, is to import all the deal.II class
+// The final step, as in previuos programs, is to import all the deal.II class
 // and function names into the global namespace:
 using namespace dealii;
 
