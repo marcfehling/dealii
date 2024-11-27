@@ -10,6 +10,13 @@ repos:
   - id: check-toml
   - id: check-yaml
     args: [--allow-multiple-documents]
+  - id: end-of-file-fixer
+    exclude: |
+        (?x)(
+            \.output|
+            \.run_only|
+            ^bundled/
+        )
   - id: no-commit-to-branch
     args: [--branch,master]
 - repo: https://github.com/gitleaks/gitleaks
