@@ -25,17 +25,17 @@ template <typename VectorType>
 void
 test(const VectorType &given_vector)
 {
-  ROL::Ptr<VectorType> given_vector_rcp =
-    ROL::makePtr<VectorType>(given_vector);
+  ROL::Ptr<const VectorType> given_vector_ptr =
+    ROL::makePtrFromRef<const VectorType>(given_vector);
 
   // --- Testing the constructor
-  Rol::VectorAdaptor<VectorType> given_vector_rol(given_vector_rcp);
+  Rol::VectorAdaptor<const VectorType> given_vector_rol(given_vector_ptr);
   AssertThrow(given_vector == *given_vector_rol.getVector(),
               ExcInternalError());
 
 
-  ROL::Ptr<VectorType>           w_rcp = ROL::makePtr<VectorType>();
-  Rol::VectorAdaptor<VectorType> w_rol(w_rcp);
+  ROL::Ptr<VectorType>           w_ptr = ROL::makePtr<VectorType>();
+  Rol::VectorAdaptor<VectorType> w_rol(w_ptr);
 
   // --- Testing VectorAdaptor::set()
   {

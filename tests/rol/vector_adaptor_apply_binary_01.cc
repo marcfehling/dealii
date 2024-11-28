@@ -75,8 +75,8 @@ test()
   a.compress(VectorOperation::insert);
   b.compress(VectorOperation::insert);
 
-  ROL::Ptr<VectorType> a_ptr = ROL::makePtr<VectorType>(a);
-  ROL::Ptr<VectorType> b_ptr = ROL::makePtr<VectorType>(b);
+  ROL::Ptr<VectorType> a_ptr = ROL::makePtrFromRef<VectorType>(a);
+  ROL::Ptr<VectorType> b_ptr = ROL::makePtrFromRef<VectorType>(b);
 
   ROL::Elementwise::Multiply<double> mult;
   ROL::Elementwise::Plus<double>     plus;
