@@ -19,6 +19,7 @@
 
 #ifdef DEAL_II_TRILINOS_WITH_ROL
 #  include <deal.II/base/exceptions.h>
+#  include <deal.II/base/index_set.h>
 
 #  include <deal.II/lac/vector.h>
 
@@ -134,11 +135,23 @@ namespace Rol
      */
     ROL::Ptr<VectorType> vector_ptr;
 
+    /**
+     * IndexSet of degrees of freedom we want to optimize.
+     */
+    IndexSet indices_to_optimize;
+
   public:
     /**
      * Constructor.
      */
     VectorAdaptor(const ROL::Ptr<VectorType> &vector_ptr);
+
+    /**
+     * Overload
+     *
+     * TODO: I do not know yet what indices_to_optimize needs to contain
+     */
+    VectorAdaptor(const ROL::Ptr<VectorType> &vector_ptr, const IndexSet &indices_to_optimize);
 
     /**
      * Return the ROL pointer to the wrapper vector, #vector_ptr.
@@ -256,7 +269,21 @@ namespace Rol
   VectorAdaptor<VectorType>::VectorAdaptor(
     const ROL::Ptr<VectorType> &vector_ptr)
     : vector_ptr(vector_ptr)
+    , indices_to_optimize(vector_ptr->locally_owned_elements())
   {}
+
+
+
+  template <typename VectorType>
+  VectorAdaptor<VectorType>::VectorAdaptor(
+    const ROL::Ptr<VectorType> &vector_ptr,
+    const IndexSet& indices_to_optimize)
+    : vector_ptr(vector_ptr)
+    , indices_to_optimize(indices_to_optimize)
+  {
+    Assert(indices_to_optimize.is_subset_of(vector_ptr->locally_owned_elements()),
+           ExcMessage("Provided IndexSet needs to be a subset of locally owned indices."));
+  }
 
 
 
@@ -285,7 +312,8 @@ namespace Rol
     const VectorAdaptor &vector_adaptor =
       dynamic_cast<const VectorAdaptor &>(rol_vector);
 
-    (*vector_ptr) = *(vector_adaptor.getVector());
+    *vector_ptr = *vector_adaptor.getVector();
+    indices_to_optimize = vector_adaptor.indices_to_optimize;
   }
 
 
@@ -300,7 +328,8 @@ namespace Rol
     const VectorAdaptor &vector_adaptor =
       dynamic_cast<const VectorAdaptor &>(rol_vector);
 
-    *vector_ptr += *(vector_adaptor.getVector());
+    for (auto i : indices_to_optimize)
+      (*vector_ptr)[i] += (*vector_adaptor.getVector())[i];
   }
 
 
@@ -316,7 +345,8 @@ namespace Rol
     const VectorAdaptor &vector_adaptor =
       dynamic_cast<const VectorAdaptor &>(rol_vector);
 
-    vector_ptr->add(alpha, *(vector_adaptor.getVector()));
+    for (auto i : indices_to_optimize)
+      (*vector_ptr)[i] += alpha * (*vector_adaptor.getVector())[i];
   }
 
 
@@ -325,10 +355,13 @@ namespace Rol
   int
   VectorAdaptor<VectorType>::dimension() const
   {
-    Assert(vector_ptr->size() < std::numeric_limits<int>::max(),
-           ExcMessage("The size of the vector being used is greater than "
+    const types::global_dof_index n_elements = indices_to_optimize.n_elements();
+
+    Assert(n_elements < std::numeric_limits<int>::max(),
+           ExcMessage("The number of elements to optimize is greater than the "
                       "largest value of type int."));
-    return static_cast<int>(vector_ptr->size());
+
+    return static_cast<int>(n_elements);
   }
 
 
@@ -337,7 +370,8 @@ namespace Rol
   void
   VectorAdaptor<VectorType>::scale(const value_type alpha)
   {
-    (*vector_ptr) *= alpha;
+    for (auto i : indices_to_optimize)
+      (*vector_ptr)[i] *= alpha;
   }
 
 
@@ -353,7 +387,11 @@ namespace Rol
     const VectorAdaptor &vector_adaptor =
       dynamic_cast<const VectorAdaptor &>(rol_vector);
 
-    return (*vector_ptr) * (*vector_adaptor.getVector());
+    value_type dot(0);
+    for (auto i : indices_to_optimize)
+      dot += (*vector_ptr)[i] * (*vector_adaptor.getVector())[i];
+
+    return dot;
   }
 
 
@@ -362,7 +400,7 @@ namespace Rol
   typename VectorType::value_type
   VectorAdaptor<VectorType>::norm() const
   {
-    return vector_ptr->l2_norm();
+    return std::sqrt(this->dot(*this));
   }
 
 
@@ -371,7 +409,7 @@ namespace Rol
   ROL::Ptr<ROL::Vector<typename VectorType::value_type>>
   VectorAdaptor<VectorType>::clone() const
   {
-    return ROL::makePtr<VectorAdaptor>(ROL::makePtr<VectorType>(*vector_ptr));
+    return ROL::makePtr<VectorAdaptor>(ROL::makePtr<VectorType>(*vector_ptr), indices_to_optimize);
   }
 
 
@@ -384,15 +422,18 @@ namespace Rol
     ROL::Ptr<VectorType> vec = ROL::makePtr<VectorType>();
     vec->reinit(*vector_ptr, false);
 
-    if (vec->locally_owned_elements().is_element(i))
-      (*vec)[i] = 1.;
+    // global dof index corresponding to i-th basis in optimization
+    const types::global_dof_index global_dof_index = indices_to_optimize.nth_index_in_set(i);
+
+    if (indices_to_optimize.is_element(global_dof_index))
+      (*vec)[global_dof_index] = 1.;
 
     if (vec->has_ghost_elements())
       vec->update_ghost_values();
     else
       vec->compress(VectorOperation::insert);
 
-    return ROL::makePtr<VectorAdaptor>(vec);
+    return ROL::makePtr<VectorAdaptor>(vec, indices_to_optimize);
   }
 
 
