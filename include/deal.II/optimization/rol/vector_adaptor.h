@@ -371,9 +371,7 @@ namespace Rol
   ROL::Ptr<ROL::Vector<typename VectorType::value_type>>
   VectorAdaptor<VectorType>::clone() const
   {
-    ROL::Ptr<VectorType> vec_ptr = ROL::makePtr<VectorType>(*vector_ptr);
-
-    return ROL::makePtr<VectorAdaptor>(vec_ptr);
+    return ROL::makePtr<VectorAdaptor>(ROL::makePtr<VectorType>(*vector_ptr));
   }
 
 
@@ -382,24 +380,19 @@ namespace Rol
   ROL::Ptr<ROL::Vector<typename VectorType::value_type>>
   VectorAdaptor<VectorType>::basis(const int i) const
   {
-    ROL::Ptr<VectorType> vec_ptr = ROL::makePtr<VectorType>();
+    // Create empty vector like dealii vector.
+    ROL::Ptr<VectorType> vec = ROL::makePtr<VectorType>();
+    vec->reinit(*vector_ptr, false);
 
-    // Zero all the entries in dealii vector.
-    vec_ptr->reinit(*vector_ptr, false);
+    if (vec->locally_owned_elements().is_element(i))
+      (*vec)[i] = 1.;
 
-    if (vector_ptr->locally_owned_elements().is_element(i))
-      vec_ptr->operator[](i) = 1.;
-
-    if (vec_ptr->has_ghost_elements())
-      {
-        vec_ptr->update_ghost_values();
-      }
+    if (vec->has_ghost_elements())
+      vec->update_ghost_values();
     else
-      {
-        vec_ptr->compress(VectorOperation::insert);
-      }
+      vec->compress(VectorOperation::insert);
 
-    return ROL::makePtr<VectorAdaptor>(vec_ptr);
+    return ROL::makePtr<VectorAdaptor>(vec);
   }
 
 
@@ -409,21 +402,13 @@ namespace Rol
   VectorAdaptor<VectorType>::applyUnary(
     const ROL::Elementwise::UnaryFunction<value_type> &f)
   {
-    const typename VectorType::iterator vend = vector_ptr->end();
-
-    for (typename VectorType::iterator iterator = vector_ptr->begin();
-         iterator != vend;
-         iterator++)
-      *iterator = f.apply(*iterator);
+    for (value_type &entry : *vector_ptr)
+      entry = f.apply(entry);
 
     if (vector_ptr->has_ghost_elements())
-      {
-        vector_ptr->update_ghost_values();
-      }
+      vector_ptr->update_ghost_values();
     else
-      {
-        vector_ptr->compress(VectorOperation::insert);
-      }
+      vector_ptr->compress(VectorOperation::insert);
   }
 
 
@@ -452,13 +437,9 @@ namespace Rol
       *l_iterator = f.apply(*l_iterator, *r_iterator);
 
     if (vector_ptr->has_ghost_elements())
-      {
-        vector_ptr->update_ghost_values();
-      }
+      vector_ptr->update_ghost_values();
     else
-      {
-        vector_ptr->compress(VectorOperation::insert);
-      }
+      vector_ptr->compress(VectorOperation::insert);
   }
 
 
@@ -468,14 +449,10 @@ namespace Rol
   VectorAdaptor<VectorType>::reduce(
     const ROL::Elementwise::ReductionOp<value_type> &r) const
   {
-    typename VectorType::value_type result = r.initialValue();
+    value_type result = r.initialValue();
 
-    const typename VectorType::iterator vend = vector_ptr->end();
-
-    for (typename VectorType::iterator iterator = vector_ptr->begin();
-         iterator != vend;
-         iterator++)
-      r.reduce(*iterator, result);
+    for (value_type &entry : *vector_ptr)
+      r.reduce(entry, result);
     // Parallel reduction among processes is handled internally.
 
     return result;
