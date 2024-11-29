@@ -153,6 +153,18 @@ namespace Rol
     getVector() const;
 
     /**
+     * Access the @p ith component as a writeable reference.
+     */
+    value_type&
+    operator[](int i);
+
+    /**
+     * Access the value of the @p ith component.
+     */
+    const value_type&
+    operator[](int i) const;
+
+    /**
      * Return the dimension (global vector size) of the wrapped vector.
      */
     int
@@ -274,6 +286,24 @@ namespace Rol
   VectorAdaptor<VectorType>::getVector() const
   {
     return vector_ptr;
+  }
+
+
+
+  template <typename VectorType>
+  typename VectorType::value_type&
+  VectorAdaptor<VectorType>::operator[](int i)
+  {
+    return (*vector_ptr)[i];
+  }
+
+
+
+  template <typename VectorType>
+  const typename VectorType::value_type&
+  VectorAdaptor<VectorType>::operator[](int i) const
+  {
+    return (*vector_ptr)[i];
   }
 
 
