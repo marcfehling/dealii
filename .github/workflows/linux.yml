@@ -77,7 +77,7 @@ jobs:
               -D CMAKE_CXX_STANDARD=20 \
               -D CMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/../kokkos-install \
               -D Kokkos_ENABLE_CUDA=ON \
-              -D Kokkos_ARCH_HOPPER90=ON \
+              -D Kokkos_ARCH_VOLTA70=ON \
               ..
         make install
     - name: configure deal.II
@@ -86,7 +86,7 @@ jobs:
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_COMPILER=clang++-19 \
-              -D DEAL_II_CXX_FLAGS="-std=c++20 -Werror -Wno-deprecated-volatile -Wnounsupported-floating-point-opt" \
+              -D DEAL_II_CXX_FLAGS="-std=c++20 -Werror -Wno-deprecated-volatile" \
               -D DEAL_II_EARLY_DEPRECATIONS=ON \
               -D DEAL_II_WITH_KOKKOS=ON \
               -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
