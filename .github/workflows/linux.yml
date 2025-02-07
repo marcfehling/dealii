@@ -269,15 +269,15 @@ jobs:
           setup_tests_quick_tests
         ctest -VV
 
-  #######################
-  # linux-debug-cuda-11 #
-  #######################
+  ####################
+  # linux-debug-cuda #
+  ####################
 
-  linux-debug-cuda-11:
-    # simple parallel debug build using cuda-11
+  linux-debug-cuda:
+    # simple parallel debug build using cuda
 
-    name: linux debug cuda-11
-    runs-on: [ubuntu-22.04]
+    name: linux debug cuda
+    runs-on: ubuntu-24.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -287,58 +287,24 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
-    env:
-      CUDA_ROOT: /usr/local/cuda
-
     steps:
     - uses: actions/checkout@v4
     - name: modules
       run: |
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
-        sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
-        sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
-        sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:ginggs/deal.ii-9.4.0-backports
         sudo apt-get update
         sudo apt-get install -yq --no-install-recommends \
-            cuda-toolkit-11-8 \
-            libp4est-dev \
             libopenmpi-dev \
-            numdiff \
-            openmpi-bin \
-            libboost-all-dev
-    # https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
-    - name: remove unused large packages
-      run : |
-        echo "=============================================================================="
-        echo "Freeing up disk space on CI system"
-        echo "=============================================================================="
-
-        echo "Listing 100 largest packages"
-        dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
-        df -h
-        echo "Removing large packages"
-        sudo apt-get remove -y '^dotnet-.*'
-        sudo apt-get remove -y '^llvm-.*'
-        sudo apt-get remove -y 'php.*'
-        sudo apt-get remove -y azure-cli google-cloud-sdk google-chrome-stable firefox powershell mono-devel
-        sudo apt-get autoremove -y
-        sudo apt-get clean
-        df -h
-        echo "Removing large directories"
-        # deleting 15GB
-        rm -rf /usr/share/dotnet/
-        df -h
-    - uses: lukka/get-cmake@v3.27.9
+            libp4est-dev \
+            nvidia-cuda-toolkit
     - name: info
       run: |
-        mpicc -v
         cmake --version
+        ompi_info --version
+        nvcc --version
     - uses: actions/checkout@v4
       with:
         repository: kokkos/kokkos
-        ref: 3.7.00
+        ref: 4.3.01
         path: kokkos
     - name: compile and install kokkos
       working-directory: kokkos
@@ -347,11 +313,11 @@ jobs:
         cd build
         cmake -D BUILD_SHARED_LIBS=ON \
               -D CMAKE_CXX_COMPILER=${GITHUB_WORKSPACE}/kokkos/bin/nvcc_wrapper \
+              -D CMAKE_CXX_STANDARD=20 \
               -D CMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/../kokkos-install \
               -D Kokkos_ENABLE_CUDA=ON \
-              -D Kokkos_ENABLE_CUDA_LAMBDA=ON \
               -D Kokkos_ENABLE_CUDA_CONSTEXPR=ON \
-              -D Kokkos_ARCH_VOLTA70=ON \
+              -D Kokkos_ARCH_HOPPER90=ON \
               ..
         make install
     - name: configure deal.II
@@ -360,16 +326,17 @@ jobs:
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_COMPILER=${GITHUB_WORKSPACE}/kokkos/bin/nvcc_wrapper \
-              -D DEAL_II_CXX_FLAGS='-Werror -Wno-non-template-friend' \
+              -D DEAL_II_CXX_FLAGS='-Werror -std=c++20' \
               -D DEAL_II_EARLY_DEPRECATIONS=ON \
-              -D DEAL_II_WITH_KOKKOS="ON" \
+              -D DEAL_II_WITH_KOKKOS=ON \
               -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
-              -D DEAL_II_WITH_MPI="ON" \
-              -D DEAL_II_MPI_WITH_DEVICE_SUPPORT="ON" \
-              -D DEAL_II_WITH_P4EST="ON" \
+              -D DEAL_II_WITH_MPI=ON \
+              -D DEAL_II_MPI_WITH_DEVICE_SUPPORT=ON \
+              -D DEAL_II_WITH_P4EST=ON \
               ..
     - name: print detailed.log
-      run: cat build/detailed.log
+      run: |
+        cat build/detailed.log
     - name: build deal.II
       run: |
         cd build
