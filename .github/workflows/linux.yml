@@ -276,7 +276,7 @@ jobs:
   linux-debug-cuda:
     # simple parallel debug build using cuda
 
-    name: linux debug cuda
+    name: linux debug cuda nvcc
     runs-on: [ubuntu-24.04]
 
     #
@@ -410,7 +410,7 @@ jobs:
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_COMPILER=clang++-19 \
-              -D DEAL_II_CXX_FLAGS="-std=c++20 -Werror -Wno-deprecated-volatile" \
+              -D DEAL_II_CXX_FLAGS="-std=c++20 -Werror -Wno-deprecated-volatile -Wnounsupported-floating-point-opt" \
               -D DEAL_II_EARLY_DEPRECATIONS=ON \
               -D DEAL_II_WITH_KOKKOS=ON \
               -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
