@@ -1,4 +1,4 @@
-name: github-linux
+name: linux
 
 on:
   push:
@@ -45,10 +45,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        - os: ubuntu-22.04
-          image: dealii/dependencies:jammy
-        - os: ubuntu-24.04
-          image: dealii/dependencies:jammy
+        include:
+          - os: ubuntu-22.04
+            image: dealii/dependencies:jammy
+          - os: ubuntu-24.04
+            image: dealii/dependencies:jammy
 
     container:
       image: ${{ matrix.image }}
