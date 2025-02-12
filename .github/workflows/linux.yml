@@ -24,14 +24,14 @@ env:
 
 jobs:
 
-  ########################
-  # linux-release-serial #
-  ########################
+  ##################
+  # release-serial #
+  ##################
 
-  linux-release-serial:
+  release-serial:
     # simple serial release build using g++
 
-    name: linux release serial
+    name: ${{ matrix.os }} release serial
     runs-on: ${{ matrix.os }}
 
     #
@@ -46,10 +46,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            image: dealii/dependencies:jammy
-          - os: ubuntu-24.04
-            image: dealii/dependencies:jammy
+        - os: ubuntu-22.04
+          image: dealii/dependencies:jammy
+        - os: ubuntu-24.04
+          image: dealii/dependencies:jammy
 
     container:
       image: ${{ matrix.image }}
@@ -88,14 +88,14 @@ jobs:
           setup_tests_quick_tests
         ctest -VV
 
-  ########################
-  # linux-debug-parallel #
-  ########################
+  ##################
+  # debug-parallel #
+  ##################
 
-  linux-debug-parallel:
+  debug-parallel:
     # simple parallel debug build using g++
 
-    name: linux debug parallel
+    name: ${{ matrix.os }} debug parallel
     runs-on: ${{ matrix.os }}
 
     #
@@ -107,8 +107,8 @@ jobs:
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
         include:
         - os: ubuntu-22.04
           image: dealii/dependencies:jammy
@@ -160,14 +160,14 @@ jobs:
           setup_tests_quick_tests
         ctest -VV
 
-  ###############################
-  # linux-debug-parallel-tpetra #
-  ###############################
+  #########################
+  # debug-parallel-tpetra #
+  #########################
 
-  linux-debug-parallel-tpetra:
+  debug-parallel-tpetra:
     # simple parallel debug build using g++ and trilinos+tpetra
 
-    name: linux debug parallel tpetra
+    name: ${{ matrix.os }} debug parallel tpetra
     runs-on: ${{ matrix.os }}
 
     #
@@ -179,8 +179,8 @@ jobs:
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
         include:
         - os: ubuntu-22.04
           image: dealii/dependencies:jammy
@@ -226,17 +226,17 @@ jobs:
         make setup_tests_trilinos_tpetra
         ctest -VV
 
-  ############################
-  # linux-debug-intel-oneapi #
-  ############################
+  ######################
+  # debug-intel-oneapi #
+  ######################
 
-  linux-debug-intel-oneapi:
+  debug-intel-oneapi:
     # parallel debug build with Intel oneAPI including MPI and MKL
     #
     # Based on https://github.com/oneapi-src/oneapi-ci
     # For a list of Intel packages see https://oneapi-src.github.io/oneapi-ci/#linux-apt
 
-    name: linux debug intel oneapi
+    name: ${{runs-on}} debug intel oneapi
     runs-on: ubuntu-24.04
 
     #
@@ -296,15 +296,15 @@ jobs:
           setup_tests_quick_tests
         ctest -VV
 
-  #######################
-  # linux-debug-cuda-11 #
-  #######################
+  #################
+  # debug-cuda-11 #
+  #################
 
-  linux-debug-cuda-11:
+  debug-cuda-11:
     # simple parallel debug build using cuda-11
 
-    name: linux debug cuda-11
-    runs-on: [ubuntu-22.04]
+    name: ubuntu-22.04 debug cuda-11
+    runs-on: ubuntu-22.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -408,15 +408,15 @@ jobs:
         cd tests/matrix_free_kokkos
         make compile_test_executables
 
-  #############################
-  # linux-debug-cuda-11-clang #
-  #############################
+  #######################
+  # debug-cuda-11-clang #
+  #######################
 
-  linux-debug-cuda-11-clang:
+  debug-cuda-11-clang:
     # simple parallel debug build using cuda-11 and clang
 
-    name: linux debug cuda-11 clang
-    runs-on: [ubuntu-22.04]
+    name: ubuntu-22.04 debug cuda-11 clang
+    runs-on: ubuntu-22.04
 
     #
     # The following condition only runs the workflow on 'push' or if the
