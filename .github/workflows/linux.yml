@@ -236,7 +236,7 @@ jobs:
     # Based on https://github.com/oneapi-src/oneapi-ci
     # For a list of Intel packages see https://oneapi-src.github.io/oneapi-ci/#linux-apt
 
-    name: ${{runs-on}} debug intel oneapi
+    name: ubuntu-24.04 debug intel oneapi
     runs-on: ubuntu-24.04
 
     #
