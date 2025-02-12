@@ -32,7 +32,7 @@ jobs:
     # simple serial release build using g++
 
     name: linux release serial
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -42,8 +42,16 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
+    strategy:
+      fail-fast: false
+      matrix:
+        - os: ubuntu-22.04
+          image: dealii/dependencies:jammy
+        - os: ubuntu-24.04
+          image: dealii/dependencies:jammy
+
     container:
-      image: dealii/dependencies:jammy
+      image: ${{ matrix.image }}
       options: --user root
 
     steps:
@@ -87,7 +95,7 @@ jobs:
     # simple parallel debug build using g++
 
     name: linux debug parallel
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -97,8 +105,17 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        include:
+        - os: ubuntu-22.04
+          image: dealii/dependencies:jammy
+        - os: ubuntu-24.04
+          image: dealii/dependencies:jammy
+
     container:
-      image: dealii/dependencies:jammy
+      image: ${{ matrix.image }}
       options: --user root --env OMPI_ALLOW_RUN_AS_ROOT=1 --env OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
     steps:
@@ -150,7 +167,7 @@ jobs:
     # simple parallel debug build using g++ and trilinos+tpetra
 
     name: linux debug parallel tpetra
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -160,8 +177,17 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        include:
+        - os: ubuntu-22.04
+          image: dealii/dependencies:jammy
+        - os: ubuntu-24.04
+          image: dealii/dependencies:jammy
+
     container:
-      image: dealii/dependencies:jammy
+      image: ${{ matrix.image }}
       options: --user root --env OMPI_ALLOW_RUN_AS_ROOT=1 --env OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
     steps:
