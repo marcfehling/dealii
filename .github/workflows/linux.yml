@@ -303,8 +303,8 @@ jobs:
   debug-cuda-11:
     # simple parallel debug build using cuda-11
 
-    name: ubuntu-22.04 debug cuda-11
-    runs-on: ubuntu-22.04
+    name: ${{ matrix.os }} debug cuda-11 ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -314,17 +314,29 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        compiler: [nvcc_wrapper, clang++-18]
+        include:
+        - os: ubuntu-22.04
+          os_short: ubuntu2204
+        - compiler: nvcc_wrapper
+          mpi_device_support: ON
+        - compiler: clang++-18
+          mpi_device_support: OFF
+
     env:
       CUDA_ROOT: /usr/local/cuda
 
     steps:
-    - uses: actions/checkout@v4
     - name: modules
       run: |
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
-        sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
-        sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
-        sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
+        wget https://developer.download.nvidia.com/compute/cuda/repos/${{ matrix.os_short }}/x86_64/cuda-${{ matrix.os_short }}.pin
+        sudo mv cuda-${{ matrix.os_short }}.pin /etc/apt/preferences.d/cuda-repository-pin-600
+        sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/${{ matrix.os_short }}/x86_64/3bf863cc.pub
+        sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/${{ matrix.os_short }}/x86_64/ /"
         sudo apt-get install -y software-properties-common
         sudo add-apt-repository ppa:ginggs/deal.ii-9.4.0-backports
         sudo apt-get update
@@ -357,23 +369,34 @@ jobs:
         # deleting 15GB
         rm -rf /usr/share/dotnet/
         df -h
-    - uses: lukka/get-cmake@v3.27.9
+    - name: setup clang-18
+      if: ${{ matrix.compiler == 'clang++-18' }}
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
+        clang++-18 -v
     - name: info
       run: |
         mpicc -v
         cmake --version
     - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         repository: kokkos/kokkos
         ref: 3.7.00
         path: kokkos
+    - name: setup nvcc_wrapper
+      if: ${{ matrix.compiler == 'nvcc_wrapper' }}
+      run: |
+        echo "${GITHUB_WORKSPACE}/kokkos/bin/" >> $GITHUB_PATH
     - name: compile and install kokkos
       working-directory: kokkos
       run: |
         mkdir build
         cd build
         cmake -D BUILD_SHARED_LIBS=ON \
-              -D CMAKE_CXX_COMPILER=${GITHUB_WORKSPACE}/kokkos/bin/nvcc_wrapper \
+              -D CMAKE_CXX_COMPILER=${{ matrix.compiler }} \
               -D CMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/../kokkos-install \
               -D Kokkos_ENABLE_CUDA=ON \
               -D Kokkos_ENABLE_CUDA_LAMBDA=ON \
@@ -386,106 +409,13 @@ jobs:
         mkdir build
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
-              -D CMAKE_CXX_COMPILER=${GITHUB_WORKSPACE}/kokkos/bin/nvcc_wrapper \
-              -D DEAL_II_CXX_FLAGS='-Werror -Wno-non-template-friend' \
+              -D CMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+              -D DEAL_II_CXX_FLAGS="-Werror -std=c++20 -Wno-non-template-friend" \
               -D DEAL_II_EARLY_DEPRECATIONS=ON \
               -D DEAL_II_WITH_KOKKOS="ON" \
               -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
               -D DEAL_II_WITH_MPI="ON" \
-              -D DEAL_II_MPI_WITH_DEVICE_SUPPORT="ON" \
-              -D DEAL_II_WITH_P4EST="ON" \
-              ..
-    - name: print detailed.log
-      run: cat build/detailed.log
-    - name: build deal.II
-      run: |
-        cd build
-        make VERBOSE=1
-    - name: build CUDA tests
-      run: |
-        cd build
-        make setup_tests_matrix_free_kokkos
-        cd tests/matrix_free_kokkos
-        make compile_test_executables
-
-  #######################
-  # debug-cuda-11-clang #
-  #######################
-
-  debug-cuda-11-clang:
-    # simple parallel debug build using cuda-11 and clang
-
-    name: ubuntu-22.04 debug cuda-11 clang
-    runs-on: ubuntu-22.04
-
-    #
-    # The following condition only runs the workflow on 'push' or if the
-    # 'pull_request' is not a draft. This is only useful for hackathons or
-    # other situations when the CI is massively overburdened with pull
-    # requests.
-    #
-    # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
-
-    env:
-      CUDA_ROOT: /usr/local/cuda
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: modules
-      run: |
-        wget https://apt.llvm.org/llvm.sh
-        chmod +x llvm.sh
-        sudo ./llvm.sh 18
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
-        sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
-        sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/3bf863cc.pub
-        sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /"
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:ginggs/deal.ii-9.4.0-backports
-        sudo apt-get update
-        sudo apt-get install -yq --no-install-recommends \
-            cuda-toolkit-11-8 \
-            libp4est-dev \
-            libopenmpi-dev \
-            numdiff \
-            openmpi-bin \
-            libboost-all-dev
-    - uses: lukka/get-cmake@v3.27.9
-    - name: info
-      run: |
-        mpicc -v
-        clang++-18 -v
-        cmake --version
-    - uses: actions/checkout@v4
-      with:
-        repository: kokkos/kokkos
-        ref: 3.7.00
-        path: kokkos
-    - name: compile and install kokkos
-      working-directory: kokkos
-      run: |
-        mkdir build
-        cd build
-        cmake -D BUILD_SHARED_LIBS=ON \
-              -D CMAKE_CXX_COMPILER=clang++-18 \
-              -D CMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/../kokkos-install \
-              -D Kokkos_ENABLE_CUDA=ON \
-              -D Kokkos_ARCH_VOLTA70=ON \
-              ..
-        make install
-    - name: configure deal.II
-      run: |
-        mkdir build
-        cd build
-        cmake -D CMAKE_BUILD_TYPE=Debug \
-              -D CMAKE_CXX_COMPILER=clang++-18 \
-              -D DEAL_II_FORCE_BUNDLED_BOOST=ON \
-              -D DEAL_II_CXX_FLAGS="-std=c++17" \
-              -D DEAL_II_EARLY_DEPRECATIONS=ON \
-              -D DEAL_II_WITH_KOKKOS="ON" \
-              -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
-              -D DEAL_II_WITH_MPI="ON" \
-              -D DEAL_II_MPI_WITH_DEVICE_SUPPORT="OFF" \
+              -D DEAL_II_MPI_WITH_DEVICE_SUPPORT=${{ matrix.mpi_device_support }} \
               -D DEAL_II_WITH_P4EST="ON" \
               ..
     - name: print detailed.log
