@@ -410,7 +410,7 @@ jobs:
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
               -D CMAKE_CXX_COMPILER=${{ matrix.compiler }} \
-              -D DEAL_II_CXX_FLAGS="-Werror -std=c++20 -Wno-non-template-friend" \
+              -D DEAL_II_CXX_FLAGS="-Werror" \
               -D DEAL_II_EARLY_DEPRECATIONS=ON \
               -D DEAL_II_WITH_KOKKOS="ON" \
               -D KOKKOS_DIR=${GITHUB_WORKSPACE}/../kokkos-install \
