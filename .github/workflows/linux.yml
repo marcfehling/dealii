@@ -317,7 +317,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        os: [ubuntu-22.04]
         compiler: [nvcc_wrapper, clang++-18]
         include:
         - os: ubuntu-22.04
