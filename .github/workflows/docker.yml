@@ -32,7 +32,7 @@ jobs:
           - platform: amd64
             os: ubuntu-24.04
           - platform: arm64
-            os: ubuntu-24.04-arm64
+            os: ubuntu-24.04-arm
           # Use only 2 jobs to build, as more jobs
           # would starve the github machine for memory.
           - n_jobs: 2
@@ -46,9 +46,6 @@ jobs:
           
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
