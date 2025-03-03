@@ -9,9 +9,7 @@ LABEL maintainer="luca.heltai@gmail.com"
 
 USER root
 
-RUN sudo apt-get update && \
-    sudo apt-get install mold && \
-    cd /usr/src && \
+RUN cd /usr/src && \
     git clone https://github.com/dealii/dealii dealii-$VER && \
     cd dealii-$VER && \
     git checkout $VER && \
