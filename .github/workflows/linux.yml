@@ -322,6 +322,7 @@ jobs:
             cuda-toolkit-11-8 \
             libp4est-dev \
             libopenmpi-dev \
+            mold \
             numdiff \
             openmpi-bin \
             libboost-all-dev
@@ -437,6 +438,7 @@ jobs:
             cuda-toolkit-11-8 \
             libp4est-dev \
             libopenmpi-dev \
+            mold \
             numdiff \
             openmpi-bin \
             libboost-all-dev
