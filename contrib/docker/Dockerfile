@@ -18,7 +18,7 @@ RUN cd /usr/src && \
     -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/hdf5/openmpi;/usr/include/hdf5/openmpi" \
     -DDEAL_II_ALLOW_AUTODETECTION=OFF \
     -DDEAL_II_COMPONENT_PYTHON_BINDINGS=ON \
-    -DCMAKE_CXX_FLAGS="-std=c++17" \
+    -DCMAKE_CXX_FLAGS="-std=c++20" \
     -DDEAL_II_WITH_64BIT_INDICES=OFF \
     -DDEAL_II_WITH_ADOLC=ON \
     -DDEAL_II_WITH_ARBORX=OFF \
