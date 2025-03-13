@@ -86,8 +86,8 @@ jobs:
   linux-debug-parallel:
     # simple parallel debug build using g++
 
-    name: linux debug parallel
-    runs-on: [ubuntu-22.04]
+    name: ${{ matrix.ubuntu_version }} ${{ matrix.architecture }} debug parallel
+    runs-on: ${{ matrix.os }}
 
     #
     # The following condition only runs the workflow on 'push' or if the
@@ -97,8 +97,19 @@ jobs:
     #
     # if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu_version: [jammy, noble]
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+        include:
+          - os: ubuntu-24.04
+            architecture: amd64
+          - os: ubuntu-24.04-arm
+            architecture: arm64
+
     container:
-      image: dealii/dependencies:jammy
+      image: dealii/dependencies:${{ matrix.ubuntu_version }}
       options: --user root --env OMPI_ALLOW_RUN_AS_ROOT=1 --env OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
     steps:
