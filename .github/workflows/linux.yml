@@ -65,6 +65,8 @@ jobs:
         cmake --version
     - name: configure deal.II
       run: |
+        sudo apt-get update
+        sudo apt-get remove -y lld llvm
         mkdir build
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
