@@ -9,10 +9,6 @@ on:
     - synchronize
     - ready_for_review
 
-concurrency:
-  group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{github.event_name == 'pull_request'}}
-
 permissions:
   contents: read
 
@@ -66,7 +62,7 @@ jobs:
     - name: configure deal.II
       run: |
         sudo apt-get update
-        sudo apt-get remove -y lld llvm
+        sudo apt-get install -y lld llvm
         mkdir build
         cd build
         cmake -D CMAKE_BUILD_TYPE=Debug \
