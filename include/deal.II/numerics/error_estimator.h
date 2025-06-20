@@ -43,7 +43,10 @@ namespace hp
 {
   template <int>
   class QCollection;
-}
+
+  template <int, int>
+  class MappingCollection;
+} // namespace hp
 #endif
 
 
@@ -427,14 +430,14 @@ public:
 
   /**
    * Equivalent to the set of functions above, except that this one takes a
-   * quadrature collection for hp-finite element dof handlers.
+   * mapping and quadrature collection for hp-finite element dof handlers.
    */
   template <typename Number>
   static void
   estimate(
-    const Mapping<dim, spacedim>    &mapping,
-    const DoFHandler<dim, spacedim> &dof,
-    const hp::QCollection<dim - 1>  &quadrature,
+    const hp::MappingCollection<dim, spacedim> &mapping,
+    const DoFHandler<dim, spacedim>            &dof,
+    const hp::QCollection<dim - 1>             &quadrature,
     const std::map<types::boundary_id, const Function<spacedim, Number> *>
                              &neumann_bc,
     const ReadVector<Number> &solution,
@@ -470,14 +473,14 @@ public:
 
   /**
    * Equivalent to the set of functions above, except that this one takes a
-   * quadrature collection for hp-finite element dof handlers.
+   * mapping and quadrature collection for hp-finite element dof handlers.
    */
   template <typename Number>
   static void
   estimate(
-    const Mapping<dim, spacedim>    &mapping,
-    const DoFHandler<dim, spacedim> &dof,
-    const hp::QCollection<dim - 1>  &quadrature,
+    const hp::MappingCollection<dim, spacedim> &mapping,
+    const DoFHandler<dim, spacedim>            &dof,
+    const hp::QCollection<dim - 1>             &quadrature,
     const std::map<types::boundary_id, const Function<spacedim, Number> *>
                                                 &neumann_bc,
     const ArrayView<const ReadVector<Number> *> &solutions,
@@ -714,14 +717,14 @@ public:
 
   /**
    * Equivalent to the set of functions above, except that this one takes a
-   * quadrature collection for hp-finite element dof handlers.
+   * mapping and quadrature collection for hp-finite element dof handlers.
    */
   template <typename Number>
   static void
   estimate(
-    const Mapping<1, spacedim>    &mapping,
-    const DoFHandler<1, spacedim> &dof,
-    const hp::QCollection<0>      &quadrature,
+    const hp::MappingCollection<1, spacedim> &mapping,
+    const DoFHandler<1, spacedim>            &dof,
+    const hp::QCollection<0>                 &quadrature,
     const std::map<types::boundary_id, const Function<spacedim, Number> *>
                              &neumann_bc,
     const ReadVector<Number> &solution,
@@ -759,14 +762,14 @@ public:
 
   /**
    * Equivalent to the set of functions above, except that this one takes a
-   * quadrature collection for hp-finite element dof handlers.
+   * mapping and quadrature collection for hp-finite element dof handlers.
    */
   template <typename Number>
   static void
   estimate(
-    const Mapping<1, spacedim>    &mapping,
-    const DoFHandler<1, spacedim> &dof,
-    const hp::QCollection<0>      &quadrature,
+    const hp::MappingCollection<1, spacedim> &mapping,
+    const DoFHandler<1, spacedim>            &dof,
+    const hp::QCollection<0>                 &quadrature,
     const std::map<types::boundary_id, const Function<spacedim, Number> *>
                                                 &neumann_bc,
     const ArrayView<const ReadVector<Number> *> &solutions,

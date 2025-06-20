@@ -1,0 +1,4 @@
+Changed: The hp-variant of KellyErrorEstimator::estimate now takes
+hp::MappingCollection objects.
+<br>
+(Marc Fehling, 2025/06/20)

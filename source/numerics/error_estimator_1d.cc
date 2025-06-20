@@ -163,9 +163,9 @@ template <int spacedim>
 template <typename Number>
 void
 KellyErrorEstimator<1, spacedim>::estimate(
-  const Mapping<1, spacedim>    &mapping,
-  const DoFHandler<1, spacedim> &dof_handler,
-  const hp::QCollection<0>      &quadrature,
+  const hp::MappingCollection<1, spacedim> &mapping,
+  const DoFHandler<1, spacedim>            &dof_handler,
+  const hp::QCollection<0>                 &quadrature,
   const std::map<types::boundary_id, const Function<spacedim, Number> *>
                            &neumann_bc,
   const ReadVector<Number> &solution,
@@ -215,7 +215,9 @@ KellyErrorEstimator<1, spacedim>::estimate(
   const Strategy            strategy)
 {
   const auto reference_cell = ReferenceCells::Line;
-  estimate(reference_cell.template get_default_linear_mapping<1, spacedim>(),
+  const hp::MappingCollection<1, spacedim> mapping(
+    reference_cell.template get_default_linear_mapping<1, spacedim>());
+  estimate(mapping,
            dof_handler,
            quadrature,
            neumann_bc,
@@ -249,7 +251,9 @@ KellyErrorEstimator<1, spacedim>::estimate(
   const Strategy                               strategy)
 {
   const auto reference_cell = ReferenceCells::Line;
-  estimate(reference_cell.template get_default_linear_mapping<1, spacedim>(),
+  const hp::MappingCollection<1, spacedim> mapping(
+    reference_cell.template get_default_linear_mapping<1, spacedim>());
+  estimate(mapping,
            dof_handler,
            quadrature,
            neumann_bc,
@@ -269,8 +273,8 @@ template <int spacedim>
 template <typename Number>
 void
 KellyErrorEstimator<1, spacedim>::estimate(
-  const Mapping<1, spacedim>    &mapping,
-  const DoFHandler<1, spacedim> &dof_handler,
+  const hp::MappingCollection<1, spacedim> &mapping,
+  const DoFHandler<1, spacedim>            &dof_handler,
   const hp::QCollection<0> &,
   const std::map<types::boundary_id, const Function<spacedim, Number> *>
                                               &neumann_bc,
@@ -388,15 +392,13 @@ KellyErrorEstimator<1, spacedim>::estimate(
 
   const hp::FECollection<1, spacedim> &fe = dof_handler.get_fe_collection();
 
-  hp::MappingCollection<1, spacedim> mapping_collection;
-  mapping_collection.push_back(mapping);
 
-  hp::FEValues<1, spacedim>     fe_values(mapping_collection,
+  hp::FEValues<1, spacedim>     fe_values(mapping,
                                       fe,
                                       q_collection,
                                       update_gradients);
   hp::FEFaceValues<1, spacedim> fe_face_values(
-    /*mapping_collection,*/ fe, q_face_collection, update_normal_vectors);
+    /*mapping,*/ fe, q_face_collection, update_normal_vectors);
 
   // loop over all cells and do something on the cells which we're told to
   // work on. note that the error indicator is only a sum over the two
@@ -540,8 +542,9 @@ KellyErrorEstimator<1, spacedim>::estimate(
   const types::material_id                     material_id,
   const Strategy                               strategy)
 {
-  const hp::QCollection<0> quadrature_collection(quadrature);
-  estimate(mapping,
+  const hp::MappingCollection<1, spacedim> mapping_collection(mapping);
+  const hp::QCollection<0>                 quadrature_collection(quadrature);
+  estimate(mapping_collection,
            dof_handler,
            quadrature_collection,
            neumann_bc,
