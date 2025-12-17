@@ -407,8 +407,8 @@ namespace TrilinosWrappers
 
     if (vector_ptr->has_ghost_elements())
       vector_ptr->update_ghost_values();
-    else
-      vector_ptr->compress(VectorOperation::add);
+
+    vector_ptr->compress(VectorOperation::add);
   }
 
 
@@ -428,8 +428,8 @@ namespace TrilinosWrappers
 
     if (vector_ptr->has_ghost_elements())
       vector_ptr->update_ghost_values();
-    else
-      vector_ptr->compress(VectorOperation::add);
+
+    vector_ptr->compress(VectorOperation::add);
   }
 
 
@@ -443,8 +443,8 @@ namespace TrilinosWrappers
 
     if (vector_ptr->has_ghost_elements())
       vector_ptr->update_ghost_values();
-    else
-      vector_ptr->compress(VectorOperation::insert);
+
+    vector_ptr->compress(VectorOperation::insert);
   }
 
 
@@ -513,8 +513,8 @@ namespace TrilinosWrappers
 
     if (basis_ptr->has_ghost_elements())
       basis_ptr->update_ghost_values();
-    else
-      basis_ptr->compress(VectorOperation::insert);
+
+    basis_ptr->compress(VectorOperation::insert);
 
     return ROL::makePtr<ROLVector>(basis_ptr, optimization_space);
     // TODO: also somehow pass the partial sums etc?
@@ -532,8 +532,8 @@ namespace TrilinosWrappers
 
     if (vector_ptr->has_ghost_elements())
       vector_ptr->update_ghost_values();
-    else
-      vector_ptr->compress(VectorOperation::insert);
+
+    vector_ptr->compress(VectorOperation::insert);
   }
 
 
@@ -554,8 +554,8 @@ namespace TrilinosWrappers
 
     if (vector_ptr->has_ghost_elements())
       vector_ptr->update_ghost_values();
-    else
-      vector_ptr->compress(VectorOperation::insert);
+
+    vector_ptr->compress(VectorOperation::insert);
   }
 
 
