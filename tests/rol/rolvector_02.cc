@@ -88,7 +88,8 @@ test(const double x, const double y)
   (*x_ptr)[0] = x;
   (*x_ptr)[1] = y;
 
-  TrilinosWrappers::ROLVector<VectorType> x_rol(x_ptr);
+  // TrilinosWrappers::ROLVector<VectorType> x_rol(x_ptr);
+  TrilinosWrappers::ROLVector<VectorType> x_rol(*x_ptr);
 
   ROL::ParameterList parlist;
 

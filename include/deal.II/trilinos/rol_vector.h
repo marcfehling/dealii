@@ -137,6 +137,15 @@ namespace TrilinosWrappers
     /**
      * Constructor.
      */
+    ROLVector(VectorType &vec);
+
+    /**
+     * Constructor.
+     *
+     * @deprecated Use constructor that takes a reference instead.
+     */
+    DEAL_II_DEPRECATED_EARLY_WITH_COMMENT(
+      "Use constructor that takes a reference instead.")
     ROLVector(const ROL::Ptr<VectorType> &vector_ptr);
 
     /**
@@ -252,8 +261,17 @@ namespace TrilinosWrappers
 
 
   template <typename VectorType>
-  ROLVector<VectorType>::ROLVector(const ROL::Ptr<VectorType> &vector_ptr)
-    : vector_ptr(vector_ptr)
+  ROLVector<VectorType>::ROLVector(VectorType &vec)
+  // : vector_ptr(ROL::makePtrFromRef<VectorType>(vec))
+  {
+    vector_ptr = ROL::makePtrFromRef<VectorType>(vec);
+  }
+
+
+  template <typename VectorType>
+  ROLVector<VectorType>::ROLVector(const ROL::Ptr<VectorType> &vec_ptr)
+    : ROLVector(*vec_ptr)
+  // : vector_ptr(vec_ptr)
   {}
 
 
@@ -282,6 +300,9 @@ namespace TrilinosWrappers
   {
     const ROLVector &vector_adaptor =
       dynamic_cast<const ROLVector &>(rol_vector);
+
+    vector_ptr->size();
+    vector_adaptor.getVector()->size();
 
     (*vector_ptr) = *(vector_adaptor.getVector());
   }
