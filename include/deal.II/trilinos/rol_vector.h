@@ -100,6 +100,11 @@ namespace TrilinosWrappers
    * VectorType::compress(VectorOperation::insert);
    * @endcode
    *
+   * TODO: Add a note on parallelization (subsection)
+   * This class is intended to work with distributed vectors. However, since ROL
+   * will manipulate the wrapped vector during the optimization progress, this
+   * is only allowed on vectors /e without ghost elements.
+   *
    * @note The current implementation in ROL doesn't support vector sizes above
    * the largest value of int type. Some of the vectors in deal.II (see
    * @ref Vector)
@@ -292,6 +297,7 @@ namespace TrilinosWrappers
   void
   ROLVector<VectorType>::plus(const ROL::Vector<value_type> &rol_vector)
   {
+    Assert(vector_ptr->has_ghost_elements() == false, ExcGhostsPresent());
     Assert(this->dimension() == rol_vector.dimension(),
            ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
 
@@ -308,6 +314,7 @@ namespace TrilinosWrappers
   ROLVector<VectorType>::axpy(const value_type               alpha,
                               const ROL::Vector<value_type> &rol_vector)
   {
+    Assert(vector_ptr->has_ghost_elements() == false, ExcGhostsPresent());
     Assert(this->dimension() == rol_vector.dimension(),
            ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
 
@@ -335,6 +342,8 @@ namespace TrilinosWrappers
   void
   ROLVector<VectorType>::scale(const value_type alpha)
   {
+    Assert(vector_ptr->has_ghost_elements() == false, ExcGhostsPresent());
+
     (*vector_ptr) *= alpha;
   }
 
@@ -399,6 +408,8 @@ namespace TrilinosWrappers
   ROLVector<VectorType>::applyUnary(
     const ROL::Elementwise::UnaryFunction<value_type> &f)
   {
+    Assert(vector_ptr->has_ghost_elements() == false, ExcGhostsPresent());
+
     const typename VectorType::iterator vend = vector_ptr->end();
 
     for (typename VectorType::iterator iterator = vector_ptr->begin();
@@ -417,6 +428,7 @@ namespace TrilinosWrappers
     const ROL::Elementwise::BinaryFunction<value_type> &f,
     const ROL::Vector<value_type>                      &rol_vector)
   {
+    Assert(vector_ptr->has_ghost_elements() == false, ExcGhostsPresent());
     Assert(this->dimension() == rol_vector.dimension(),
            ExcDimensionMismatch(this->dimension(), rol_vector.dimension()));
 
