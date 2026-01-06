@@ -30,16 +30,19 @@ jobs:
     - name: detect merges
       if: github.event_name == 'pull_request'
       run: |
-        echo $(git show-branch master)
-        echo $(git show-branch origin/master)
-        echo $(git show-branch remotes/origin/master)
-        echo $(git show-branch $GITHUB_BASE_REF)
-        echo $(git show-branch dealii-test)
-        echo $(git show-branch refs/pull/9/merge)
-        echo $(git show-branch $GITHUB_HEAD_REF)
-        echo $(git log --merges --pretty=format:"%h" master..dealii-test)
-        echo $(git log --merges --pretty=format:"%h" $GITHUB_BASE_REF..$GITHUB_HEAD_REF)
-        # bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_HEAD_REF $GITHUB_BASE_REF
+        git fetch origin ${{ github.base_ref }}
+        echo $(git log --merges --pretty=format:"%h" origin/${{ github.base_ref }}..HEAD)
+        
+        #~ echo $(git show-branch master)
+        #~ echo $(git show-branch origin/master)
+        #~ echo $(git show-branch remotes/origin/master)
+        #~ echo $(git show-branch $GITHUB_BASE_REF)
+        #~ echo $(git show-branch dealii-test)
+        #~ echo $(git show-branch refs/pull/9/merge)
+        #~ echo $(git show-branch $GITHUB_HEAD_REF)
+        #~ echo $(git log --merges --pretty=format:"%h" master..dealii-test)
+        #~ echo $(git log --merges --pretty=format:"%h" $GITHUB_BASE_REF..$GITHUB_HEAD_REF)
+        #~ # bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_HEAD_REF $GITHUB_BASE_REF
 
   #~ doxygen:
     #~ # build the documentation
