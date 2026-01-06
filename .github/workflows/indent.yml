@@ -20,6 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
       with:
+        # fetches full history, but only for the ref being checked out
         fetch-depth: 0
     #~ - name: setup
       #~ run: |
@@ -30,9 +31,24 @@ jobs:
     - name: detect merges
       if: github.event_name == 'pull_request'
       run: |
-        git fetch origin ${{ github.base_ref }}
-        echo $(git log --merges --pretty=format:"%h" origin/${{ github.base_ref }}..HEAD)
-        
+        # fetch base branch explicitly
+        git fetch origin $GITHUB_BASE_REF
+
+        # commits with more than two parents are merge commits
+        MERGES=$(git rev-list origin/$GITHUB_BASE_REF..HEAD --parents | awk 'NF > 2 { print $1 }')
+
+        if [ -n "$MERGES" ]; then
+          echo "Merge commits detected in this PR:"
+          for c in $MERGES; do
+            echo "  - $c"
+          done
+          exit 1
+        fi
+
+        echo "No merge commits found!"
+        #~ git rev-list origin/$GITHUB_BASE_REF..HEAD --parents | awk 'NF > 2 { exit 1 }'
+
+        #~ echo $(git log --merges --pretty=format:"%h" origin/$GITHUB_BASE_REF..origin/$GITHUB_HEAD_REF)
         #~ echo $(git show-branch master)
         #~ echo $(git show-branch origin/master)
         #~ echo $(git show-branch remotes/origin/master)
