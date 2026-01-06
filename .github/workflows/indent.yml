@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         # fetches full history, but only for the ref being checked out
-        fetch-depth: 0
+        fetch-depth: 100
     #~ - name: setup
       #~ run: |
         #~ ./contrib/utilities/download_clang_format
@@ -31,10 +31,12 @@ jobs:
     - name: detect merges
       if: github.event_name == 'pull_request'
       run: |
-        # fetch base branch explicitly
-        git fetch origin $GITHUB_BASE_REF
+        # We already fetched the head branch with actions/checkout and fetch-depth: 0.
+        # Now also fetch the base branch.
+        git fetch --quiet origin $GITHUB_BASE_REF
 
         # commits with more than two parents are merge commits
+        # TODO: We can outsource this to the script
         MERGES=$(git rev-list origin/$GITHUB_BASE_REF..origin/$GITHUB_HEAD_REF --parents | awk 'NF > 2 { print $1 }')
 
         if [ -n "$MERGES" ]; then
