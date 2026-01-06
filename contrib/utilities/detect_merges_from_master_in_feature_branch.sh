@@ -2,7 +2,7 @@
 ## ------------------------------------------------------------------------
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
-## Copyright (C) 2025 by the deal.II authors
+## Copyright (C) 2025 - 2026 by the deal.II authors
 ##
 ## This file is part of the deal.II library.
 ##
@@ -45,8 +45,8 @@ commit_is_in_parent_branch () {
 readarray -t merge_hash_array < <(get_merge_commits_since_parent_branch)
 
 if [[ -z "${merge_hash_array}" ]] ; then
-    echo "No merge commits present at all, everything is good!"
-    exit 0
+  echo "No merge commits present at all, everything is good!"
+  exit 0
 fi
 
 echo "Merge commits found, checking if they originate from ${parent_ref}."

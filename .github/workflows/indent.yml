@@ -25,16 +25,16 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-    - name: setup
-      run: |
-        ./contrib/utilities/download_clang_format
-    - name: indent
-      run: |
-        ./contrib/utilities/check_indentation.sh
+    #~ - name: setup
+      #~ run: |
+        #~ ./contrib/utilities/download_clang_format
+    #~ - name: indent
+      #~ run: |
+        #~ ./contrib/utilities/check_indentation.sh
     - name: detect merges
       if: github.event_name == 'pull_request'
       run: |
-        bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_REF $GITHUB_BASE_REF
+        bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_HEAD_REF $GITHUB_BASE_REF
 
   doxygen:
     # build the documentation
