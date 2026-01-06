@@ -32,8 +32,9 @@ jobs:
       run: |
         ./contrib/utilities/check_indentation.sh
     - name: detect merges
+      if: github.event_name == 'pull_request'
       run: |
-        bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_REF remotes/origin/master
+        bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_REF $GITHUB_BASE_REF
 
   doxygen:
     # build the documentation
