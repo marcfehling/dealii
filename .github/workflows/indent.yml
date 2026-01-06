@@ -1,10 +1,6 @@
 name: indent
 
 on:
-  push:
-    branches:
-      - 'master'
-      - 'dealii-*'
   pull_request:
 
 concurrency:
@@ -34,7 +30,6 @@ jobs:
     - name: detect merges
       if: github.event_name == 'pull_request'
       run: |
-        git branch --all
         git show-branch master
         git show-branch origin/master
         git show-branch remotes/origin/master
@@ -44,7 +39,7 @@ jobs:
         git show-branch $GITHUB_HEAD_REF
         git log --merges --pretty=format:"%h" master..dealii-test
         git log --merges --pretty=format:"%h" $GITHUB_BASE_REF..$GITHUB_HEAD_REF
-        bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_HEAD_REF $GITHUB_BASE_REF
+        # bash ./contrib/utilities/detect_merges_from_master_in_feature_branch.sh $GITHUB_HEAD_REF $GITHUB_BASE_REF
 
   #~ doxygen:
     #~ # build the documentation
