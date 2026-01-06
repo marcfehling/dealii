@@ -35,7 +35,7 @@ jobs:
         git fetch origin $GITHUB_BASE_REF
 
         # commits with more than two parents are merge commits
-        MERGES=$(git rev-list origin/$GITHUB_BASE_REF..HEAD --parents | awk 'NF > 2 { print $1 }')
+        MERGES=$(git rev-list origin/$GITHUB_BASE_REF..origin/$GITHUB_HEAD_REF --parents | awk 'NF > 2 { print $1 }')
 
         if [ -n "$MERGES" ]; then
           echo "Merge commits detected in this PR:"
