@@ -36,6 +36,11 @@ cmake_minimum_required(VERSION 3.13.4)
 #
 cmake_policy(VERSION 3.13.4)
 
+if(POLICY CMP0111)
+  # Hotfix to enforce old behavior.
+  cmake_policy(SET CMP0111 OLD)
+endif()
+
 if(POLICY CMP0144)
   # Introduced in CMake 3.27: find_package(<PackageName>) searches
   # prefixes specified by upper-case <PACKAGENAME>_ROOT CMake and
