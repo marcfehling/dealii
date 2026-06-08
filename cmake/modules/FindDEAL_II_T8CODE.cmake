@@ -16,8 +16,13 @@
 # Try to find the T8CODE library
 #
 # This module exports:
+#   T8CODE_DIR
 #   T8CODE_LIBRARIES
-#   T8CODE_INCLUDE_DIR
+#   T8CODE_INCLUDE_DIRS
+#   T8CODE_VERSION
+#   T8CODE_VERSION_MAJOR
+#   T8CODE_VERSION_MINOR
+#   T8CODE_VERSION_PATCH
 #   T8CODE_WITH_MPI
 #
 
@@ -38,25 +43,40 @@ find_package(P4EST CONFIG
 find_package(T8CODE CONFIG
              HINTS ${T8CODE_DIR}/cmake ${T8CODE_DIR}/install/cmake)
 
-  if(${T8CODE_ENABLE_MPI})
-    message(STATUS "Found MPI")
-    set(T8CODE_WITH_MPI TRUE)
-  else()
-    message(STATUS "NOT Found MPI")
-  endif()
+if(T8CODE_FOUND)
+  #
+  # Adopt variable name to be consistent within deal.II.
+  # - extract Version Numbers
+  # -  MPI Status.
+  #
+  set(T8CODE_VERSION "${T8_VERSION}")
+  set(T8CODE_VERSION_MAJOR "${T8_VERSION_MAJOR}")
+  set(T8CODE_VERSION_MINOR "${T8_VERSION_MINOR}")
+  set(T8CODE_VERSION_PATCH "${T8_VERSION_PATCH}")
+  message(STATUS "T8CODE VERSION: ${T8CODE_VERSION} ${T8CODE_VERSION_MAJOR} ${T8CODE_VERSION_MINOR} ${T8CODE_VERSION_PATCH}" )
 
- 
+  set(T8CODE_WITH_MPI "${T8CODE_ENABLE_MPI}")
+
+  #
+  # t8code does not export the include directory. We find it ourselves.
+  #
+  #~ message(STATUS "T8CODE_INCLUDE_DIR: ${T8CODE_INCLUDE_DIR}" )
+  #~ message(STATUS "T8CODE_INCLUDE_DIRS: ${T8CODE_INCLUDE_DIRS}")
   deal_ii_find_path(T8CODE_INCLUDE_DIR t8.h
-  HINTS ${T8CODE_DIR}/.. ${T8CODE_DIR}
-  PATH_SUFFIXES include
-  )
+    HINTS ${T8CODE_DIR}/.. ${T8CODE_DIR}
+    PATH_SUFFIXES include
+    )
 
-add_definitions(-DT8_CMAKE_BUILD)
-set(_targets T8CODE::T8)
+  set(_targets T8CODE::T8)
+endif()
 
 process_feature(T8CODE
-  TARGETS REQUIRED _targets
-  LIBRARIES OPTIONAL LAPACK_LIBRARIES MPI_C_LIBRARIES
+  TARGETS
+    REQUIRED _targets
+  LIBRARIES
+    OPTIONAL LAPACK_LIBRARIES MPI_C_LIBRARIES
   INCLUDE_DIRS
     REQUIRED T8CODE_INCLUDE_DIR
+  CLEAR
+    T8CODE_INCLUDE_DIR P4EST_DIR SC_DIR
   )
