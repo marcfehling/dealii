@@ -1,7 +1,7 @@
 ## ------------------------------------------------------------------------
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
-## Copyright (C) 2012 - 2026 by the deal.II authors
+## Copyright (C) 2026 by the deal.II authors
 ##
 ## This file is part of the deal.II library.
 ##
@@ -13,7 +13,7 @@
 ## ------------------------------------------------------------------------
 
 #
-# Configuration for the t8code and sc libraries:
+# Configuration for the t8code libraries:
 #
 
 set(FEATURE_T8CODE_DEPENDS MPI)
@@ -21,6 +21,7 @@ set(FEATURE_T8CODE_DEPENDS MPI)
 
 macro(feature_t8code_find_external var)
   find_package(DEAL_II_T8CODE)
+
   if(T8CODE_FOUND)
     set(${var} TRUE)
 

@@ -190,26 +190,33 @@ InitFinalize::InitFinalize([[maybe_unused]] int    &argc,
     }
 #endif
 
-    // Initialize p4est and libsc components
-#ifdef DEAL_II_WITH_P4EST
-  if (static_cast<bool>(libraries & InitializeLibrary::P4EST))
+    // Initialize libsc as required by both p4est and t8code
+#if defined(DEAL_II_WITH_P4EST) || defined(DEAL_II_WITH_T8CODE)
+  if (static_cast<bool>(libraries &
+                        (InitializeLibrary::P4EST | InitializeLibrary::T8CODE)))
     {
-#  if DEAL_II_P4EST_VERSION_GTE(2, 5, 0, 0)
+#  if DEAL_II_P4EST_VERSION_GTE(2, 5, 0, 0) || defined(DEAL_II_WITH_T8CODE)
       // This feature is broken in version 2.0.0 for calls to
       // MPI_Comm_create_group (see cburstedde/p4est#30).
       // Disabling it leads to more verbose p4est error messages
       // which should be fine.
       sc_init(MPI_COMM_WORLD, 0, 0, nullptr, SC_LP_SILENT);
 #  endif
+    }
+#endif
+
+    // Initialize p4est
+#ifdef DEAL_II_WITH_P4EST
+  if (static_cast<bool>(libraries & InitializeLibrary::P4EST))
+    {
       p4est_init(nullptr, SC_LP_SILENT);
     }
 #endif
 
-// Initialize t8code and libsc components
+// Initialize t8code
 #ifdef DEAL_II_WITH_T8CODE
   if (static_cast<bool>(libraries & InitializeLibrary::T8CODE))
     {
-      sc_init(MPI_COMM_WORLD, 0, 0, nullptr, SC_LP_SILENT);
       t8_init(SC_LP_SILENT);
     }
 #endif
@@ -482,20 +489,13 @@ InitFinalize::finalize()
 #  endif
 #endif
 
-#ifdef DEAL_II_WITH_P4EST
-      // now end p4est and libsc
-      // Note: p4est has no finalize function
-      if (static_cast<bool>(libraries & InitializeLibrary::P4EST))
+#if defined(DEAL_II_WITH_P4EST) || defined(DEAL_II_WITH_T8CODE)
+      // now end libsc
+      // Note: t8code and p4est have no finalize functions
+      if (static_cast<bool>(
+            libraries & (InitializeLibrary::P4EST | InitializeLibrary::T8CODE)))
         sc_finalize();
 #endif
-
-#ifdef DEAL_II_WITH_T8CODE
-      // now end t8code and libsc
-      // Note: t8code has no finalize function
-      if (static_cast<bool>(libraries & InitializeLibrary::T8CODE))
-        sc_finalize();
-#endif
-
 
 #ifdef DEAL_II_WITH_PSBLAS
       if (static_cast<bool>(libraries & InitializeLibrary::PSBLAS))
