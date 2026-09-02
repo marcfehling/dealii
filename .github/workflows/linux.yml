@@ -54,7 +54,7 @@ jobs:
         sudo add-apt-repository ppa:ginggs/deal.ii-9.7.1-backports
         sudo apt-get update
         sudo apt-get install -yq --no-install-recommends \
-            cuda-toolkit-12-8 \
+            cuda-toolkit-12-5 \
             libp4est-dev \
             libopenmpi-dev \
             numdiff \
@@ -166,7 +166,7 @@ jobs:
         sudo add-apt-repository ppa:ginggs/deal.ii-9.7.1-backports
         sudo apt-get update
         sudo apt-get install -yq --no-install-recommends \
-            cuda-toolkit-12-8 \
+            cuda-toolkit-12-5 \
             libp4est-dev \
             libopenmpi-dev \
             numdiff \
