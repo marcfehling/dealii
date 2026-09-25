@@ -11,6 +11,9 @@ on:
     - reopened
     - synchronize
     - ready_for_review
+    - labeled
+
+if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ready to test')
 
 concurrency:
   group: ${{ github.event_name }}-${{ github.workflow }}-${{ github.ref }}
